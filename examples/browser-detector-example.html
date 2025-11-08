@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browser-Native Workout Detector Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    .video-container {
+      position: relative;
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    video, canvas {
+      width: 100%;
+      border-radius: 8px;
+      background: #000;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    select {
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .metric-card {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #4CAF50;
+    }
+    .metric-label {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .metric-value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #333;
+    }
+    .metric-unit {
+      font-size: 14px;
+      color: #999;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+    .status.ready {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status.processing {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .rep-list {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 10px;
+    }
+    .rep-item {
+      padding: 8px;
+      margin: 5px 0;
+      background: #f9f9f9;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .rep-item.correct {
+      border-left: 3px solid #4CAF50;
+    }
+    .rep-item.incorrect {
+      border-left: 3px solid #f44336;
+    }
+    .badge {
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .badge.correct {
+      background: #4CAF50;
+      color: white;
+    }
+    .badge.incorrect {
+      background: #f44336;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏋️ Browser-Native Workout Detector</h1>
+    <p class="subtitle">100% JavaScript - No Python Backend Required!</p>
+
+    <div class="controls">
+      <select id="activitySelect">
+        <option value="push-ups">Push-ups</option>
+        <option value="pull-ups">Pull-ups</option>
+        <option value="sit-ups">Sit-ups</option>
+        <option value="vertical jump">Vertical Jump</option>
+        <option value="broad jump">Broad Jump</option>
+        <option value="shuttle run">Shuttle Run</option>
+        <option value="sit and reach">Sit and Reach</option>
+      </select>
+      <button id="startBtn">Start Webcam</button>
+      <button id="stopBtn" disabled>Stop</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+
+    <div id="status" class="status ready">Ready to start</div>
+
+    <div class="video-container">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <div class="metrics">
+      <div class="metric-card">
+        <div class="metric-label">Rep Count</div>
+        <div class="metric-value" id="repCount">0</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">State</div>
+        <div class="metric-value" id="state" style="font-size: 24px;">-</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Time</div>
+        <div class="metric-value" id="time">0.0<span class="metric-unit">s</span></div>
+      </div>
+      <div class="metric-card" id="extraMetric" style="display: none;">
+        <div class="metric-label" id="extraLabel">Extra</div>
+        <div class="metric-value" id="extraValue">-</div>
+      </div>
+    </div>
+
+    <div class="rep-list" id="repList"></div>
+  </div>
+
+  <!-- MediaPipe Pose -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+
+  <script type="module">
+    // Import detector (in real app, this would be from your build)
+    // For demo purposes, we'll inline a simplified version
+
+    class SmoothingBuffer {
+      constructor(size) {
+        this.buffer = [];
+        this.maxSize = size;
+      }
+      add(value) {
+        this.buffer.push(value);
+        if (this.buffer.length > this.maxSize) {
+          this.buffer.shift();
+        }
+        return this.getAverage();
+      }
+      getAverage() {
+        if (this.buffer.length === 0) return 0;
+        return this.buffer.reduce((a, b) => a + b, 0) / this.buffer.length;
+      }
+    }
+
+    function calculateAngle(a, b, c) {
+      const ba = { x: a.x - b.x, y: a.y - b.y };
+      const bc = { x: c.x - b.x, y: c.y - b.y };
+      const dotProduct = ba.x * bc.x + ba.y * bc.y;
+      const magnitudeBA = Math.sqrt(ba.x * ba.x + ba.y * ba.y);
+      const magnitudeBC = Math.sqrt(bc.x * bc.x + bc.y * bc.y);
+      const cosAngle = Math.max(-1, Math.min(1, dotProduct / ((magnitudeBA * magnitudeBC) + 1e-9)));
+      return Math.acos(cosAngle) * (180 / Math.PI);
+    }
+
+    class PushupDetector {
+      constructor() {
+        this.state = 'up';
+        this.inDip = false;
+        this.dipStartTime = 0;
+        this.currentMinAngle = 180;
+        this.reps = [];
+        this.angleBuffer = new SmoothingBuffer(3);
+        this.DOWN_ANGLE = 75;
+        this.UP_ANGLE = 110;
+        this.MIN_DIP_DURATION = 0.2;
+      }
+
+      process(landmarks, time) {
+        const leftShoulder = landmarks[11];
+        const leftElbow = landmarks[13];
+        const leftWrist = landmarks[15];
+        const rightShoulder = landmarks[12];
+        const rightElbow = landmarks[14];
+        const rightWrist = landmarks[16];
+
+        const leftAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
+        const rightAngle = calculateAngle(rightShoulder, rightElbow, rightWrist);
+        const elbowAngle = this.angleBuffer.add((leftAngle + rightAngle) / 2);
+
+        if (this.state === 'up' && elbowAngle <= this.DOWN_ANGLE) {
+          this.state = 'down';
+          this.inDip = true;
+          this.dipStartTime = time;
+          this.currentMinAngle = elbowAngle;
+        } else if (this.state === 'down' && elbowAngle >= this.UP_ANGLE) {
+          this.state = 'up';
+          if (this.inDip) {
+            const dipDuration = time - this.dipStartTime;
+            const isCorrect = this.currentMinAngle <= this.DOWN_ANGLE && dipDuration >= this.MIN_DIP_DURATION;
+            
+            this.reps.push({
+              count: this.reps.length + 1,
+              downTime: this.dipStartTime,
+              upTime: time,
+              dipDuration: dipDuration,
+              minElbowAngle: this.currentMinAngle,
+              correct: isCorrect,
+              timestamp: time
+            });
+            
+            this.inDip = false;
+            this.currentMinAngle = 180;
+          }
+        }
+
+        if (this.inDip && elbowAngle < this.currentMinAngle) {
+          this.currentMinAngle = elbowAngle;
+        }
+
+        return this.reps;
+      }
+
+      getState() { return this.state; }
+      getCurrentAngle() { return this.currentMinAngle; }
+      getReps() { return this.reps; }
+      getCorrectCount() { return this.reps.filter(r => r.correct).length; }
+    }
+
+    // App State
+    let detector = new PushupDetector();
+    let pose = null;
+    let camera = null;
+    let startTime = Date.now();
+    let isRunning = false;
+
+    // UI Elements
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const activitySelect = document.getElementById('activitySelect');
+    const statusDiv = document.getElementById('status');
+    const repCountDiv = document.getElementById('repCount');
+    const stateDiv = document.getElementById('state');
+    const timeDiv = document.getElementById('time');
+    const repListDiv = document.getElementById('repList');
+
+    // Initialize MediaPipe Pose
+    function initPose() {
+      pose = new Pose({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+      });
+
+      pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+
+      pose.onResults(onResults);
+    }
+
+    // Process pose results
+    function onResults(results) {
+      if (!isRunning) return;
+
+      // Clear canvas
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw pose landmarks
+      if (results.poseLandmarks) {
+        drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+        drawLandmarks(ctx, results.poseLandmarks, {color: '#FF0000', lineWidth: 1, radius: 3});
+
+        // Process with detector
+        const currentTime = (Date.now() - startTime) / 1000;
+        const reps = detector.process(results.poseLandmarks, currentTime);
+
+        // Update UI
+        updateUI(currentTime, reps);
+      }
+    }
+
+    // Update UI with current metrics
+    function updateUI(currentTime, reps) {
+      repCountDiv.textContent = reps.length;
+      stateDiv.textContent = detector.getState();
+      timeDiv.innerHTML = `${currentTime.toFixed(1)}<span class="metric-unit">s</span>`;
+
+      // Update rep list
+      repListDiv.innerHTML = reps.map(rep => `
+        <div class="rep-item ${rep.correct ? 'correct' : 'incorrect'}">
+          <span>Rep #${rep.count} - ${rep.dipDuration?.toFixed(2)}s</span>
+          <span class="badge ${rep.correct ? 'correct' : 'incorrect'}">
+            ${rep.correct ? '✓ Correct' : '✗ Incorrect'}
+          </span>
+        </div>
+      `).reverse().join('');
+    }
+
+    // Start webcam
+    async function startWebcam() {
+      try {
+        statusDiv.className = 'status processing';
+        statusDiv.textContent = 'Initializing camera...';
+
+        if (!pose) {
+          initPose();
+        }
+
+        camera = new Camera(video, {
+          onFrame: async () => {
+            if (isRunning) {
+              await pose.send({image: video});
+            }
+          },
+          width: 640,
+          height: 480
+        });
+
+        await camera.start();
+
+        isRunning = true;
+        startTime = Date.now();
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+
+        statusDiv.className = 'status ready';
+        statusDiv.textContent = 'Running - Perform your exercise!';
+      } catch (error) {
+        statusDiv.className = 'status error';
+        statusDiv.textContent = 'Error: ' + error.message;
+        console.error(error);
+      }
+    }
+
+    // Stop webcam
+    function stopWebcam() {
+      isRunning = false;
+      if (camera) {
+        camera.stop();
+      }
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      statusDiv.className = 'status ready';
+      statusDiv.textContent = 'Stopped';
+    }
+
+    // Reset detector
+    function reset() {
+      detector = new PushupDetector();
+      startTime = Date.now();
+      repCountDiv.textContent = '0';
+      stateDiv.textContent = '-';
+      timeDiv.innerHTML = '0.0<span class="metric-unit">s</span>';
+      repListDiv.innerHTML = '';
+    }
+
+    // Event listeners
+    startBtn.addEventListener('click', startWebcam);
+    stopBtn.addEventListener('click', stopWebcam);
+    resetBtn.addEventListener('click', reset);
+    activitySelect.addEventListener('change', (e) => {
+      // In full implementation, switch detector based on activity
+      reset();
+      statusDiv.textContent = `Ready to track ${e.target.value}`;
+    });
+
+    // Initialize
+    statusDiv.textContent = 'Click "Start Webcam" to begin';
+  </script>
+</body>
+</html>
