@@ -194,6 +194,13 @@ const VideoPlayer = ({ src, className = '' }: VideoPlayerProps) => {
         preload="auto"
         crossOrigin="anonymous"
         controls={false}
+        muted={false}
+        autoPlay={false}
+        style={{ 
+          imageRendering: 'crisp-edges',
+          WebkitTransform: 'translateZ(0)', // Hardware acceleration
+          transform: 'translateZ(0)'
+        }}
       />
       
       {error && (

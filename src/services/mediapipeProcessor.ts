@@ -139,18 +139,24 @@ class MediaPipeProcessor {
     
     tempCanvas.width = frames[0].width;
     tempCanvas.height = frames[0].height;
-    const tempCtx = tempCanvas.getContext('2d')!;
+    const tempCtx = tempCanvas.getContext('2d', { 
+      alpha: false,
+      desynchronized: true // Better performance
+    })!;
     
-    // Setup MediaRecorder with the temp canvas
+    // Setup MediaRecorder with the temp canvas - HIGHER BITRATE for better quality
     const stream = tempCanvas.captureStream(fps);
     
     let options: MediaRecorderOptions;
+    // Use higher bitrate (8 Mbps) for smoother video
     if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-      options = { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 5000000 };
+      options = { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 8000000 };
     } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-      options = { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 5000000 };
+      options = { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 8000000 };
+    } else if (MediaRecorder.isTypeSupported('video/webm;codecs=h264')) {
+      options = { mimeType: 'video/webm;codecs=h264', videoBitsPerSecond: 8000000 };
     } else {
-      options = { mimeType: 'video/webm', videoBitsPerSecond: 5000000 };
+      options = { mimeType: 'video/webm', videoBitsPerSecond: 8000000 };
     }
     
     const recorder = new MediaRecorder(stream, options);
@@ -162,27 +168,47 @@ class MediaPipeProcessor {
       }
     };
     
-    // Start recording
-    recorder.start();
+    // Start recording with smaller timeslice for smoother output
+    recorder.start(100); // Collect data every 100ms
     
-    // Render each frame at the correct timing
+    // Render frames using requestAnimationFrame for smoother playback
     const frameDuration = 1000 / fps; // milliseconds per frame
-    for (let i = 0; i < frames.length; i++) {
-      tempCtx.putImageData(frames[i], 0, 0);
-      await new Promise(resolve => setTimeout(resolve, frameDuration));
-      
-      if (i % 30 === 0) {
-        console.log(`Rendering frame ${i}/${frames.length} to video...`);
-      }
-    }
+    let frameIndex = 0;
+    let lastFrameTime = performance.now();
     
-    // Stop recording and wait for final data
     return new Promise((resolve) => {
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: options.mimeType || 'video/webm' });
-        resolve(blob);
+      const renderFrame = (currentTime: number) => {
+        if (frameIndex >= frames.length) {
+          // All frames rendered, stop recording
+          recorder.onstop = () => {
+            const blob = new Blob(chunks, { type: options.mimeType || 'video/webm' });
+            console.log('Video created:', blob.size, 'bytes', blob.type);
+            resolve(blob);
+          };
+          recorder.stop();
+          return;
+        }
+        
+        // Check if enough time has passed for next frame
+        const elapsed = currentTime - lastFrameTime;
+        if (elapsed >= frameDuration) {
+          // Render current frame
+          tempCtx.putImageData(frames[frameIndex], 0, 0);
+          
+          if (frameIndex % 30 === 0) {
+            console.log(`Rendering frame ${frameIndex}/${frames.length} to video...`);
+          }
+          
+          frameIndex++;
+          lastFrameTime = currentTime;
+        }
+        
+        // Continue to next frame
+        requestAnimationFrame(renderFrame);
       };
-      recorder.stop();
+      
+      // Start rendering
+      requestAnimationFrame(renderFrame);
     });
   }
 
