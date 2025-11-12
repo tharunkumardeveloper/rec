@@ -397,29 +397,19 @@ const ActivityDetail = ({ activity, onBack, onStartWorkout }: ActivityDetailProp
         )}
       </div>
 
-      {/* Workout Mode Selection - Right below cover image */}
-      <div className="px-4 py-4 max-w-md mx-auto bg-background border-b space-y-3">
-        <p className="text-sm font-semibold text-center mb-2">Choose Workout Mode</p>
-        <div className="grid grid-cols-2 gap-3">
-          <Button 
-            onClick={() => onStartWorkout('live')}
-            variant="outline"
-            className="h-20 flex-col gap-2"
-          >
-            <Trophy className="w-6 h-6" />
-            <span className="text-sm font-semibold">Live Camera</span>
-            <span className="text-xs text-muted-foreground">Real-time analysis</span>
-          </Button>
-          <Button 
-            onClick={() => onStartWorkout('upload')}
-            variant="outline"
-            className="h-20 flex-col gap-2"
-          >
-            <Trophy className="w-6 h-6" />
-            <span className="text-sm font-semibold">Upload Video</span>
-            <span className="text-xs text-muted-foreground">Analyze recording</span>
-          </Button>
-        </div>
+      {/* Start Workout Button - Right below cover image */}
+      <div className="px-4 py-4 max-w-md mx-auto bg-background border-b">
+        <Button 
+          onClick={() => onStartWorkout('upload')} // Default to upload mode, user can choose inside
+          className="w-full h-16 text-lg font-semibold"
+          size="lg"
+        >
+          <Trophy className="w-6 h-6 mr-2" />
+          Start Workout
+        </Button>
+        <p className="text-xs text-center text-muted-foreground mt-2">
+          Choose between live camera or video upload in the next screen
+        </p>
       </div>
 
       {/* Content */}
