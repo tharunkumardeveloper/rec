@@ -1,8 +1,40 @@
-import { Pose, Results } from '@mediapipe/pose';
-import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
-import { POSE_CONNECTIONS } from '@mediapipe/pose';
 import { getVideoDetectorForActivity, type VideoDetector } from './videoDetectors';
 import { fixWebmDuration } from '@/utils/fixWebmDuration';
+
+// Declare global MediaPipe types
+declare global {
+  interface Window {
+    Pose: any;
+    drawConnectors: any;
+    drawLandmarks: any;
+    POSE_CONNECTIONS: any;
+  }
+}
+
+// Helper to get MediaPipe from either npm or CDN
+function getMediaPipe() {
+  // Check if loaded via CDN (global window object)
+  if (typeof window !== 'undefined' && window.Pose) {
+    console.log('Using MediaPipe from CDN (window.Pose)');
+    return {
+      Pose: window.Pose,
+      drawConnectors: window.drawConnectors,
+      drawLandmarks: window.drawLandmarks,
+      POSE_CONNECTIONS: window.POSE_CONNECTIONS
+    };
+  }
+  
+  // Try npm package import
+  try {
+    const { Pose, POSE_CONNECTIONS } = require('@mediapipe/pose');
+    const { drawConnectors, drawLandmarks } = require('@mediapipe/drawing_utils');
+    console.log('Using MediaPipe from npm package');
+    return { Pose, drawConnectors, drawLandmarks, POSE_CONNECTIONS };
+  } catch (e) {
+    console.error('MediaPipe not available:', e);
+    throw new Error('MediaPipe library not loaded. Please refresh the page.');
+  }
+}
 
 export interface RepData {
   count: number;
@@ -50,8 +82,29 @@ class MediaPipeProcessor {
   private processedFrames: ImageData[] = [];
   
   async initialize() {
-    this.pose = new Pose({
-      locateFile: (file) => {
+    // Wait for MediaPipe to be available (if loading from CDN)
+    if (typeof window !== 'undefined' && !window.Pose) {
+      console.log('Waiting for MediaPipe to load from CDN...');
+      await new Promise((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (window.Pose) {
+            clearInterval(checkInterval);
+            resolve(true);
+          }
+        }, 100);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          resolve(false);
+        }, 10000);
+      });
+    }
+
+    const mp = getMediaPipe();
+    
+    this.pose = new mp.Pose({
+      locateFile: (file: string) => {
         return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
       }
     });
@@ -460,18 +513,21 @@ class MediaPipeProcessor {
     });
   }
 
-  private drawResults(results: Results, activityName: string, repCount: number, state: string, currentAngle?: number, correctCount?: number, incorrectCount?: number, currentTime?: number, dipTime?: number) {
+  private drawResults(results: any, activityName: string, repCount: number, state: string, currentAngle?: number, correctCount?: number, incorrectCount?: number, currentTime?: number, dipTime?: number) {
     if (!this.ctx || !this.canvas) return;
+
+    // Get MediaPipe drawing functions
+    const mp = getMediaPipe();
 
     // Draw landmarks and connections (EXACTLY like Python with mp_draw)
     if (results.poseLandmarks) {
       // Draw connections in cyan/blue like Python
-      drawConnectors(this.ctx, results.poseLandmarks, POSE_CONNECTIONS, {
+      mp.drawConnectors(this.ctx, results.poseLandmarks, mp.POSE_CONNECTIONS, {
         color: '#00FFFF',
         lineWidth: 2
       });
       // Draw landmarks in white/cyan like Python
-      drawLandmarks(this.ctx, results.poseLandmarks, {
+      mp.drawLandmarks(this.ctx, results.poseLandmarks, {
         color: '#FFFFFF',
         fillColor: '#00FFFF',
         radius: 3
