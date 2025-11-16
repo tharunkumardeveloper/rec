@@ -229,20 +229,46 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
         throw new Error('Invalid file type. Please upload a video file.');
       }
 
-      setProcessingMessage('Analyzing your workout...');
+      // Get video duration for better messaging
+      const videoElement = document.createElement('video');
+      videoElement.src = URL.createObjectURL(file);
+      await new Promise((resolve) => {
+        videoElement.onloadedmetadata = () => {
+          const duration = videoElement.duration;
+          if (duration > 60) {
+            setProcessingMessage(`Processing large video (${Math.floor(duration / 60)}m ${Math.floor(duration % 60)}s) - this may take a while...`);
+          } else {
+            setProcessingMessage('Analyzing your workout...');
+          }
+          URL.revokeObjectURL(videoElement.src);
+          resolve(true);
+        };
+      });
 
       // Process video with MediaPipe in browser
       const processingResult = await mediapipeProcessor.processVideo(
         file,
         activityName,
         (prog, frame, reps, metrics) => {
-          console.log('Progress update:', prog, 'Frame:', frame ? 'Yes' : 'No', 'Reps:', reps);
           setProgress(prog);
           if (frame) {
             setLiveFrame(frame);
           }
           setCurrentReps(reps || 0);
           setCurrentMetrics(metrics || null);
+          
+          // Update message based on progress
+          if (prog < 25) {
+            setProcessingMessage('Detecting body landmarks...');
+          } else if (prog < 50) {
+            setProcessingMessage('Tracking movements...');
+          } else if (prog < 75) {
+            setProcessingMessage('Counting reps...');
+          } else if (prog < 95) {
+            setProcessingMessage('Finalizing analysis...');
+          } else {
+            setProcessingMessage('Creating output video...');
+          }
         }
       );
 
@@ -450,21 +476,50 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
                   </p>
                 </div>
 
-                <div className="text-center p-3 rounded-lg bg-secondary/30">
-                  <div className="text-2xl font-bold mb-1">
-                    {currentMetrics?.correctCount !== undefined ? currentMetrics.correctCount : '...'}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Correct Form</p>
-                </div>
+                {activityName.includes('Jump') ? (
+                  <>
+                    <div className="text-center p-3 rounded-lg bg-secondary/30">
+                      <div className="text-2xl font-bold mb-1">
+                        {currentReps > 0 && currentMetrics?.maxJumpHeight
+                          ? `${currentMetrics.maxJumpHeight.toFixed(2)}m`
+                          : '...'}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Max Height</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-secondary/30">
+                      <div className="text-2xl font-bold mb-1">
+                        {currentReps > 0 && currentMetrics?.avgJumpHeight !== undefined && currentMetrics.avgJumpHeight > 0
+                          ? `${currentMetrics.avgJumpHeight.toFixed(2)}m`
+                          : '...'}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Avg Height</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-center p-3 rounded-lg bg-secondary/30">
+                      <div className="text-2xl font-bold mb-1 text-green-500">
+                        {currentMetrics?.correctCount !== undefined ? currentMetrics.correctCount : '...'}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Correct Form</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-secondary/30">
+                      <div className="text-2xl font-bold mb-1 text-red-500">
+                        {currentMetrics?.incorrectCount !== undefined ? currentMetrics.incorrectCount : '...'}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Bad Form</p>
+                    </div>
+                  </>
+                )}
 
-                {currentMetrics?.minAngle && (
+                {!activityName.includes('Jump') && currentMetrics?.minAngle && (
                   <div className="text-center p-3 rounded-lg bg-secondary/30">
                     <div className="text-2xl font-bold mb-1">{Math.round(currentMetrics.minAngle)}°</div>
                     <p className="text-xs text-muted-foreground">Min Angle</p>
                   </div>
                 )}
 
-                {currentMetrics?.currentTime && (
+                {currentMetrics?.currentTime !== undefined && (
                   <div className="text-center p-3 rounded-lg bg-secondary/30">
                     <div className="text-2xl font-bold mb-1">{currentMetrics.currentTime.toFixed(1)}s</div>
                     <p className="text-xs text-muted-foreground">Duration</p>
@@ -629,39 +684,6 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
             </Card>
           )}
 
-          {/* Analysis Features Info */}
-          <Card className="card-elevated bg-gradient-to-br from-primary/5 to-primary/10">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">AI Analysis Features</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                </div>
-                <p><span className="font-semibold">Skeleton Tracking:</span> Real-time body landmark detection</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                </div>
-                <p><span className="font-semibold">Joint Angles:</span> Precise angle measurements for form validation</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
-                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                </div>
-                <p><span className="font-semibold">Rep Counter:</span> Automatic counting with form validation</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                  <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                </div>
-                <p><span className="font-semibold">Visual Overlay:</span> Colored skeleton lines and metrics display</p>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Stats Card */}
           <Card className="card-elevated">
             <CardHeader>
@@ -693,10 +715,17 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
                   </div>
                 )}
 
-                {result.badSets !== undefined && result.badSets > 0 && (
+                {result.badSets !== undefined && !activityName.includes('Jump') && (
                   <div className="text-center p-3 rounded-lg bg-secondary/30">
-                    <div className="text-2xl font-bold mb-1">{result.badSets}</div>
-                    <p className="text-xs text-muted-foreground">Incorrect</p>
+                    <div className="text-2xl font-bold mb-1 text-red-500">{result.badSets}</div>
+                    <p className="text-xs text-muted-foreground">Bad Form</p>
+                  </div>
+                )}
+                
+                {result.stats?.correctReps !== undefined && !activityName.includes('Jump') && (
+                  <div className="text-center p-3 rounded-lg bg-secondary/30">
+                    <div className="text-2xl font-bold mb-1 text-green-500">{result.stats.correctReps}</div>
+                    <p className="text-xs text-muted-foreground">Correct Form</p>
                   </div>
                 )}
 

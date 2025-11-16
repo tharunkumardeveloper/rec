@@ -90,15 +90,18 @@ while True:
             peak_y = hip_smoothed
             air_start_time = t
             air_time = 0  # reset air_time at takeoff
+            print(f"[Jump] Takeoff at {t:.2f}s, baseline={baseline_y:.1f}, current={hip_smoothed:.1f}")
         elif in_air:
             peak_y = min(peak_y, hip_smoothed)
             air_time = t - air_start_time  # update air_time continuously
+            
             # Landing detected
             if hip_smoothed >= baseline_y - 5:
                 in_air = False
                 jump_height_px = baseline_y - peak_y
                 jump_height_m = jump_height_px * PIXEL_TO_M
                 jump_count += 1
+                print(f"[Jump] Landing at {t:.2f}s, height={jump_height_px:.1f}px ({jump_height_m:.2f}m), air_time={air_time:.2f}s")
                 jump_data.append({
                     'count': jump_count,
                     'takeoff_time': round(air_start_time,3),
@@ -112,6 +115,29 @@ while True:
                     time_of_max_height = air_start_time
                 peak_y = None
                 air_time = 0  # reset after landing
+                baseline_y = hip_smoothed  # update baseline after landing
+            # Safety: force landing if stuck in air > 2 seconds
+            elif air_time > 2.0:
+                print(f"[Jump] Force landing after {air_time:.2f}s in air")
+                in_air = False
+                jump_height_px = baseline_y - peak_y
+                jump_height_m = jump_height_px * PIXEL_TO_M
+                if jump_height_px > 10:  # Only count if reasonable height
+                    jump_count += 1
+                    jump_data.append({
+                        'count': jump_count,
+                        'takeoff_time': round(air_start_time,3),
+                        'landing_time': round(t,3),
+                        'air_time_s': round(air_time,3),
+                        'jump_height_px': round(jump_height_px,2),
+                        'jump_height_m': round(jump_height_m,3)
+                    })
+                    if jump_height_px > max_jump_height_px:
+                        max_jump_height_px = jump_height_px
+                        time_of_max_height = air_start_time
+                peak_y = None
+                air_time = 0
+                baseline_y = hip_smoothed
 
         # -------- Display --------
         cv2.putText(frame, f"Jump Count: {jump_count}", (10,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,255),2)
@@ -121,7 +147,13 @@ while True:
 
     cv2.imshow("Vertical Jump Tracker", frame)
     out_vid.write(frame)
-    if cv2.waitKey(int(1000/fps)) & 0xFF == 27:  # ESC
+    
+    # Progress indicator
+    if frame_idx % 30 == 0:
+        progress = (frame_idx / total_frames) * 100
+        print(f"Processing: {progress:.1f}% ({frame_idx}/{total_frames} frames)")
+    
+    if cv2.waitKey(1) & 0xFF == 27:  # ESC - changed to 1ms for faster processing
         break
 
 # -------- Cleanup --------

@@ -35,11 +35,11 @@ function calculateAngle(a: Landmark, b: Landmark, c: Landmark): number {
   const ba_y = a.y - b.y;
   const bc_x = c.x - b.x;
   const bc_y = c.y - b.y;
-  
+
   const dotProduct = ba_x * bc_x + ba_y * bc_y;
   const magnitudeBA = Math.sqrt(ba_x * ba_x + ba_y * ba_y);
   const magnitudeBC = Math.sqrt(bc_x * bc_x + bc_y * bc_y);
-  
+
   const cosAngle = Math.max(-1.0, Math.min(1.0, dotProduct / ((magnitudeBA * magnitudeBC) + 1e-9)));
   return Math.acos(cosAngle) * (180.0 / Math.PI);
 }
@@ -53,7 +53,7 @@ export class PushupVideoDetector {
   private reps: RepData[] = [];
   private angle_history: number[] = [];
   private last_rep_time: number = 0;
-  
+
   private readonly DOWN_ANGLE = 90;  // More lenient angle threshold
   private readonly UP_ANGLE = 110;
   private readonly MIN_DIP_DURATION = 0.2;  // Minimum duration for valid rep
@@ -76,7 +76,7 @@ export class PushupVideoDetector {
     if (this.angle_history.length > this.SMOOTH_N) {
       this.angle_history.shift();
     }
-    
+
     const elbow_angle_sm = this.angle_history.reduce((a, b) => a + b, 0) / this.angle_history.length;
 
     if (this.state === 'up' && elbow_angle_sm <= this.DOWN_ANGLE) {
@@ -90,20 +90,20 @@ export class PushupVideoDetector {
       if (this.in_dip && this.dip_start_time !== null) {
         const dip_duration = time - this.dip_start_time;
         const time_since_last_rep = time - this.last_rep_time;
-        
+
         // Count all dips as reps (if not too fast)
         const is_valid_rep = time_since_last_rep >= this.MIN_REP_INTERVAL;
-        
+
         // Mark as correct if: good angle (90° or less) AND proper duration (at least 0.2s)
         const has_good_depth = this.current_dip_min_angle <= this.DOWN_ANGLE;
         const has_good_duration = dip_duration >= this.MIN_DIP_DURATION;
         const is_correct = has_good_depth && has_good_duration;
-        
+
         const repStatus = is_correct ? '✅ CORRECT' : '❌ BAD';
         const angleStatus = has_good_depth ? '✓' : '✗ TOO SHALLOW';
         const durationStatus = has_good_duration ? '✓' : '✗ TOO FAST';
         console.log(`Rep ${this.reps.length + 1} ${repStatus}: angle=${this.current_dip_min_angle.toFixed(1)}° ${angleStatus}, duration=${dip_duration.toFixed(2)}s ${durationStatus}`);
-        
+
         // Count all valid dips (even if incorrect form)
         if (is_valid_rep) {
           const rep = {
@@ -114,11 +114,11 @@ export class PushupVideoDetector {
             min_elbow_angle: Math.round(this.current_dip_min_angle * 100) / 100,
             correct: is_correct
           };
-          
+
           this.reps.push(rep);
           this.last_rep_time = time;
         }
-        
+
         this.in_dip = false;
         this.dip_start_time = null;
         this.current_dip_min_angle = 180;
@@ -133,13 +133,13 @@ export class PushupVideoDetector {
   }
 
   getState() { return this.state; }
-  getCurrentAngle() { 
-    return this.angle_history.length > 0 
-      ? this.angle_history.reduce((a, b) => a + b, 0) / this.angle_history.length 
+  getCurrentAngle() {
+    return this.angle_history.length > 0
+      ? this.angle_history.reduce((a, b) => a + b, 0) / this.angle_history.length
       : 0;
   }
-  getDipTime(currentTime: number) { 
-    return (this.in_dip && this.dip_start_time !== null) ? currentTime - this.dip_start_time : 0; 
+  getDipTime(currentTime: number) {
+    return (this.in_dip && this.dip_start_time !== null) ? currentTime - this.dip_start_time : 0;
   }
   getReps() { return this.reps; }
   getCorrectCount() { return this.reps.filter(r => r.correct === true).length; }
@@ -155,10 +155,10 @@ export class PullupVideoDetector {
   private reps: RepData[] = [];
   private angle_history: number[] = [];
   private last_rep_time: number = 0;
-  
-  private readonly UP_ANGLE = 90;  // Arms bent at top
-  private readonly DOWN_ANGLE = 140; // Arms extended at bottom
-  private readonly MIN_PULL_DURATION = 0.3;
+
+  private readonly UP_ANGLE = 100;  // Arms bent at top (more lenient)
+  private readonly DOWN_ANGLE = 130; // Arms extended at bottom (more lenient)
+  private readonly MIN_PULL_DURATION = 0.2; // Shorter minimum
   private readonly MIN_REP_INTERVAL = 0.5;
   private readonly SMOOTH_N = 5;
 
@@ -178,7 +178,7 @@ export class PullupVideoDetector {
     if (this.angle_history.length > this.SMOOTH_N) {
       this.angle_history.shift();
     }
-    
+
     const elbow_angle_sm = this.angle_history.reduce((a, b) => a + b, 0) / this.angle_history.length;
 
     // State: down (hanging) -> up (pulled up) -> down
@@ -193,20 +193,20 @@ export class PullupVideoDetector {
       if (this.in_pull && this.pull_start_time !== null) {
         const pull_duration = time - this.pull_start_time;
         const time_since_last_rep = time - this.last_rep_time;
-        
+
         // Count all pulls as reps (if not too fast)
         const is_valid_rep = time_since_last_rep >= this.MIN_REP_INTERVAL;
-        
+
         // Mark as correct if: good angle (≤90°) AND proper duration (≥0.3s)
         const has_good_pull = this.current_pull_min_angle <= this.UP_ANGLE;
         const has_good_duration = pull_duration >= this.MIN_PULL_DURATION;
         const is_correct = has_good_pull && has_good_duration;
-        
+
         const repStatus = is_correct ? '✅ CORRECT' : '❌ BAD';
         const angleStatus = has_good_pull ? '✓' : '✗ NOT PULLED UP ENOUGH';
         const durationStatus = has_good_duration ? '✓' : '✗ TOO FAST';
         console.log(`Pullup ${this.reps.length + 1} ${repStatus}: angle=${this.current_pull_min_angle.toFixed(1)}° ${angleStatus}, duration=${pull_duration.toFixed(2)}s ${durationStatus}`);
-        
+
         if (is_valid_rep) {
           this.reps.push({
             count: this.reps.length + 1,
@@ -218,7 +218,7 @@ export class PullupVideoDetector {
           });
           this.last_rep_time = time;
         }
-        
+
         this.in_pull = false;
         this.pull_start_time = null;
         this.current_pull_min_angle = 180;
@@ -233,13 +233,13 @@ export class PullupVideoDetector {
   }
 
   getState() { return this.state; }
-  getCurrentAngle() { 
-    return this.angle_history.length > 0 
-      ? this.angle_history.reduce((a, b) => a + b, 0) / this.angle_history.length 
+  getCurrentAngle() {
+    return this.angle_history.length > 0
+      ? this.angle_history.reduce((a, b) => a + b, 0) / this.angle_history.length
       : 0;
   }
-  getDipTime(currentTime: number) { 
-    return (this.in_pull && this.pull_start_time !== null) ? currentTime - this.pull_start_time : 0; 
+  getDipTime(currentTime: number) {
+    return (this.in_pull && this.pull_start_time !== null) ? currentTime - this.pull_start_time : 0;
   }
   getReps() { return this.reps; }
   getCorrectCount() { return this.reps.filter(r => r.correct === true).length; }
@@ -253,7 +253,7 @@ export class SitupVideoDetector {
   private dip_start_time: number | null = null;
   private reps: RepData[] = [];
   private angle_history: number[] = [];
-  
+
   private readonly MIN_DIP_CHANGE = 15;
   private readonly SMOOTH_N = 5;
 
@@ -265,14 +265,14 @@ export class SitupVideoDetector {
     const rightElbow = landmarks[14];
     const rightWrist = landmarks[16];
 
-    const elbow_angle = (calculateAngle(leftShoulder, leftElbow, leftWrist) + 
-                         calculateAngle(rightShoulder, rightElbow, rightWrist)) / 2;
+    const elbow_angle = (calculateAngle(leftShoulder, leftElbow, leftWrist) +
+      calculateAngle(rightShoulder, rightElbow, rightWrist)) / 2;
 
     this.angle_history.push(elbow_angle);
     if (this.angle_history.length > this.SMOOTH_N) {
       this.angle_history.shift();
     }
-    
+
     const elbow_angle_sm = this.angle_history.reduce((a, b) => a + b, 0) / this.angle_history.length;
 
     if (this.last_extreme_angle === null) {
@@ -300,31 +300,36 @@ export class SitupVideoDetector {
   }
 
   getState() { return this.state; }
-  getCurrentAngle() { 
-    return this.angle_history.length > 0 
-      ? this.angle_history.reduce((a, b) => a + b, 0) / this.angle_history.length 
+  getCurrentAngle() {
+    return this.angle_history.length > 0
+      ? this.angle_history.reduce((a, b) => a + b, 0) / this.angle_history.length
       : 0;
   }
-  getDipTime(currentTime: number) { 
-    return (this.state === 'down' && this.dip_start_time !== null) ? currentTime - this.dip_start_time : 0; 
+  getDipTime(currentTime: number) {
+    return (this.state === 'down' && this.dip_start_time !== null) ? currentTime - this.dip_start_time : 0;
   }
   getReps() { return this.reps; }
   getCorrectCount() { return this.reps.filter(r => r.correct === true).length; }
   getBadCount() { return this.reps.filter(r => r.correct === false).length; }
 }
 
-// Vertical Jump Video Detector - EXACT match to verticaljump_video.py
+// Vertical Jump Video Detector - Fixed coordinate system
 export class VerticalJumpVideoDetector {
   private baseline_y: number | null = null;
   private in_air = false;
   private peak_y: number | null = null;
   private air_start_time = 0;
+  private air_time = 0;
   private reps: RepData[] = [];
   private hip_history: number[] = [];
   private max_jump_height_px = 0;
-  
-  private readonly PIXEL_TO_M = 0.0026;
+  private baseline_frames = 0;
+
+  private readonly PIXEL_TO_M = 2.6; // Adjusted for normalized coords (0-1 range)
   private readonly SMOOTH_N = 5;
+  private readonly TAKEOFF_THRESHOLD = 0.037; // ~20px in 540px height (20/540)
+  private readonly LANDING_THRESHOLD = 0.009; // ~5px in 540px height (5/540)
+  private readonly MIN_BASELINE_FRAMES = 10;
 
   process(landmarks: Landmark[], time: number): RepData[] {
     const leftHip = landmarks[23];
@@ -335,40 +340,69 @@ export class VerticalJumpVideoDetector {
     if (this.hip_history.length > this.SMOOTH_N) {
       this.hip_history.shift();
     }
-    
+
     const hip_smoothed = this.hip_history.reduce((a, b) => a + b, 0) / this.hip_history.length;
 
+    // Establish baseline over first few frames
     if (this.baseline_y === null) {
       this.baseline_y = hip_smoothed;
+      this.baseline_frames = 0;
+    } else if (this.baseline_frames < this.MIN_BASELINE_FRAMES && !this.in_air) {
+      this.baseline_y = (this.baseline_y * this.baseline_frames + hip_smoothed) / (this.baseline_frames + 1);
+      this.baseline_frames++;
     }
 
-    if (!this.in_air && hip_smoothed < this.baseline_y - 0.02) {
-      this.in_air = true;
-      this.peak_y = hip_smoothed;
-      this.air_start_time = time;
-    } else if (this.in_air && this.peak_y !== null) {
-      this.peak_y = Math.min(this.peak_y, hip_smoothed);
-      
-      if (hip_smoothed >= this.baseline_y - 0.005) {
-        const jump_height_px = this.baseline_y - this.peak_y;
-        const jump_height_m = jump_height_px * this.PIXEL_TO_M;
-        const air_time = time - this.air_start_time;
-        
-        if (jump_height_px > this.max_jump_height_px) {
-          this.max_jump_height_px = jump_height_px;
+    // Takeoff detection: hip moves up significantly (y decreases in screen coords)
+    if (!this.in_air && this.baseline_frames >= this.MIN_BASELINE_FRAMES) {
+      if (hip_smoothed < this.baseline_y - this.TAKEOFF_THRESHOLD) {
+        this.in_air = true;
+        this.peak_y = hip_smoothed;
+        this.air_start_time = time;
+        this.air_time = 0;
+      }
+    }
+    // While in air
+    else if (this.in_air && this.peak_y !== null) {
+      // Track peak (minimum y value = highest point)
+      if (hip_smoothed < this.peak_y) {
+        this.peak_y = hip_smoothed;
+      }
+      this.air_time = time - this.air_start_time;
+
+      // Landing detection: hip returns close to baseline
+      if (hip_smoothed >= this.baseline_y - this.LANDING_THRESHOLD) {
+        this.in_air = false;
+        const jump_height_norm = this.baseline_y - this.peak_y;
+        const jump_height_m = jump_height_norm * this.PIXEL_TO_M;
+
+        if (jump_height_norm > this.max_jump_height_px) {
+          this.max_jump_height_px = jump_height_norm;
         }
-        
-        this.reps.push({
-          count: this.reps.length + 1,
-          takeoff_time: Math.round(this.air_start_time * 1000) / 1000,
-          landing_time: Math.round(time * 1000) / 1000,
-          air_time_s: Math.round(air_time * 1000) / 1000,
-          jump_height_px: Math.round(jump_height_px * 100) / 100,
-          jump_height_m: Math.round(jump_height_m * 1000) / 1000
-        });
-        
+
+        // Only count jumps with reasonable height
+        if (jump_height_norm > 0.01) {
+          this.reps.push({
+            count: this.reps.length + 1,
+            takeoff_time: Math.round(this.air_start_time * 1000) / 1000,
+            landing_time: Math.round(time * 1000) / 1000,
+            air_time_s: Math.round(this.air_time * 1000) / 1000,
+            jump_height_px: Math.round(jump_height_norm * 1000) / 1000,
+            jump_height_m: Math.round(jump_height_m * 1000) / 1000,
+            correct: true  // All jumps are valid for vertical jump
+          });
+        }
+
+        this.peak_y = null;
+        this.air_time = 0;
+        // Update baseline after landing
+        this.baseline_y = hip_smoothed;
+      }
+      // Safety: force landing if airborne too long (>2 seconds)
+      else if (this.air_time > 2.0) {
         this.in_air = false;
         this.peak_y = null;
+        this.air_time = 0;
+        this.baseline_y = hip_smoothed;
       }
     }
 
@@ -376,13 +410,15 @@ export class VerticalJumpVideoDetector {
   }
 
   getState() { return this.in_air ? 'airborne' : 'grounded'; }
-  getAirTime(currentTime: number) { 
-    return this.in_air ? currentTime - this.air_start_time : 0; 
+  getAirTime(currentTime: number) {
+    return this.in_air ? currentTime - this.air_start_time : 0;
   }
   getMaxJumpHeight() { return this.max_jump_height_px * this.PIXEL_TO_M; }
   getReps() { return this.reps; }
-  getCurrentAngle() { return undefined; }
-  getDipTime() { return 0; }
+  getCurrentAngle() { return 0; }
+  getDipTime(currentTime: number) {
+    return this.in_air ? currentTime - this.air_start_time : 0;
+  }
   getCorrectCount() { return this.reps.length; }
   getBadCount() { return 0; }
 }
@@ -396,7 +432,7 @@ export class ShuttleRunVideoDetector {
   private status = 'Waiting';
   private x_history: number[] = [];
   private dir_history: string[] = [];
-  
+
   private readonly THRESHOLD_PIX = 0.005;
   private readonly DIR_FRAMES = 3;
   private readonly PIXEL_TO_M = 0.01;
@@ -409,12 +445,12 @@ export class ShuttleRunVideoDetector {
     const rightFoot = landmarks[32];
 
     const avg_x = (leftAnkle.x + rightAnkle.x + leftFoot.x + rightFoot.x) / 4;
-    
+
     this.x_history.push(avg_x);
     if (this.x_history.length > this.SMOOTH_N) {
       this.x_history.shift();
     }
-    
+
     const smoothed_x = this.x_history.reduce((a, b) => a + b, 0) / this.x_history.length;
 
     if (this.last_x !== null) {
@@ -423,15 +459,15 @@ export class ShuttleRunVideoDetector {
       if (Math.abs(delta) > this.THRESHOLD_PIX) {
         const new_direction = delta > 0 ? 'forward' : 'backward';
         this.dir_history.push(new_direction);
-        
+
         if (this.dir_history.length > this.DIR_FRAMES) {
           this.dir_history.shift();
         }
-        
-        if (this.dir_history.length === this.DIR_FRAMES && 
-            this.dir_history.every(d => d === this.dir_history[0])) {
+
+        if (this.dir_history.length === this.DIR_FRAMES &&
+          this.dir_history.every(d => d === this.dir_history[0])) {
           const confirmed_direction = this.dir_history[0];
-          
+
           if (this.start_x === null) {
             this.start_x = smoothed_x;
             this.direction = confirmed_direction;
@@ -461,19 +497,20 @@ export class ShuttleRunVideoDetector {
   }
 
   getState() { return this.status; }
-  getDistance() { 
+  getDistance() {
     if (this.start_x === null || this.last_x === null) return 0;
-    return Math.abs(this.last_x - this.start_x) * this.PIXEL_TO_M; 
+    return Math.abs(this.last_x - this.start_x) * this.PIXEL_TO_M;
   }
   getRunCount() { return this.run_count; }
   getCurrentAngle() { return undefined; }
   getDipTime() { return 0; }
   getCorrectCount() { return this.run_count; }
   getBadCount() { return 0; }
-  getReps() { 
+  getReps() {
     return Array.from({ length: this.run_count }, (_, i) => ({
       count: i + 1,
-      timestamp: 0
+      timestamp: 0,
+      correct: true  // All runs are valid
     }));
   }
 }
@@ -485,7 +522,7 @@ export class VerticalBroadJumpVideoDetector {
   private takeoff_x: number | null = null;
   private reps: RepData[] = [];
   private ankle_y_history: number[] = [];
-  
+
   private readonly Y_THRESHOLD = 0.015;
   private readonly SMOOTH_N = 5;
 
@@ -516,15 +553,16 @@ export class VerticalBroadJumpVideoDetector {
         this.state = 'grounded';
         const air_time = time - this.air_start_time;
         const jump_distance = Math.abs(ankle_x - this.takeoff_x);
-        
+
         this.reps.push({
           count: this.reps.length + 1,
           takeoff_time: Math.round(this.air_start_time * 1000) / 1000,
           landing_time: Math.round(time * 1000) / 1000,
           air_time_s: Math.round(air_time * 1000) / 1000,
-          jump_distance_px: Math.round(jump_distance * 100) / 100
+          jump_distance_px: Math.round(jump_distance * 100) / 100,
+          correct: true  // All jumps are valid for broad jump
         });
-        
+
         this.takeoff_x = null;
       }
     }
@@ -546,7 +584,7 @@ export class SitAndReachVideoDetector {
   private max_reach_px = 0;
   private reach_data: RepData[] = [];
   private reach_history: number[] = [];
-  
+
   private readonly PIXEL_TO_M = 0.0026;
   private readonly SMOOTH_N = 5;
 
@@ -560,12 +598,12 @@ export class SitAndReachVideoDetector {
     const hand_x = (leftWrist.x + rightWrist.x) / 2;
 
     const reach_px = hand_x - foot_x;
-    
+
     this.reach_history.push(reach_px);
     if (this.reach_history.length > this.SMOOTH_N) {
       this.reach_history.shift();
     }
-    
+
     const reach_smoothed = this.reach_history.reduce((a, b) => a + b, 0) / this.reach_history.length;
     const reach_m = reach_smoothed * this.PIXEL_TO_M;
 
@@ -583,13 +621,13 @@ export class SitAndReachVideoDetector {
     return this.reach_data;
   }
 
-  getCurrentReach() { 
+  getCurrentReach() {
     return this.reach_history.length > 0
       ? (this.reach_history.reduce((a, b) => a + b, 0) / this.reach_history.length) * this.PIXEL_TO_M
       : 0;
   }
-  getMaxReach() { 
-    return this.max_reach_px * this.PIXEL_TO_M; 
+  getMaxReach() {
+    return this.max_reach_px * this.PIXEL_TO_M;
   }
   getReachData() { return this.reach_data; }
   getState() { return 'reaching'; }
@@ -597,10 +635,11 @@ export class SitAndReachVideoDetector {
   getDipTime() { return 0; }
   getCorrectCount() { return this.reach_data.length; }
   getBadCount() { return 0; }
-  getReps() { 
+  getReps() {
     return this.reach_data.length > 0 ? [{
       count: 1,
-      reach_m: this.getMaxReach()
+      reach_m: this.getMaxReach(),
+      correct: true  // All reaches are valid
     }] : [];
   }
 }
@@ -608,7 +647,7 @@ export class SitAndReachVideoDetector {
 // Factory function to get detector for activity
 export function getVideoDetectorForActivity(activityName: string) {
   const name = activityName.toLowerCase();
-  
+
   if (name.includes('push')) {
     return new PushupVideoDetector();
   } else if (name.includes('pull') || name.includes('chin')) {
@@ -624,15 +663,15 @@ export function getVideoDetectorForActivity(activityName: string) {
   } else if (name.includes('sit') && name.includes('reach')) {
     return new SitAndReachVideoDetector();
   }
-  
+
   return new PushupVideoDetector();
 }
 
-export type VideoDetector = 
-  | PushupVideoDetector 
-  | PullupVideoDetector 
-  | SitupVideoDetector 
-  | VerticalJumpVideoDetector 
+export type VideoDetector =
+  | PushupVideoDetector
+  | PullupVideoDetector
+  | SitupVideoDetector
+  | VerticalJumpVideoDetector
   | VerticalBroadJumpVideoDetector
-  | ShuttleRunVideoDetector 
+  | ShuttleRunVideoDetector
   | SitAndReachVideoDetector;
