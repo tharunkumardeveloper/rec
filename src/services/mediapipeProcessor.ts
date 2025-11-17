@@ -900,8 +900,12 @@ class MediaPipeProcessor {
       });
     });
 
-    // Processing loop
-    const processFrame = async () => {
+    // Processing loop - PROCESS EVERY FRAME for accuracy
+    let lastFrameTime = 0;
+    const targetFrameTime = 1000 / 30; // 30fps max
+    let processingFrame = false;
+
+    const processFrame = async (currentTime: number) => {
       if (!isProcessing || !videoElement || videoElement.readyState < 2) {
         if (!isProcessing) {
           onComplete();
@@ -909,22 +913,33 @@ class MediaPipeProcessor {
         return;
       }
 
-      frameCount++;
+      // Throttle to 30fps but NEVER skip frames
+      const timeSinceLastFrame = currentTime - lastFrameTime;
+      
+      if (timeSinceLastFrame >= targetFrameTime && !processingFrame) {
+        processingFrame = true;
+        lastFrameTime = currentTime;
+        frameCount++;
 
-      // Send frame to MediaPipe (throttle to ~30fps)
-      if (frameCount % 2 === 0) {
         try {
+          // CRITICAL: Wait for MediaPipe to finish processing this frame
+          // This ensures every frame is analyzed, even on slow devices
           await this.pose!.send({ image: videoElement });
+          
+          // Small delay to ensure onResults callback completes
+          await new Promise(resolve => setTimeout(resolve, 10));
         } catch (error) {
           console.error('MediaPipe processing error:', error);
         }
+        
+        processingFrame = false;
       }
 
       requestAnimationFrame(processFrame);
     };
 
     // Start processing
-    processFrame();
+    requestAnimationFrame(processFrame);
 
     // Return a function to stop processing
     return new Promise((resolve) => {
