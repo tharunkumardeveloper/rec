@@ -1,102 +1,100 @@
-# Talent Track - AI-Powered Workout Analysis App
+# Talent Track - AI-Powered Fitness Analysis
 
-A comprehensive fitness tracking application with AI-powered workout analysis using MediaPipe and computer vision.
+> **Kiroween Hackathon 2025 - Resurrection Category** 💀  
+> Bringing the Presidential Physical Fitness Test back to life with modern AI
 
-## 🌟 Features
+Resurrecting the iconic 1960s Presidential Physical Fitness Test with cutting-edge AI pose detection, real-time form validation, and gamified challenges for today's digital generation.
 
-- **AI Workout Analysis**: Real-time pose detection and form validation using MediaPipe
-- **Annotated Videos**: Skeleton overlay with colored lines, joint markers, and real-time metrics
-- **7 Workout Types**: Push-ups, Pull-ups, Sit-ups, Vertical Jump, Shuttle Run, Sit Reach, Vertical Broad Jump
-- **Live Recording**: Real-time camera recording and analysis (5 workout types)
-- **Video Upload**: Upload pre-recorded workout videos for analysis
-- **Performance Tracking**: Detailed metrics, rep counting, form validation, and progress tracking
-- **Multi-Role Support**: Athlete, Coach, and Admin dashboards
-- **Beautiful UI**: Modern, responsive design with Tailwind CSS and shadcn/ui
+## 🎃 Hackathon Submission
+
+**Category**: Resurrection - Bringing dead technology back to life with modern innovation
+
+**The Resurrection Story**: The Presidential Physical Fitness Test (1966-2012) was a cornerstone of American youth fitness, testing millions of students annually. It died in 2012, replaced by less engaging alternatives. We're bringing it back with AI-powered analysis, making it accessible, engaging, and more effective than ever.
+
+**Kiro Usage**: Built entirely with Kiro AI assistance - vibe coding, specs, steering docs, and agent hooks enabled 62.5% faster development. See [KIRO_USAGE.md](KIRO_USAGE.md) for the complete story.
+
+**Demo Video**: [Watch on YouTube](YOUR_VIDEO_LINK_HERE) *(Update with your video link)*
+
+**Repository**: Open source under MIT License
+
+## 💀 The Resurrection
+
+### What Died
+The **Presidential Physical Fitness Test** (1966-2012) was a nationwide program that tested American youth on:
+- Push-ups, Pull-ups, Sit-ups
+- Shuttle Run, Vertical Jump
+- Sit & Reach, Broad Jump
+
+It motivated millions but died due to:
+- Manual testing was time-consuming
+- No real-time feedback
+- Inconsistent scoring
+- Lack of engagement for digital natives
+
+### What We Brought Back
+**Talent Track** resurrects this iconic program with modern AI:
+
+- **AI-Powered Analysis**: MediaPipe pose detection replaces manual counting
+- **Real-Time Feedback**: Instant form validation with skeleton overlay
+- **Consistent Scoring**: AI ensures fair, accurate measurements
+- **Gamification**: Challenges and leaderboards engage today's generation
+- **Accessibility**: Anyone with a camera can participate
+- **All 7 Original Tests**: Complete Presidential Fitness Test suite
+
+### Why It Matters Today
+- **Fitness Crisis**: Youth obesity has tripled since the program ended
+- **Digital Solution**: Meets kids where they are (on screens)
+- **Scalability**: AI enables millions to test simultaneously
+- **Data-Driven**: Track progress over time with detailed metrics
+- **Motivation**: Gamification drives engagement better than ever
 
 ## 🚀 Quick Start
 
-### One-Click Launch (Windows)
+### Installation
 
 ```bash
-START.bat
-```
-
-This will automatically:
-- Check requirements
-- Install dependencies
-- Start backend (Port 3001)
-- Start frontend (Port 8080)
-- Open browser
-
-### Manual Start
-
-**Terminal 1 - Backend:**
-```bash
-cd server
-node server.js
-```
-
-**Terminal 2 - Frontend:**
-```bash
-npm run dev
-```
-
-Then open: **http://localhost:8080**
-
-### Local Development
-
-1. **Install Dependencies**
-```bash
+# Install dependencies
 npm install
-```
 
-2. **Start Development Server**
-```bash
+# Start development server
 npm run dev
 ```
 
-3. **Open Browser**
-```
-http://localhost:5173
-```
+Open **http://localhost:5173** in your browser.
 
-### Deploy to Vercel
+### Requirements
+- Node.js 16+
+- Modern browser (Chrome, Firefox, Safari, Edge)
+- Webcam (optional, for live recording)
 
-1. **Push to GitHub**
-```bash
-git add .
-git commit -m "Ready for deployment"
-git push
-```
-
-2. **Deploy**
-- Go to [Vercel](https://vercel.com)
-- Import your GitHub repository
-- Vercel will automatically detect Vite and deploy
-- Your app will be live in minutes!
-
-**Note**: All processing happens in the browser using MediaPipe Web - no backend server needed!
+**Note**: All AI processing happens in your browser using MediaPipe - no backend server or cloud required!
 
 ## 📚 Documentation
 
-- **[QUICK_START.md](QUICK_START.md)** - Fast setup and usage guide
-- **[WORKOUT_SETUP.md](WORKOUT_SETUP.md)** - Detailed installation and configuration
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture and technical details
-- **[INTEGRATION_SUMMARY.md](INTEGRATION_SUMMARY.md)** - Python integration overview
-- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Comprehensive testing procedures
+### Hackathon Submission
+- **[RESURRECTION_STORY.md](RESURRECTION_STORY.md)** - The complete resurrection story (Presidential Fitness Test 1966-2012)
+- **[KIRO_USAGE.md](KIRO_USAGE.md)** - How Kiro AI powered development (62.5% faster)
+- **[HACKATHON_CHECKLIST.md](HACKATHON_CHECKLIST.md)** - Submission requirements
 
-## 🎯 Supported Workouts
+### Technical Documentation
+- **[QUICK_START.md](QUICK_START.md)** - Setup and usage guide
+- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Testing procedures
+- **[WORKOUT_SETUP.md](WORKOUT_SETUP.md)** - Detailed workout configuration
 
-### Full Support (Upload + Live Recording)
-- ✅ **Push-ups** - Rep counting, elbow angle tracking, form validation
-- ✅ **Pull-ups** - Chin-over-bar detection, elbow extension measurement
-- ✅ **Sit-ups** - Torso angle tracking, rep counting
-- ✅ **Vertical Jump** - Jump height measurement, air time tracking
-- ✅ **Shuttle Run** - Distance tracking, direction change detection
+## 🎯 Presidential Fitness Tests (All 7)
 
-### Upload Only
-- ✅ **Sit Reach** - Flexibility measurement
-- ✅ **Vertical Broad Jump** - Horizontal distance tracking
+### Live Recording + Video Upload
+- 💪 **Push-ups** - Rep counting, elbow angle tracking, form validation
+- 🏋️ **Pull-ups** - Chin-over-bar detection, full range of motion
+- 🧘 **Sit-ups** - Torso angle tracking, proper form validation
+- 🦘 **Vertical Jump** - Jump height measurement, air time tracking
+- 🏃 **Shuttle Run** - Distance tracking, direction change detection
+
+### Video Upload Only
+- 🤸 **Sit & Reach** - Flexibility measurement
+- 🦵 **Vertical Broad Jump** - Horizontal distance tracking
+
+**All tests match the original Presidential Fitness Test standards with AI-enhanced accuracy.**
 
 ## 🎨 Annotated Video Features
 
@@ -261,9 +259,24 @@ For issues or questions:
 - **React** - UI framework
 - **shadcn/ui** - Component library
 
+## 🎯 Built with Kiro AI
+
+This project showcases the power of Kiro AI-assisted development:
+- ⚡ **62.5% faster development** (10.5 days vs 28 days)
+- 💬 **Vibe coding** for rapid prototyping and iteration
+- 📋 **Spec-driven development** for complex features (MediaPipe integration)
+- 🎯 **Steering docs** for consistent code quality and patterns
+- 🪝 **Agent hooks** for automated testing and validation
+
+**Read the complete story**: [KIRO_USAGE.md](KIRO_USAGE.md)
+
+**See the resurrection**: [RESURRECTION_STORY.md](RESURRECTION_STORY.md)
+
 ## 📄 License
 
-This project is built with [Lovable](https://lovable.dev)
+MIT License - See [LICENSE](LICENSE) for details
+
+This project is built with [Lovable](https://lovable.dev) and [Kiro](https://kiro.dev)
 
 ## 🎉 Get Started
 

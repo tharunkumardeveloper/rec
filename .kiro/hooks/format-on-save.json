@@ -1,0 +1,15 @@
+{
+  "name": "Format Code on Save",
+  "description": "Automatically format TypeScript and React files on save",
+  "trigger": {
+    "type": "onSave",
+    "filePattern": "**/*.{ts,tsx}"
+  },
+  "actions": [
+    {
+      "type": "runCommand",
+      "command": "npx prettier --write ${file}"
+    }
+  ],
+  "enabled": true
+}

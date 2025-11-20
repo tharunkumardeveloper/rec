@@ -1,0 +1,15 @@
+{
+  "name": "Validate Component Types",
+  "description": "Run TypeScript type checking when React components are saved",
+  "trigger": {
+    "type": "onSave",
+    "filePattern": "**/components/**/*.tsx"
+  },
+  "actions": [
+    {
+      "type": "runCommand",
+      "command": "npx tsc --noEmit"
+    }
+  ],
+  "enabled": true
+}
