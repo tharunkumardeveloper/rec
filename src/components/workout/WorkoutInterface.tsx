@@ -3,7 +3,7 @@ import { toast } from '@/components/ui/sonner';
 import WorkoutUploadScreen from './WorkoutUploadScreen';
 import VideoProcessor from './VideoProcessor';
 import LiveCameraProcessor from './LiveCameraProcessor';
-import LiveRecorder from './LiveRecorder';
+import LiveRecorder from './LiveRecorderNew';
 import { BADGES, checkBadgeUnlock, updateUserStats } from '@/utils/badgeSystem';
 import { getUserStats, saveUserStats, getUnlockedBadges, unlockBadge } from '@/utils/workoutStorage';
 
