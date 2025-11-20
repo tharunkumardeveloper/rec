@@ -286,7 +286,10 @@ const WorkoutUploadScreen = ({ activityName, onBack, onVideoSelected, onLiveReco
           <div className="text-6xl animate-pulse">📁</div>
           <h2 className="text-xl font-semibold">Select Your Video</h2>
           <p className="text-muted-foreground">Choose a video file to analyze</p>
-          <Button variant="outline" onClick={onBack} className="mt-4">
+          <Button variant="outline" onClick={() => {
+            window.scrollTo(0, 0);
+            onBack();
+          }} className="mt-4">
             Cancel
           </Button>
         </div>
@@ -309,7 +312,10 @@ const WorkoutUploadScreen = ({ activityName, onBack, onVideoSelected, onLiveReco
       <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-subtle border-b safe-top">
         <div className="px-4 py-4">
           <div className="flex items-center space-x-3 max-w-4xl mx-auto">
-            <Button variant="ghost" size="sm" onClick={onBack} className="tap-target">
+            <Button variant="ghost" size="sm" onClick={() => {
+              window.scrollTo(0, 0);
+              onBack();
+            }} className="tap-target">
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">

@@ -46,7 +46,7 @@ const Index = () => {
       setUserName(userData.name);
       setIsFirstTime(false);
     }
-    
+
     // Register service worker for offline support
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
@@ -58,7 +58,7 @@ const Index = () => {
           console.warn('⚠️ Service Worker registration failed:', error);
         });
     }
-    
+
     // Preload critical images immediately (high priority)
     import('@/utils/imagePreloader').then(({ preloadCriticalAssets, preloadAllAssets }) => {
       // Load critical assets first
@@ -92,7 +92,7 @@ const Index = () => {
       admin: 'Arjun Krishnan'
     };
     setUserName(names[role]);
-    
+
     // Check if user needs setup (simulate first-time login)
     if (isFirstTime) {
       setAppState('setup');
@@ -175,7 +175,7 @@ const Index = () => {
     if (userRole === 'coach' || userRole === 'admin') {
       return null; // CoachDashboard handles its own content
     }
-    
+
     switch (activeTab) {
       case 'discover':
         return <DiscoverTab />;
@@ -185,8 +185,8 @@ const Index = () => {
         return <RoadmapTab onViewAllBadges={handleBadgesOpen} />;
       default:
         return (
-          <HomeScreen 
-            userRole={userRole} 
+          <HomeScreen
+            userRole={userRole}
             userName={userName}
             onTabChange={setActiveTab}
             activeTab={activeTab}
@@ -209,7 +209,7 @@ const Index = () => {
         />
       );
     }
-    
+
     return (
       <ActivityDetail
         activity={selectedActivity}
@@ -250,7 +250,7 @@ const Index = () => {
           </div>
         </div>
         <div className="px-4 py-6 max-w-md mx-auto">
-          <ChallengeDetail 
+          <ChallengeDetail
             challengeId={selectedChallengeId}
             onBack={handleBackToHome}
             onStartWorkout={handleStartChallengeWorkout}
@@ -264,19 +264,19 @@ const Index = () => {
   switch (appState) {
     case 'loading':
       return <LoadingScreen onComplete={handleLoadingComplete} />;
-    
+
     case 'auth':
       return <AuthFlow onLogin={handleLogin} />;
-    
+
     case 'setup':
       return <SetupFlow onComplete={handleSetupComplete} onSkip={() => setAppState('home')} />;
-    
+
     case 'home':
       return (
         <div className="min-h-screen bg-background">
           {activeTab === 'training' && userRole === 'athlete' ? (
-            <HomeScreen 
-              userRole={userRole} 
+            <HomeScreen
+              userRole={userRole}
               userName={userName}
               onTabChange={setActiveTab}
               activeTab={activeTab}
@@ -350,9 +350,8 @@ const Index = () => {
                           scrollToTop();
                           setActiveTab(id);
                         }}
-                        className={`flex flex-col items-center space-y-1 tap-target p-2 rounded-lg transition-colors ${
-                          activeTab === id ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                        className={`flex flex-col items-center space-y-1 tap-target p-2 rounded-lg transition-colors ${activeTab === id ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'
+                          }`}
                       >
                         <span className="text-lg">{icon}</span>
                         <span className="text-xs font-medium">{label}</span>
@@ -365,7 +364,7 @@ const Index = () => {
           )}
         </div>
       );
-    
+
     default:
       return <LoadingScreen onComplete={handleLoadingComplete} />;
   }

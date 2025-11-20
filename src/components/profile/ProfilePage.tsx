@@ -57,7 +57,10 @@ const ProfilePage = ({ userName, userEmail = "user@example.com", onBack, onLogou
       <div className="sticky top-0 z-50 bg-primary border-b border-primary-dark safe-top">
         <div className="px-4 py-4">
           <div className="flex items-center max-w-md mx-auto">
-            <Button variant="ghost" size="sm" onClick={onBack} className="mr-3 text-white hover:bg-white/20">
+            <Button variant="ghost" size="sm" onClick={() => {
+              window.scrollTo(0, 0);
+              onBack();
+            }} className="mr-3 text-white hover:bg-white/20">
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <h1 className="text-lg font-semibold text-white">Profile</h1>

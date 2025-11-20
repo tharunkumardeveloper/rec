@@ -618,7 +618,10 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Another Video
               </Button>
-              <Button variant="ghost" onClick={onBack} className="w-full">
+              <Button variant="ghost" onClick={() => {
+                window.scrollTo(0, 0);
+                onBack();
+              }} className="w-full">
                 Exit Workout
               </Button>
             </div>
@@ -636,7 +639,10 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
         <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-subtle border-b safe-top">
           <div className="px-4 py-4">
             <div className="flex items-center space-x-3 max-w-md mx-auto">
-              <Button variant="ghost" size="sm" onClick={onBack} className="tap-target">
+              <Button variant="ghost" size="sm" onClick={() => {
+                window.scrollTo(0, 0);
+                onBack();
+              }} className="tap-target">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="flex-1">

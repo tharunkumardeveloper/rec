@@ -389,7 +389,10 @@ const ActivityDetail = ({ activity, onBack, onStartWorkout }: ActivityDetailProp
           <div className="flex items-center justify-between max-w-md mx-auto">
             <div className="w-10" /> {/* Spacer */}
             <h1 className="text-lg font-semibold">{activity.name}</h1>
-            <Button variant="ghost" size="sm" onClick={onBack} className="tap-target">
+            <Button variant="ghost" size="sm" onClick={() => {
+              window.scrollTo(0, 0);
+              onBack();
+            }} className="tap-target">
               <X className="w-5 h-5" />
             </Button>
           </div>
