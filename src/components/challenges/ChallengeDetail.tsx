@@ -193,13 +193,30 @@ const ChallengeDetail = ({ challengeId, onBack, onStartWorkout }: ChallengeDetai
 
   const getChallengeImage = () => {
     switch (challengeId) {
-      case 'push-up-power': return pushupPowerImage;
-      case 'pull-up-progression': return pullupProgressionImage;
-      case 'core-crusher': return coreCrusherImage;
-      case 'sprint-master': return sprintMasterImage;
-      case 'flexibility-foundation': return flexibilityFoundationImage;
-      case 'jump-power': return jumpPowerImage;
-      case 'adaptive-strength': return adaptiveStrengthImage;
+      case 'push-up-power':
+      case 'strength-pushup-master':
+        return pushupPowerImage;
+      case 'pull-up-progression':
+      case 'strength-pullup-power':
+        return pullupProgressionImage;
+      case 'core-crusher':
+      case 'strength-core-crusher':
+        return coreCrusherImage;
+      case 'sprint-master':
+      case 'endurance-sprint-master':
+        return sprintMasterImage;
+      case 'flexibility-foundation':
+        return flexibilityFoundationImage;
+      case 'jump-power':
+      case 'endurance-jump-power':
+        return jumpPowerImage;
+      case 'adaptive-strength':
+      case 'para-adaptive-strength':
+        return adaptiveStrengthImage;
+      case 'calisthenics-bodyweight':
+      case 'elite-century-club':
+      case 'elite-perfect-form':
+        return pushupPowerImage;
       default: return pushupPowerImage;
     }
   };

@@ -349,7 +349,21 @@ const activityContent = {
   }
 };
 
-// Preview GIF mapping
+// Preview image mapping - using static images for better performance
+const previewImages: { [key: string]: string } = {
+  'Push-ups': '/challenges/pushup-power.webp',
+  'Pull-ups': '/challenges/pullup-progression.jpg',
+  'Sit-ups': '/challenges/core-crusher.avif',
+  'Vertical Jump': '/challenges/jump-power.jpg',
+  'Shuttle Run': '/challenges/sprint-master.jpg',
+  'Modified Shuttle Run': '/challenges/sprint-master.jpg',
+  'Sit Reach': '/challenges/flexibility-foundation.webp',
+  'Inclined Push-up': '/challenges/pushup-power.webp',
+  'Knee Push-ups': '/challenges/adaptive-strength.jpg',
+  'Wide Arm Push-up': '/challenges/pushup-power.webp'
+};
+
+// GIF mapping for demonstration section
 const previewGifs: { [key: string]: string } = {
   'Push-ups': '/pushup.gif',
   'Pull-ups': '/pullup.gif',
@@ -366,6 +380,7 @@ const previewGifs: { [key: string]: string } = {
 const ActivityDetail = ({ activity, onBack, onStartWorkout }: ActivityDetailProps) => {
 
   const content = activityContent[activity.name as keyof typeof activityContent];
+  const previewImage = previewImages[activity.name];
   const previewGif = previewGifs[activity.name];
   
   // Scroll to top when component mounts
@@ -400,14 +415,15 @@ const ActivityDetail = ({ activity, onBack, onStartWorkout }: ActivityDetailProp
       </div>
 
       {/* Cover Image */}
-      <div className="aspect-video bg-black relative">
-        {previewGif ? (
+      <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 relative">
+        {previewImage ? (
           <img 
-            src={previewGif} 
+            src={previewImage} 
             alt={activity.name}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
+            loading="eager"
             onError={(e) => {
-              // Fallback if GIF fails to load
+              // Fallback if image fails to load
               (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
@@ -418,10 +434,11 @@ const ActivityDetail = ({ activity, onBack, onStartWorkout }: ActivityDetailProp
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+          <div className="w-full h-full flex items-center justify-center">
             <div className="text-6xl">💪</div>
           </div>
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       </div>
 
       {/* Workout Mode Selection - Right below cover image */}
