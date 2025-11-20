@@ -1020,22 +1020,6 @@ const LiveRecorder = ({ activityName, onBack, onComplete }: LiveRecorderProps) =
                 ))}
               </ol>
             </div>
-
-            {/* Key Points - Compact */}
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                <Info className="w-4 h-4 text-primary" />
-                Recording Tips
-              </h3>
-              <ul className="space-y-1.5">
-                {demo.keyPoints.map((point, index) => (
-                  <li key={index} className="flex items-start gap-2 text-xs">
-                    <div className="w-1 h-1 bg-primary rounded-full mt-1.5 shrink-0" />
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
 
           {/* Action Buttons - Fixed at bottom */}
