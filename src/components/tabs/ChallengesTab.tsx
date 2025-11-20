@@ -281,27 +281,33 @@ const ChallengesTab = ({ onStartWorkout }: ChallengesTabProps) => {
             <Card key={challenge.id} className="card-elevated overflow-hidden">
               {/* Challenge Cover Image */}
               {challenge.image && (
-                <div className="h-32 relative">
+                <div className="h-40 relative bg-gradient-to-br from-primary/20 to-primary/5">
                   <img 
                     src={challenge.image}
                     alt={challenge.name}
                     className="w-full h-full object-cover"
-                    loading="lazy"
+                    loading="eager"
+                    onError={(e) => {
+                      console.error('Failed to load image:', challenge.image);
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3 z-10">
+                    <div className="flex items-center gap-2">
+                      <div className="text-3xl">{challenge.badge.icon}</div>
+                      <div>
+                        <h3 className="text-white font-bold text-base">{challenge.name}</h3>
+                        <p className="text-white/90 text-xs">{challenge.description}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
               
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="text-2xl">{challenge.badge.icon}</div>
-                      <div>
-                        <CardTitle className="text-lg">{challenge.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{challenge.description}</p>
-                      </div>
-                    </div>
                     <div className="flex flex-wrap gap-2 mt-2">
                       <Badge className={`${getCategoryColor(challenge.category)} text-white`}>
                         {challenge.category}
