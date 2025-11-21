@@ -60,7 +60,7 @@ const Index = () => {
         console.log('Could not lock to portrait:', error);
       }
     };
-    
+
     lockToPortrait();
 
     // Register service worker for offline support

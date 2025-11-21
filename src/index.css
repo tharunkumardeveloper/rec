@@ -137,20 +137,29 @@
     overflow-x: hidden;
   }
 
-  /* Force portrait orientation for all pages except live recorder */
+  /* Force portrait orientation visually for all pages except live recorder */
   @media screen and (orientation: landscape) and (max-width: 1024px) {
-    body:not(.force-landscape) {
-      /* Prevent landscape mode on mobile */
-      max-width: 100vh;
-      max-height: 100vw;
+    body:not(.force-landscape) #root {
+      /* Rotate content back to portrait when device is in landscape */
+      transform: rotate(-90deg);
+      transform-origin: left top;
+      width: 100vh;
+      height: 100vw;
+      overflow-x: hidden;
+      position: absolute;
+      top: 100%;
+      left: 0;
     }
   }
   
-  /* Live recorder gets landscape mode */
-  body.force-landscape {
-    /* Allow landscape */
-    max-width: none;
-    max-height: none;
+  /* Live recorder gets natural landscape mode */
+  body.force-landscape #root {
+    transform: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
   }
 
   /* Mobile viewport fix */
