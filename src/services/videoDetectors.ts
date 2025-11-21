@@ -56,12 +56,16 @@ export class PushupVideoDetector {
   private reps: RepData[] = [];
   private angle_history: number[] = [];
   private last_rep_time: number = 0;
+  private ready_to_start = false;
+  private initial_frames = 0;
 
-  private readonly DOWN_ANGLE = 90;  // More lenient angle threshold
-  private readonly UP_ANGLE = 110;
-  private readonly MIN_DIP_DURATION = 0.2;  // Minimum duration for valid rep
-  private readonly MIN_REP_INTERVAL = 0.5;  // Minimum time between reps to prevent false positives
-  private readonly SMOOTH_N = 5;  // Increased smoothing to reduce noise
+  private readonly DOWN_ANGLE = 85;  // Stricter: must go below 85° (was 90°)
+  private readonly UP_ANGLE = 140;   // Stricter: must extend to 140° (was 110°)
+  private readonly STARTING_ANGLE_MIN = 130; // Must start with arms extended
+  private readonly MIN_DIP_DURATION = 0.3;  // Increased from 0.2s
+  private readonly MIN_REP_INTERVAL = 0.5;
+  private readonly SMOOTH_N = 5;
+  private readonly MIN_ANGLE_CHANGE = 40; // Must have at least 40° range of motion
 
   process(landmarks: Landmark[], time: number): RepData[] {
     const leftShoulder = landmarks[11];
@@ -82,30 +86,41 @@ export class PushupVideoDetector {
 
     const elbow_angle_sm = this.angle_history.reduce((a, b) => a + b, 0) / this.angle_history.length;
 
+    // Verify starting position (arms extended in plank)
+    if (!this.ready_to_start && this.initial_frames < 30) {
+      this.initial_frames++;
+      if (this.initial_frames >= 10 && elbow_angle_sm >= this.STARTING_ANGLE_MIN) {
+        this.ready_to_start = true;
+        console.log('✅ Push-up starting position detected - ready to count reps');
+      }
+      return this.reps; // Don't count reps until in starting position
+    }
+
     // Track minimum angle while in down state
     if (this.state === 'down' && elbow_angle_sm < this.current_dip_min_angle) {
       this.current_dip_min_angle = elbow_angle_sm;
     }
 
-    if (this.state === 'up' && elbow_angle_sm <= this.DOWN_ANGLE) {
+    if (this.ready_to_start && this.state === 'up' && elbow_angle_sm <= this.DOWN_ANGLE) {
       this.state = 'down';
       this.in_dip = true;
       this.dip_start_time = time;
       this.current_dip_min_angle = elbow_angle_sm;
     }
-    else if (this.state === 'down' && elbow_angle_sm >= this.UP_ANGLE) {
+    else if (this.ready_to_start && this.state === 'down' && elbow_angle_sm >= this.UP_ANGLE) {
       this.state = 'up';
       if (this.in_dip && this.dip_start_time !== null) {
         const dip_duration = time - this.dip_start_time;
         const time_since_last_rep = time - this.last_rep_time;
+        const angle_range = this.UP_ANGLE - this.current_dip_min_angle;
 
-        // More lenient interval check - 0.3s instead of 0.5s for faster reps
-        const is_valid_rep = time_since_last_rep >= 0.3;
+        const is_valid_rep = time_since_last_rep >= this.MIN_REP_INTERVAL;
 
-        // Mark as correct if: good angle (90° or less) AND proper duration (at least 0.2s)
+        // Stricter validation: good depth + proper duration + sufficient range of motion
         const has_good_depth = this.current_dip_min_angle <= this.DOWN_ANGLE;
         const has_good_duration = dip_duration >= this.MIN_DIP_DURATION;
-        const is_correct = has_good_depth && has_good_duration;
+        const has_good_range = angle_range >= this.MIN_ANGLE_CHANGE;
+        const is_correct = has_good_depth && has_good_duration && has_good_range;
 
         const repStatus = is_correct ? '✅ CORRECT' : '❌ BAD';
         const angleStatus = has_good_depth ? '✓' : '✗ TOO SHALLOW';
@@ -163,12 +178,16 @@ export class PullupVideoDetector {
   private reps: RepData[] = [];
   private angle_history: number[] = [];
   private last_rep_time: number = 0;
+  private ready_to_start = false;
+  private initial_frames = 0;
 
-  private readonly UP_ANGLE = 100;  // Arms bent at top (more lenient)
-  private readonly DOWN_ANGLE = 130; // Arms extended at bottom (more lenient)
-  private readonly MIN_PULL_DURATION = 0.2; // Shorter minimum
+  private readonly UP_ANGLE = 90;   // Stricter: must pull to 90° (was 100°)
+  private readonly DOWN_ANGLE = 150; // Stricter: must extend to 150° (was 130°)
+  private readonly STARTING_ANGLE_MIN = 140; // Must start hanging (arms extended)
+  private readonly MIN_PULL_DURATION = 0.4; // Increased from 0.2s
   private readonly MIN_REP_INTERVAL = 0.5;
   private readonly SMOOTH_N = 5;
+  private readonly MIN_ANGLE_CHANGE = 50; // Must have at least 50° range
 
   process(landmarks: Landmark[], time: number): RepData[] {
     const leftShoulder = landmarks[11];
@@ -189,26 +208,37 @@ export class PullupVideoDetector {
 
     const elbow_angle_sm = this.angle_history.reduce((a, b) => a + b, 0) / this.angle_history.length;
 
+    // Verify starting position (hanging with arms extended)
+    if (!this.ready_to_start && this.initial_frames < 30) {
+      this.initial_frames++;
+      if (this.initial_frames >= 10 && elbow_angle_sm >= this.STARTING_ANGLE_MIN) {
+        this.ready_to_start = true;
+        console.log('✅ Pull-up starting position detected - ready to count reps');
+      }
+      return this.reps;
+    }
+
     // State: down (hanging) -> up (pulled up) -> down
-    if (this.state === 'down' && elbow_angle_sm <= this.UP_ANGLE) {
+    if (this.ready_to_start && this.state === 'down' && elbow_angle_sm <= this.UP_ANGLE) {
       this.state = 'up';
       this.in_pull = true;
       this.pull_start_time = time;
       this.current_pull_min_angle = elbow_angle_sm;
     }
-    else if (this.state === 'up' && elbow_angle_sm >= this.DOWN_ANGLE) {
+    else if (this.ready_to_start && this.state === 'up' && elbow_angle_sm >= this.DOWN_ANGLE) {
       this.state = 'down';
       if (this.in_pull && this.pull_start_time !== null) {
         const pull_duration = time - this.pull_start_time;
         const time_since_last_rep = time - this.last_rep_time;
+        const angle_range = this.DOWN_ANGLE - this.current_pull_min_angle;
 
-        // Count all pulls as reps (if not too fast)
         const is_valid_rep = time_since_last_rep >= this.MIN_REP_INTERVAL;
 
-        // Mark as correct if: good angle (≤90°) AND proper duration (≥0.3s)
+        // Stricter validation: good pull + proper duration + sufficient range
         const has_good_pull = this.current_pull_min_angle <= this.UP_ANGLE;
         const has_good_duration = pull_duration >= this.MIN_PULL_DURATION;
-        const is_correct = has_good_pull && has_good_duration;
+        const has_good_range = angle_range >= this.MIN_ANGLE_CHANGE;
+        const is_correct = has_good_pull && has_good_duration && has_good_range;
 
         const repStatus = is_correct ? '✅ CORRECT' : '❌ BAD';
         const angleStatus = has_good_pull ? '✓' : '✗ NOT PULLED UP ENOUGH';
@@ -261,12 +291,15 @@ export class SitupVideoDetector {
   private up_start_time: number | null = null;
   private reps: RepData[] = [];
   private angle_history: number[] = [];
-  private first_down = true; // Track if this is the first down (don't count it)
-  private up_angle: number = 0; // Track angle at up position
+  private first_down = true;
+  private up_angle: number = 0;
+  private ready_to_start = false;
+  private initial_frames = 0;
 
-  private readonly MIN_DIP_CHANGE = 15;
+  private readonly MIN_DIP_CHANGE = 25; // Increased from 15° to 25°
   private readonly SMOOTH_N = 5;
-  private readonly MIN_DURATION = 0.2; // Minimum 0.2s for a rep (more lenient)
+  private readonly MIN_DURATION = 0.4; // Increased from 0.2s to 0.4s
+  private readonly STARTING_ANGLE_MAX = 100; // Must start lying down (low angle)
 
   process(landmarks: Landmark[], time: number): RepData[] {
     const leftShoulder = landmarks[11];
@@ -286,13 +319,23 @@ export class SitupVideoDetector {
 
     const elbow_angle_sm = this.angle_history.reduce((a, b) => a + b, 0) / this.angle_history.length;
 
+    // Verify starting position (lying down)
+    if (!this.ready_to_start && this.initial_frames < 30) {
+      this.initial_frames++;
+      if (this.initial_frames >= 10 && elbow_angle_sm <= this.STARTING_ANGLE_MAX) {
+        this.ready_to_start = true;
+        console.log('✅ Sit-up starting position detected - ready to count reps');
+      }
+      return this.reps;
+    }
+
     if (this.last_extreme_angle === null) {
       this.last_extreme_angle = elbow_angle_sm;
       this.up_angle = elbow_angle_sm;
     }
 
     // Transition from UP to DOWN (going down)
-    if (this.state === 'up' && this.last_extreme_angle - elbow_angle_sm >= this.MIN_DIP_CHANGE) {
+    if (this.ready_to_start && this.state === 'up' && this.last_extreme_angle - elbow_angle_sm >= this.MIN_DIP_CHANGE) {
       this.state = 'down';
       this.up_angle = this.last_extreme_angle; // Store the up angle
       this.last_extreme_angle = elbow_angle_sm;
