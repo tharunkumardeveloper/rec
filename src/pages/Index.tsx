@@ -169,6 +169,9 @@ const Index = () => {
     scrollToTop();
     setAppState('home');
     setShowGhostAnimation(false); // No animation when going back
+    setSelectedActivity(null); // Clear selected activity to prevent showing ActivityDetail
+    setGhostGif(undefined); // Clear ghost gif
+    setShowWorkout(false); // Clear workout state
   };
 
   const handleTabChange = (tab: string) => {
@@ -289,6 +292,7 @@ const Index = () => {
         onBack={() => {
           setAppState('ghost-mode');
           setShowGhostAnimation(false); // No animation when going back
+          setSelectedActivity(null); // Clear selected activity
         }}
         onStartWorkout={(mode, ghostGifUrl) => {
           console.log('Ghost Mode - Starting workout:', mode, ghostGifUrl);
