@@ -101,6 +101,10 @@ const LiveRecorderNew = ({ activityName, onBack, onComplete }: LiveRecorderProps
   const [poseDetector, setPoseDetector] = useState<any>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [showDemoDialog, setShowDemoDialog] = useState(true);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [isPinching, setIsPinching] = useState(false);
+  const initialPinchDistance = useRef<number>(0);
+  const initialZoom = useRef<number>(1);
 
   const tips = WORKOUT_TIPS[activityName] || WORKOUT_TIPS['Push-ups'];
   const demo = WORKOUT_DEMOS[activityName] || WORKOUT_DEMOS['Push-ups'];
@@ -541,9 +545,73 @@ const LiveRecorderNew = ({ activityName, onBack, onComplete }: LiveRecorderProps
     }
   };
 
+  // Pinch-to-zoom handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      setIsPinching(true);
+      const distance = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      initialPinchDistance.current = distance;
+      initialZoom.current = zoomLevel;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && isPinching) {
+      const distance = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const scale = distance / initialPinchDistance.current;
+      const newZoom = Math.min(Math.max(initialZoom.current * scale, 1), 3);
+      setZoomLevel(newZoom);
+      applyZoom(newZoom);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsPinching(false);
+  };
+
+  const applyZoom = async (zoom: number) => {
+    if (streamRef.current) {
+      const videoTrack = streamRef.current.getVideoTracks()[0];
+      const capabilities = videoTrack.getCapabilities() as any;
+      
+      if (capabilities.zoom) {
+        try {
+          await videoTrack.applyConstraints({
+            advanced: [{ zoom: zoom } as any]
+          });
+        } catch (err) {
+          console.log('Zoom not supported on this device');
+        }
+      }
+    }
+  };
+
+  const handleZoomIn = () => {
+    const newZoom = Math.min(zoomLevel + 0.5, 3);
+    setZoomLevel(newZoom);
+    applyZoom(newZoom);
+  };
+
+  const handleZoomOut = () => {
+    const newZoom = Math.max(zoomLevel - 0.5, 1);
+    setZoomLevel(newZoom);
+    applyZoom(newZoom);
+  };
+
   return (
     <div className="fixed inset-0 bg-black z-50">
-      <div className="relative w-full h-full">
+      <div 
+        className="relative w-full h-full"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black z-50">
             <Loader2 className="w-12 h-12 text-white animate-spin" />
@@ -594,6 +662,29 @@ const LiveRecorderNew = ({ activityName, onBack, onComplete }: LiveRecorderProps
               <div className="flex items-center gap-2">
                 {stage === 'setup' && !isLoading && (
                   <>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleZoomOut}
+                      className="text-white hover:bg-white/20"
+                      disabled={zoomLevel <= 1}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
+                      </svg>
+                    </Button>
+                    <span className="text-white text-sm font-medium">{zoomLevel.toFixed(1)}x</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleZoomIn}
+                      className="text-white hover:bg-white/20"
+                      disabled={zoomLevel >= 3}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                      </svg>
+                    </Button>
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -673,6 +764,10 @@ const LiveRecorderNew = ({ activityName, onBack, onComplete }: LiveRecorderProps
                     <div className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                       <span>Position your full body in frame</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                      <span>🤏 Pinch to zoom or use +/- buttons</span>
                     </div>
                     <div className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-green-400 rounded-full"></div>
