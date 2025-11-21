@@ -792,9 +792,9 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
                       </div>
                     )}
 
-                    {result.badSets !== undefined && !activityName.includes('Jump') && (
+                    {result.stats?.incorrectReps !== undefined && !activityName.includes('Jump') && (
                       <div className="text-center p-3 rounded-lg bg-secondary/30">
-                        <div className="text-2xl font-bold mb-1 text-red-500">{result.badSets}</div>
+                        <div className="text-2xl font-bold mb-1 text-red-500">{result.stats.incorrectReps}</div>
                         <p className="text-xs text-muted-foreground">Bad Form</p>
                       </div>
                     )}

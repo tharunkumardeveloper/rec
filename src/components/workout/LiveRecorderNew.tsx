@@ -284,6 +284,9 @@ const LiveRecorderNew = ({ activityName, onBack, onComplete }: LiveRecorderProps
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
         
+        // Calculate actual duration from start time
+        const actualDuration = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        
         // Directly proceed to output screen
         const videoUrl = URL.createObjectURL(blob);
         const finalState = detectorStateRef.current;
@@ -300,15 +303,15 @@ const LiveRecorderNew = ({ activityName, onBack, onComplete }: LiveRecorderProps
           posture: goodPosture ? 'Good' as const : 'Bad' as const,
           setsCompleted: totalReps,
           badSets: incorrectReps,
-          duration: `${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')}`,
+          duration: `${Math.floor(actualDuration / 60)}:${(actualDuration % 60).toString().padStart(2, '0')}`,
           videoUrl: videoUrl,
           videoBlob: blob,
           stats: {
             totalReps: totalReps,
             correctReps: correctReps,
             incorrectReps: incorrectReps,
-            avgRepDuration: totalReps > 0 ? recordingTime / totalReps : 0,
-            totalTime: recordingTime,
+            avgRepDuration: totalReps > 0 ? actualDuration / totalReps : 0,
+            totalTime: actualDuration,
             csvData: []
           }
         };
