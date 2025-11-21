@@ -48,9 +48,13 @@ const SettingsPage = ({ onBack }: SettingsPageProps) => {
         </div>
       </div>
 
-      <div className="px-4 pb-8 max-w-md mx-auto pt-6 space-y-6">
-        {/* Notifications */}
-        <Card className="card-elevated">
+      <div className="px-4 pb-8 max-w-4xl mx-auto pt-6">
+        {/* Two Column Layout on Desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column */}
+          <div className="space-y-6">
+            {/* Notifications */}
+            <Card className="card-elevated">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Bell className="w-5 h-5 mr-2" />
@@ -125,11 +129,37 @@ const SettingsPage = ({ onBack }: SettingsPageProps) => {
                 onCheckedChange={() => toggleSetting('darkMode')}
               />
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Account Management */}
-        <Card className="card-elevated">
+          {/* Appearance */}
+          <Card className="card-elevated">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Moon className="w-5 h-5 mr-2" />
+                Appearance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="dark-mode">Dark Mode</Label>
+                  <p className="text-sm text-muted-foreground">Switch to dark theme</p>
+                </div>
+                <Switch
+                  id="dark-mode"
+                  checked={settings.darkMode}
+                  onCheckedChange={() => toggleSetting('darkMode')}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Account Management */}
+          <Card className="card-elevated">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Shield className="w-5 h-5 mr-2" />
@@ -169,11 +199,11 @@ const SettingsPage = ({ onBack }: SettingsPageProps) => {
               <Info className="w-4 h-4 mr-3" />
               Terms of Service
             </Button>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* App Info */}
-        <Card className="card-elevated">
+          {/* App Info */}
+          <Card className="card-elevated">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Info className="w-5 h-5 mr-2" />
@@ -195,8 +225,10 @@ const SettingsPage = ({ onBack }: SettingsPageProps) => {
                 <span className="font-medium">TalentTrack Team</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
       </div>
     </div>
   );

@@ -209,17 +209,7 @@ const Index = () => {
       case 'roadmap':
         return <RoadmapTab onViewAllBadges={handleBadgesOpen} />;
       default:
-        return (
-          <HomeScreen
-            userRole={userRole}
-            userName={userName}
-            onTabChange={handleTabChange}
-            activeTab={activeTab}
-            onProfileOpen={handleProfileOpen}
-            onSettingsOpen={handleSettingsOpen}
-            onChallengeRedirect={handleChallengeRedirect}
-          />
-        );
+        return null; // Training tab is handled separately
     }
   };
 
@@ -356,26 +346,75 @@ const Index = () => {
 
     case 'home':
       return (
-        <div className="min-h-screen bg-background">
-          {activeTab === 'training' && userRole === 'athlete' ? (
-            <HomeScreen
-              userRole={userRole}
-              userName={userName}
-              onTabChange={(tab) => {
-                if (tab === 'ghost-mode') {
-                  setShowGhostAnimation(true); // Show animation when entering from banner
-                  setAppState('ghost-mode');
-                } else {
-                  handleTabChange(tab);
-                }
-              }}
-              activeTab={activeTab}
-              onProfileOpen={handleProfileOpen}
-              onSettingsOpen={handleSettingsOpen}
-              onChallengeRedirect={handleChallengeRedirect}
-              onActivitySelect={handleActivitySelect}
-            />
-          ) : userRole === 'coach' ? (
+        <div className="min-h-screen bg-background lg:flex">
+          {/* Desktop Sidebar Navigation */}
+          <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:border-r lg:bg-card">
+            <div className="flex flex-col flex-1 overflow-y-auto">
+              {/* Logo/Brand */}
+              <div className="flex items-center h-16 px-6 border-b bg-primary">
+                <h1 className="text-xl font-bold text-white">TalentTrack</h1>
+              </div>
+              
+              {/* Navigation Items */}
+              <nav className="flex-1 px-4 py-6 space-y-2">
+                {[
+                  { id: 'training', label: 'Training', icon: '⚡' },
+                  { id: 'discover', label: 'Discover', icon: '🔍' },
+                  { id: 'report', label: 'Report', icon: '📊' },
+                  { id: 'roadmap', label: 'Roadmap', icon: '🗺️' }
+                ].map(({ id, label, icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => {
+                      scrollToTop();
+                      setActiveTab(id);
+                    }}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      activeTab === id 
+                        ? 'bg-primary text-primary-foreground font-semibold' 
+                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                    }`}
+                  >
+                    <span className="text-2xl">{icon}</span>
+                    <span className="text-sm">{label}</span>
+                  </button>
+                ))}
+              </nav>
+
+              {/* User Section */}
+              <div className="p-4 border-t">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                    {userName.split(' ').map(n => n[0]).join('')}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{userName}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{userRole}</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <button
+                    onClick={handleProfileOpen}
+                    className="w-full flex items-center space-x-2 px-3 py-2 text-sm rounded-lg hover:bg-secondary transition-colors"
+                  >
+                    <span>👤</span>
+                    <span>Profile</span>
+                  </button>
+                  <button
+                    onClick={handleSettingsOpen}
+                    className="w-full flex items-center space-x-2 px-3 py-2 text-sm rounded-lg hover:bg-secondary transition-colors"
+                  >
+                    <span>⚙️</span>
+                    <span>Settings</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="lg:ml-64 flex-1">
+            {userRole === 'coach' ? (
             <CoachDashboard
               userName={userName}
               onTabChange={handleTabChange}
@@ -391,67 +430,90 @@ const Index = () => {
               onProfileOpen={handleProfileOpen}
               onSettingsOpen={handleSettingsOpen}
             />
-          ) : (
-            <div className="min-h-screen bg-background">
-              {/* Top Bar for other tabs */}
-              <div className="sticky top-0 z-50 bg-primary border-b border-primary-dark safe-top">
-                <div className="px-4 py-4">
-                  <div className="flex items-center justify-between max-w-md mx-auto">
-                    <div>
-                      <h1 className="text-lg font-semibold text-white">Welcome, {userName}</h1>
-                      <p className="text-sm text-white/80 capitalize">{userRole}</p>
+            ) : (
+              <div className="min-h-screen bg-background">
+                {/* Top Bar for all athlete tabs - Mobile Only */}
+                <div className="sticky top-0 z-50 bg-primary border-b border-primary-dark safe-top lg:hidden">
+                  <div className="px-4 py-4">
+                    <div className="flex items-center justify-between max-w-7xl mx-auto">
+                      <div>
+                        <h1 className="text-lg font-semibold text-white">Welcome, {userName}</h1>
+                        <p className="text-sm text-white/80 capitalize">{userRole}</p>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={handleSettingsOpen}
+                          className="tap-target p-2 rounded-lg hover:bg-white/20 transition-colors text-white text-lg"
+                        >
+                          ⚙️
+                        </button>
+                        <button
+                          onClick={handleProfileOpen}
+                          className="tap-target p-2 rounded-lg hover:bg-white/20 transition-colors text-white text-lg"
+                        >
+                          👤
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <button
-                        onClick={handleSettingsOpen}
-                        className="tap-target p-2 rounded-lg hover:bg-white/20 transition-colors text-white text-lg"
-                      >
-                        ⚙️
-                      </button>
-                      <button
-                        onClick={handleProfileOpen}
-                        className="tap-target p-2 rounded-lg hover:bg-white/20 transition-colors text-white text-lg"
-                      >
-                        👤
-                      </button>
+                  </div>
+                </div>
+
+                {/* Tab Content */}
+                <div className="pb-20 lg:pb-8">
+                  {activeTab === 'training' ? (
+                    <HomeScreen
+                      userRole={userRole}
+                      userName={userName}
+                      onTabChange={(tab) => {
+                        if (tab === 'ghost-mode') {
+                          setShowGhostAnimation(true);
+                          setAppState('ghost-mode');
+                        } else {
+                          handleTabChange(tab);
+                        }
+                      }}
+                      activeTab={activeTab}
+                      onProfileOpen={handleProfileOpen}
+                      onSettingsOpen={handleSettingsOpen}
+                      onChallengeRedirect={handleChallengeRedirect}
+                      onActivitySelect={handleActivitySelect}
+                    />
+                  ) : (
+                    <div className="px-4 max-w-7xl mx-auto pt-6">
+                      {renderTabContent()}
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom Navigation - Hidden on large screens */}
+                <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-subtle border-t safe-bottom lg:hidden">
+                  <div className="max-w-md mx-auto px-4 py-2">
+                    <div className="flex justify-around">
+                      {[
+                        { id: 'training', label: 'Training', icon: '⚡' },
+                        { id: 'discover', label: 'Discover', icon: '🔍' },
+                        { id: 'report', label: 'Report', icon: '📊' },
+                        { id: 'roadmap', label: 'Roadmap', icon: '🗺️' }
+                      ].map(({ id, label, icon }) => (
+                        <button
+                          key={id}
+                          onClick={() => {
+                            scrollToTop();
+                            setActiveTab(id);
+                          }}
+                          className={`flex flex-col items-center space-y-1 tap-target p-2 rounded-lg transition-colors ${activeTab === id ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                        >
+                          <span className="text-lg">{icon}</span>
+                          <span className="text-xs font-medium">{label}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Tab Content */}
-              <div className="px-4 pb-20 max-w-md mx-auto pt-6">
-                {renderTabContent()}
-              </div>
-
-              {/* Bottom Navigation */}
-              <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-subtle border-t safe-bottom">
-                <div className="max-w-md mx-auto px-4 py-2">
-                  <div className="flex justify-around">
-                    {[
-                      { id: 'training', label: 'Training', icon: '⚡' },
-                      { id: 'discover', label: 'Discover', icon: '🔍' },
-                      { id: 'report', label: 'Report', icon: '📊' },
-                      { id: 'roadmap', label: 'Roadmap', icon: '🗺️' }
-                    ].map(({ id, label, icon }) => (
-                      <button
-                        key={id}
-                        onClick={() => {
-                          scrollToTop();
-                          setActiveTab(id);
-                        }}
-                        className={`flex flex-col items-center space-y-1 tap-target p-2 rounded-lg transition-colors ${activeTab === id ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'
-                          }`}
-                      >
-                        <span className="text-lg">{icon}</span>
-                        <span className="text-xs font-medium">{label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       );
 

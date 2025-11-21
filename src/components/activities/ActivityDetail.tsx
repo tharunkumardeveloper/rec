@@ -5,7 +5,10 @@ import {
   X,
   Target,
   Clock,
-  Users
+  Users,
+  Trophy,
+  Calendar,
+  Zap
 } from 'lucide-react';
 
 interface ActivityDetailProps {
@@ -414,8 +417,8 @@ const ActivityDetail = ({ activity, onBack, onStartWorkout }: ActivityDetailProp
         </div>
       </div>
 
-      {/* Cover Image */}
-      <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 relative">
+      {/* Cover Image - Mobile Only */}
+      <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 relative lg:hidden">
         {activity.image ? (
           <img 
             src={activity.image} 
@@ -450,9 +453,9 @@ const ActivityDetail = ({ activity, onBack, onStartWorkout }: ActivityDetailProp
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       </div>
 
-      {/* Workout Mode Selection - Right below cover image */}
-      <div className="px-4 py-4 max-w-md mx-auto bg-background border-b">
-        <div className="grid grid-cols-2 gap-3">
+      {/* Workout Mode Selection - Mobile Only (Right below cover image) */}
+      <div className="px-4 py-4 max-w-4xl mx-auto bg-background border-b lg:hidden">
+        <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
           <Button 
             onClick={() => onStartWorkout('upload')}
             className="h-16 text-base font-semibold flex flex-col items-center justify-center"
@@ -480,96 +483,169 @@ const ActivityDetail = ({ activity, onBack, onStartWorkout }: ActivityDetailProp
         </p>
       </div>
 
-      {/* Content */}
-      <div className="px-4 pb-20 max-w-md mx-auto">
-        {/* Title and Category */}
-        <div className="py-6 border-b">
-          <h1 className="text-2xl font-bold mb-2">{activity.name}</h1>
-          <Badge variant="outline" className="mb-4">{content.category}</Badge>
-          <p className="text-muted-foreground">{content.description}</p>
-        </div>
-
-        {/* Preview GIF */}
-        {previewGif && (
-          <div className="py-6 border-b">
-            <h3 className="font-semibold mb-3">How It Looks</h3>
-            <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
-              <img 
-                src={previewGif}
-                alt={`${activity.name} demonstration`}
-                className="max-w-full max-h-full object-contain"
-                loading="eager"
-                onError={(e) => {
-                  console.error('GIF failed to load:', previewGif);
-                }}
-              />
+      {/* Content - 40-60 Split on Desktop */}
+      <div className="px-4 pb-20 lg:pb-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-[40%_60%] gap-6 lg:gap-8">
+          {/* Left Column (40%) - Workout Metadata */}
+          <div className="space-y-6 lg:order-1">
+            {/* Title and Category */}
+            <div className="py-6 border-b">
+              <h1 className="text-2xl lg:text-3xl font-bold mb-2">{activity.name}</h1>
+              <Badge variant="outline" className="mb-4 text-sm">{content.category}</Badge>
+              <p className="text-muted-foreground text-sm lg:text-base">{content.description}</p>
             </div>
-          </div>
-        )}
 
-        {/* Muscles */}
-        <div className="py-6 border-b">
-          <h3 className="font-semibold mb-3">Primary Muscles</h3>
-          <div className="flex flex-wrap gap-2">
-            {content.muscles.map((muscle) => (
-              <Button
-                key={muscle}
-                variant="outline"
-                size="sm"
-                className="rounded-full bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
-              >
-                {muscle}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* How to do */}
-        <div className="py-6 border-b">
-          <h3 className="font-semibold mb-3">How to do</h3>
-          <div className="space-y-3">
-            {content.steps.map((step, index) => (
-              <div key={index} className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
-                  {index + 1}
+            {/* Preview GIF - Mobile Only (shown after description) */}
+            {previewGif && (
+              <div className="py-6 border-b lg:hidden">
+                <h3 className="font-semibold mb-3 text-lg">Demonstration</h3>
+                <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={previewGif}
+                    alt={`${activity.name} demonstration`}
+                    className="w-full h-full object-contain"
+                    loading="eager"
+                    onError={(e) => {
+                      console.error('GIF failed to load:', previewGif);
+                    }}
+                  />
                 </div>
-                <p className="text-sm">{step}</p>
               </div>
-            ))}
+            )}
+
+            {/* Muscles */}
+            <div className="py-6 border-b">
+              <h3 className="font-semibold mb-3 text-lg">Primary Muscles</h3>
+              <div className="flex flex-wrap gap-2">
+                {content.muscles.map((muscle) => (
+                  <Button
+                    key={muscle}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
+                  >
+                    {muscle}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Equipment & Stats */}
+            <div className="py-6 border-b">
+              <h3 className="font-semibold mb-3 text-lg">Equipment Needed</h3>
+              <p className="text-sm text-muted-foreground">Body weight only</p>
+            </div>
+
+            {/* Action Buttons - Desktop Only */}
+            <div className="space-y-3 py-6 hidden lg:block">
+              <Button 
+                onClick={() => onStartWorkout('live')}
+                className="w-full h-12 text-base font-semibold"
+                size="lg"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Start Live Workout
+              </Button>
+              <Button 
+                onClick={() => onStartWorkout('upload')}
+                className="w-full h-12 text-base font-semibold"
+                variant="outline"
+                size="lg"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Upload Video
+              </Button>
+            </div>
+          </div>
+
+          {/* Right Column (60%) - Exercise Instructions */}
+          <div className="space-y-6 lg:order-2">
+
+            {/* Preview GIF/Video - Desktop Only */}
+            {previewGif && (
+              <div className="py-6 border-b hidden lg:block">
+                <h3 className="font-semibold mb-3 text-lg">Demonstration</h3>
+                <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden flex items-center justify-center min-w-[480px] lg:min-w-full">
+                  <img 
+                    src={previewGif}
+                    alt={`${activity.name} demonstration`}
+                    className="w-full h-full object-contain"
+                    loading="eager"
+                    onError={(e) => {
+                      console.error('GIF failed to load:', previewGif);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* How to do */}
+            <div className="py-6 border-b">
+              <h3 className="font-semibold mb-4 text-lg">How to Perform</h3>
+              <div className="space-y-4">
+                {content.steps.map((step, index) => (
+                  <div key={index} className="flex items-start space-x-3">
+                    <div className="w-7 h-7 lg:w-8 lg:h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
+                      {index + 1}
+                    </div>
+                    <p className="text-sm lg:text-base leading-relaxed">{step}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Common Mistakes */}
+            <div className="py-6 border-b">
+              <h3 className="font-semibold mb-4 text-lg">Common Mistakes to Avoid</h3>
+              <div className="space-y-3">
+                {content.mistakes.map((mistake, index) => (
+                  <div key={index} className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-destructive rounded-full mt-2 flex-shrink-0" />
+                    <p className="text-sm lg:text-base text-muted-foreground">{mistake}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Common Mistakes */}
-        <div className="py-6 border-b">
-          <h3 className="font-semibold mb-3">Common Mistakes</h3>
-          <div className="space-y-2">
-            {content.mistakes.map((mistake, index) => (
-              <div key={index} className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-destructive rounded-full mt-2 flex-shrink-0" />
-                <p className="text-sm text-muted-foreground">{mistake}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="py-6">
-          <h3 className="font-semibold mb-3">Exercise Stats</h3>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-3 rounded-lg bg-secondary/30">
-              <Target className="w-5 h-5 mx-auto mb-1 text-primary" />
+        {/* Full-Width Statistics Section */}
+        <div className="col-span-1 lg:col-span-2 py-6">
+          <h3 className="font-semibold mb-4 text-lg">Exercise Stats</h3>
+          <div className="grid grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="text-center p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+              <Target className="w-6 h-6 mx-auto mb-2 text-primary" />
               <div className="text-sm font-medium">Difficulty</div>
-              <div className="text-xs text-muted-foreground">Intermediate</div>
+              <div className="text-xs text-muted-foreground mt-1">Intermediate</div>
             </div>
-            <div className="text-center p-3 rounded-lg bg-secondary/30">
-              <Clock className="w-5 h-5 mx-auto mb-1 text-success" />
+            <div className="text-center p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+              <Clock className="w-6 h-6 mx-auto mb-2 text-success" />
               <div className="text-sm font-medium">Duration</div>
-              <div className="text-xs text-muted-foreground">5-10 min</div>
+              <div className="text-xs text-muted-foreground mt-1">5-10 min</div>
             </div>
-            <div className="text-center p-3 rounded-lg bg-secondary/30">
-              <Users className="w-5 h-5 mx-auto mb-1 text-info" />
+            <div className="text-center p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+              <Users className="w-6 h-6 mx-auto mb-2 text-info" />
               <div className="text-sm font-medium">Popularity</div>
-              <div className="text-xs text-muted-foreground">High</div>
+              <div className="text-xs text-muted-foreground mt-1">High</div>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+              <Trophy className="w-6 h-6 mx-auto mb-2 text-warning" />
+              <div className="text-sm font-medium">Your Best</div>
+              <div className="text-xs text-muted-foreground mt-1">25 reps</div>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+              <Calendar className="w-6 h-6 mx-auto mb-2 text-purple-500" />
+              <div className="text-sm font-medium">Last Done</div>
+              <div className="text-xs text-muted-foreground mt-1">2 days ago</div>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+              <Zap className="w-6 h-6 mx-auto mb-2 text-orange-500" />
+              <div className="text-sm font-medium">Total Sessions</div>
+              <div className="text-xs text-muted-foreground mt-1">12 times</div>
             </div>
           </div>
         </div>

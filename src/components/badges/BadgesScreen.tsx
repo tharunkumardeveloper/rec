@@ -67,9 +67,9 @@ const BadgesScreen = ({ onBack }: BadgesScreenProps) => {
         </div>
       </div>
 
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6">
+      <div className="px-4 py-6 max-w-7xl mx-auto space-y-6">
         {/* Overall Progress */}
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 max-w-2xl mx-auto lg:max-w-full">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -99,8 +99,8 @@ const BadgesScreen = ({ onBack }: BadgesScreenProps) => {
           ))}
         </div>
 
-        {/* Badges Grid */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Badges Grid - Responsive */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {filteredBadges.map((badge) => {
             const { isUnlocked, progress } = getBadgeStatus(badge);
 
@@ -186,7 +186,7 @@ const BadgesScreen = ({ onBack }: BadgesScreenProps) => {
         )}
 
         {/* Stats Summary */}
-        <Card className="bg-muted/50">
+        <Card className="bg-muted/50 max-w-2xl mx-auto lg:max-w-full">
           <CardContent className="p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
               <Trophy className="w-4 h-4" />

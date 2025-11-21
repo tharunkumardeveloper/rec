@@ -68,9 +68,13 @@ const ProfilePage = ({ userName, userEmail = "user@example.com", onBack, onLogou
         </div>
       </div>
 
-      <div className="px-4 pb-8 max-w-md mx-auto pt-6 space-y-6">
-        {/* Profile Photo */}
-        <Card className="card-elevated">
+      <div className="px-4 pb-8 max-w-4xl mx-auto pt-6">
+        {/* Two Column Layout on Desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Profile Photo and Quick Stats */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Profile Photo */}
+            <Card className="card-elevated">
           <CardContent className="p-6 text-center">
             <div className="relative mb-4">
               <Avatar className="w-24 h-24 mx-auto">
@@ -89,11 +93,70 @@ const ProfilePage = ({ userName, userEmail = "user@example.com", onBack, onLogou
             </div>
             <h2 className="text-xl font-bold">{profileData.name}</h2>
             <p className="text-sm text-muted-foreground">{profileData.email}</p>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Personal Information */}
-        <Card className="card-elevated">
+          {/* Level Progress */}
+          <Card className="card-elevated">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Target className="w-5 h-5 mr-2 text-primary" />
+                Level Progress
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-semibold">Level {userLevel.level}</span>
+                  <span className="text-sm text-muted-foreground">{userLevel.progress}%</span>
+                </div>
+                <div className="w-full bg-secondary rounded-full h-3">
+                  <div 
+                    className="bg-primary h-3 rounded-full transition-all duration-300"
+                    style={{ width: `${userLevel.progress}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{userLevel.xp} XP</span>
+                  <span>{userLevel.nextLevelXp} XP</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Achievements Summary */}
+          <Card className="card-elevated">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Trophy className="w-5 h-5 mr-2 text-warning" />
+                Achievements
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 rounded-lg bg-warning/10">
+                  <Badge className="w-8 h-8 rounded-full bg-warning text-warning-foreground p-0 flex items-center justify-center mb-2">
+                    <Trophy className="w-4 h-4" />
+                  </Badge>
+                  <div className="text-2xl font-bold text-warning">{achievements.badges}</div>
+                  <div className="text-xs text-muted-foreground">Badges</div>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-primary/10">
+                  <Badge className="w-8 h-8 rounded-full bg-primary text-primary-foreground p-0 flex items-center justify-center mb-2">
+                    <Coins className="w-4 h-4" />
+                  </Badge>
+                  <div className="text-2xl font-bold text-primary">{achievements.coins}</div>
+                  <div className="text-xs text-muted-foreground">Coins</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column - Forms and Settings */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Personal Information */}
+          <Card className="card-elevated">
           <CardHeader>
             <CardTitle>Personal Information</CardTitle>
           </CardHeader>
@@ -150,67 +213,11 @@ const ProfilePage = ({ userName, userEmail = "user@example.com", onBack, onLogou
               <Mail className="w-4 h-4 mr-3" />
               Change Email
             </Button>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Level Progress */}
-        <Card className="card-elevated">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Target className="w-5 h-5 mr-2 text-primary" />
-              Level Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-semibold">Level {userLevel.level}</span>
-                <span className="text-sm text-muted-foreground">{userLevel.progress}%</span>
-              </div>
-              <div className="w-full bg-secondary rounded-full h-3">
-                <div 
-                  className="bg-primary h-3 rounded-full transition-all duration-300"
-                  style={{ width: `${userLevel.progress}%` }}
-                />
-              </div>
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>{userLevel.xp} XP</span>
-                <span>{userLevel.nextLevelXp} XP</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Achievements Summary */}
-        <Card className="card-elevated">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Trophy className="w-5 h-5 mr-2 text-warning" />
-              Achievements
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 rounded-lg bg-warning/10">
-                <Badge className="w-8 h-8 rounded-full bg-warning text-warning-foreground p-0 flex items-center justify-center mb-2">
-                  <Trophy className="w-4 h-4" />
-                </Badge>
-                <div className="text-2xl font-bold text-warning">{achievements.badges}</div>
-                <div className="text-xs text-muted-foreground">Badges</div>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-primary/10">
-                <Badge className="w-8 h-8 rounded-full bg-primary text-primary-foreground p-0 flex items-center justify-center mb-2">
-                  <Coins className="w-4 h-4" />
-                </Badge>
-                <div className="text-2xl font-bold text-primary">{achievements.coins}</div>
-                <div className="text-xs text-muted-foreground">Coins</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Fitness Stats */}
-        <Card className="card-elevated">
+          {/* Fitness Stats */}
+          <Card className="card-elevated">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Target className="w-5 h-5 mr-2 text-success" />
@@ -251,31 +258,33 @@ const ProfilePage = ({ userName, userEmail = "user@example.com", onBack, onLogou
               </div>
               <p className="text-xs text-muted-foreground mt-1">Normal Weight</p>
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Save Button */}
-        <Button className="w-full" size="lg">
-          Save Changes
-        </Button>
+          {/* Save Button */}
+          <Button className="w-full" size="lg">
+            Save Changes
+          </Button>
 
-        {/* Logout Button */}
-        <Button 
-          variant="ghost" 
-          size="lg" 
-          className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
-          onClick={() => {
-            // Clear any stored user data/session
-            localStorage.clear();
-            sessionStorage.clear();
-            // Redirect to auth flow
-            onLogout ? onLogout() : onBack();
-          }}
-        >
-          <Lock className="w-4 h-4 mr-2" />
-          Logout
-        </Button>
+          {/* Logout Button */}
+          <Button 
+            variant="ghost" 
+            size="lg" 
+            className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => {
+              // Clear any stored user data/session
+              localStorage.clear();
+              sessionStorage.clear();
+              // Redirect to auth flow
+              onLogout ? onLogout() : onBack();
+            }}
+          >
+            <Lock className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
+        </div>
       </div>
+    </div>
     </div>
   );
 };

@@ -1,15 +1,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  Settings, 
-  User, 
-  Target, 
-  Trophy, 
-  Calendar,
+import {
+  Settings,
+  User,
   Zap,
   Star,
   Ghost,
@@ -49,8 +44,6 @@ interface HomeScreenProps {
 }
 
 const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen, onSettingsOpen, onChallengeRedirect, onActivitySelect }: HomeScreenProps) => {
-  const [searchFocus, setSearchFocus] = useState(false);
-  const [selectedChallengeFilter, setSelectedChallengeFilter] = useState<string | null>(null);
 
   const getChallengeImage = (challengeId: string) => {
     switch (challengeId) {
@@ -131,11 +124,8 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
     }
   ];
 
-  const challengeTags = ['Strength', 'Endurance', 'Flexibility', 'Calisthenics', 'Para-Athlete'];
-
   const getFilteredChallenges = () => {
-    if (!selectedChallengeFilter) return challenges;
-    return challenges.filter(challenge => challenge.category === selectedChallengeFilter);
+    return challenges;
   };
 
   const activityTags = [
@@ -144,12 +134,6 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-    );
-  };
-
   const allActivities = [
     // Arm exercises
     { name: 'Push-ups', rating: 4.8, image: pushupImage, muscles: 'Chest, Arms', tags: ['Arm', 'Chest'] },
@@ -157,14 +141,14 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
     { name: 'Inclined Push-up', rating: 4.5, image: inclinedPushupImage, muscles: 'Chest, Arms', tags: ['Arm', 'Chest'] },
     { name: 'Knee Push-up', rating: 4.3, image: kneePushupImage, muscles: 'Chest, Arms', tags: ['Arm', 'Chest', 'Para-Athlete'] },
     { name: 'Wide Arm Push-up', rating: 4.6, image: wideArmPushupImage, muscles: 'Chest, Arms', tags: ['Arm', 'Chest'] },
-    
+
     // Leg exercises
     { name: 'Vertical Jump', rating: 4.6, image: verticalJumpImage, muscles: 'Legs', tags: ['Leg'] },
-    
+
     // Endurance exercises
     { name: 'Shuttle Run', rating: 4.8, image: shuttleRunGeneralImage, muscles: 'Full Body', tags: ['Endurance', 'Leg'] },
     { name: 'Modified Shuttle Run', rating: 4.2, image: modifiedShuttleRunImage, muscles: 'Full Body', tags: ['Endurance', 'Para-Athlete'] },
-    
+
     // Flexibility exercises
     { name: 'Sit Reach', rating: 4.5, image: sitReachImage, muscles: 'Hamstrings & Lower Back', tags: ['Flexibility'] },
     { name: 'Sit-ups', rating: 4.7, image: sitUpsImage, muscles: 'Core', tags: ['Flexibility'] }
@@ -172,7 +156,7 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
 
   const getFilteredActivities = () => {
     if (selectedTags.length === 0) return allActivities;
-    return allActivities.filter(activity => 
+    return allActivities.filter(activity =>
       selectedTags.some(tag => activity.tags.includes(tag))
     );
   };
@@ -180,111 +164,97 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
   const activities = getFilteredActivities();
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Bar */}
-      <div className="sticky top-0 z-50 bg-primary border-b border-primary-dark safe-top">
-        <div className="px-4 py-4">
-          <div className="flex items-center justify-between max-w-md mx-auto">
-            <div>
-              <h1 className="text-lg font-semibold text-white">Welcome, {userName}</h1>
-              <p className="text-sm text-white/80 capitalize">{userRole}</p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="sm" className="tap-target text-white hover:bg-white/20" onClick={() => {
-                window.scrollTo(0, 0);
-                onSettingsOpen?.();
-              }}>
-                <Settings className="w-5 h-5" />
-              </Button>
-              <Button variant="ghost" size="sm" className="tap-target text-white hover:bg-white/20" onClick={() => {
-                window.scrollTo(0, 0);
-                onProfileOpen?.();
-              }}>
-                <User className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <>
+      {/* Content - No top bar, it's handled by Index.tsx wrapper */}
+      <div className="px-4 pb-20 lg:pb-8 max-w-7xl mx-auto pt-6">
 
-      {/* Content */}
-      <div className="px-4 pb-20 max-w-md mx-auto">
-        {/* Search Bar */}
-        <div className="mb-6 relative mt-8">
-          <div className={`relative transition-all duration-300 ${
-            searchFocus ? 'transform scale-105' : ''
-          }`}>
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search workouts, challenges..."
-              className="pl-10 h-12 rounded-xl border-2 border-violet-800 bg-violet-950/20 focus:border-violet-600 focus:bg-violet-900/30"
-              onFocus={() => setSearchFocus(true)}
-              onBlur={() => setSearchFocus(false)}
-            />
-          </div>
-          {searchFocus && (
-            <Card className="absolute top-full mt-2 w-full z-10 animate-slide-up">
-              <CardContent className="p-3">
-                <p className="text-sm text-muted-foreground">Search recommendations will appear here</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        {/* Weekly Progress & Ghost Mode - Side by Side on Desktop */}
+        <div className="mb-6 max-w-2xl mx-auto lg:max-w-full lg:grid lg:grid-cols-2 lg:gap-6">
+          {/* Weekly Goal Progress */}
+          <Card className="animate-fade-in mb-6 lg:mb-0">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Weekly Progress</CardTitle>
+                <Badge variant="secondary" className="bg-success/20 text-success">
+                  🔥 5 day streak
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between mb-3">
+                {['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su'].map((day, index) => {
+                  // Get current day (0 = Sunday, 1 = Monday, etc.)
+                  const today = new Date().getDay();
+                  // Convert to Monday-first (0 = Monday, 6 = Sunday)
+                  const currentDayIndex = today === 0 ? 6 : today - 1;
+                  const isToday = index === currentDayIndex;
 
-        {/* Weekly Goal Progress */}
-        <Card className="mb-6 animate-fade-in">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Weekly Progress</CardTitle>
-              <Badge variant="secondary" className="bg-success/20 text-success">
-                🔥 5 day streak
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between mb-3">
-              {['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su'].map((day, index) => {
-                // Get current day (0 = Sunday, 1 = Monday, etc.)
-                const today = new Date().getDay();
-                // Convert to Monday-first (0 = Monday, 6 = Sunday)
-                const currentDayIndex = today === 0 ? 6 : today - 1;
-                const isToday = index === currentDayIndex;
-                
-                return (
-                  <div
-                    key={`${day}-${index}`}
-                    className="relative"
-                  >
-                    {isToday && (
-                      <>
-                        <div className="absolute inset-0 rounded-full bg-primary/20 animate-[ping_2s_ease-in-out_infinite]" />
-                        <div className="absolute inset-0 rounded-full bg-primary/30 animate-[ping_2s_ease-in-out_infinite_0.5s]" />
-                      </>
-                    )}
+                  return (
                     <div
-                      className={`relative w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                        isToday
+                      key={`${day}-${index}`}
+                      className="relative"
+                    >
+                      {isToday && (
+                        <>
+                          <div className="absolute inset-0 rounded-full bg-primary/20 animate-[ping_2s_ease-in-out_infinite]" />
+                          <div className="absolute inset-0 rounded-full bg-primary/30 animate-[ping_2s_ease-in-out_infinite_0.5s]" />
+                        </>
+                      )}
+                      <div
+                        className={`relative w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${isToday
                           ? 'bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground scale-110 shadow-lg shadow-primary/50'
                           : 'bg-secondary text-muted-foreground'
-                      }`}
-                    >
-                      {day}
+                          }`}
+                      >
+                        {day}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">5/7 days this week</span>
-              <span className="text-primary font-medium">71% complete</span>
-            </div>
-          </CardContent>
-        </Card>
+                  );
+                })}
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">5/7 days this week</span>
+                <span className="text-primary font-medium">71% complete</span>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Activity Focus */}
-        <div className="mb-6">
+          {/* Ghost Mode Banner */}
+          <Card
+            className="overflow-hidden cursor-pointer hover:scale-[1.02] active:scale-95 transition-all duration-300 bg-gradient-to-r from-purple-950 via-gray-900 to-purple-950 border-purple-500/30 hover:border-purple-400/60 hover:shadow-2xl hover:shadow-purple-500/50 group mb-6 lg:mb-0 lg:flex lg:items-center"
+            onClick={() => onTabChange?.('ghost-mode')}
+          >
+            <CardContent className="p-6 lg:p-8 relative w-full">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 via-purple-600/10 to-purple-600/0 animate-pulse" />
+              {/* Floating ghosts on hover */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                <Ghost className="absolute top-4 right-12 w-5 h-5 text-purple-400/50 animate-ghost-float" />
+                <Ghost className="absolute bottom-4 right-24 w-4 h-4 text-purple-300/40 animate-ghost-float" style={{ animationDelay: '0.3s' }} />
+                <Ghost className="absolute top-1/2 right-32 w-6 h-6 text-purple-500/30 animate-ghost-float" style={{ animationDelay: '0.6s' }} />
+              </div>
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-full bg-purple-900/50 flex items-center justify-center border-2 border-purple-500/30 group-hover:border-purple-400/60 group-hover:bg-purple-800/60 transition-all duration-300 group-hover:scale-110">
+                    <Ghost className="w-7 h-7 lg:w-8 lg:h-8 text-purple-400 animate-pulse group-hover:animate-bounce" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg lg:text-xl text-purple-100 flex items-center space-x-2 group-hover:text-white transition-colors mb-1">
+                      <span>Ghost Mode</span>
+                      <Badge className="bg-purple-800/50 text-purple-200 border-purple-600/30 group-hover:bg-purple-700/70 group-hover:text-purple-100 transition-all text-xs">NEW</Badge>
+                    </h3>
+                    <p className="text-sm lg:text-base text-purple-300 group-hover:text-purple-200 transition-colors">Train in the shadows 👻</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-6 h-6 text-purple-400 group-hover:text-purple-300 group-hover:translate-x-1 transition-all flex-shrink-0" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Activity Focus - Full Width Below */}
+        <div className="mb-6 max-w-2xl mx-auto lg:max-w-full">
           <h2 className="text-xl font-bold mb-4">Activity Focus</h2>
-          
+
           {/* Tags */}
           <div className="flex flex-wrap gap-2 mb-4">
             {activityTags.map((tag) => (
@@ -293,8 +263,8 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
                 variant={selectedTags.includes(tag) ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => {
-                  setSelectedTags(prev => 
-                    prev.includes(tag) 
+                  setSelectedTags(prev =>
+                    prev.includes(tag)
                       ? [] // Deselect if already selected
                       : [tag] // Select only this tag, deselect others
                   );
@@ -306,35 +276,45 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
             ))}
           </div>
 
-          {/* Activities - Responsive Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
-            {activities.slice(0, 12).map((activity) => (
-              <Card 
-                key={activity.name} 
-                className="overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95"
+          {/* Activities - Responsive Grid: 2 cols (mobile), 2 cols (tablet), 5 cols (desktop) */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
+            {activities.slice(0, 16).map((activity) => (
+              <Card
+                key={activity.name}
+                className="overflow-hidden cursor-pointer hover:scale-105 transition-transform active:scale-95 group"
                 onClick={() => {
                   onActivitySelect?.(activity);
                 }}
               >
                 {activity.image ? (
-                  <div 
-                    className="h-24 sm:h-28 md:h-32 bg-cover bg-center relative"
+                  <div
+                    className={`aspect-[4/3] bg-cover relative ${activity.name === 'Push-ups' ? 'bg-[center_right_30%]' :
+                      activity.name === 'Inclined Push-up' ? 'bg-[center_left_30%]' :
+                        'bg-center'
+                      }`}
                     style={{
                       backgroundImage: `url(${activity.image})`
                     }}
                   >
+                    {/* Quick Start Button - Desktop Only */}
+                    <div className="hidden lg:flex absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center">
+                      <Button size="sm" className="bg-primary hover:bg-primary/90">
+                        <Zap className="w-4 h-4 mr-2" />
+                        Quick Start
+                      </Button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="h-24 sm:h-28 md:h-32 bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white text-3xl">
+                  <div className="aspect-[4/3] bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white text-3xl">
                     💪
                   </div>
                 )}
-                <CardContent className="p-2 sm:p-3 bg-card text-card-foreground">
-                  <h3 className="font-semibold text-xs sm:text-sm mb-1 line-clamp-2">{activity.name}</h3>
-                  <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{activity.muscles}</p>
-                  <div className="flex items-center justify-between text-xs">
+                <CardContent className="p-3 lg:p-4 bg-card text-card-foreground">
+                  <h3 className="font-semibold text-sm lg:text-base mb-1 line-clamp-2">{activity.name}</h3>
+                  <p className="text-xs lg:text-sm text-muted-foreground mb-2 line-clamp-1">{activity.muscles}</p>
+                  <div className="flex items-center justify-between text-xs lg:text-sm">
                     <div className="flex items-center space-x-1">
-                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                      <Star className="w-3 h-3 lg:w-4 lg:h-4 fill-yellow-400 text-yellow-400" />
                       <span className="font-medium">{activity.rating}</span>
                     </div>
                   </div>
@@ -344,53 +324,22 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
           </div>
         </div>
 
-        {/* Ghost Mode Banner */}
-        <Card 
-          className="mb-6 overflow-hidden cursor-pointer hover:scale-[1.02] active:scale-95 transition-all duration-300 bg-gradient-to-r from-purple-950 via-gray-900 to-purple-950 border-purple-500/30 hover:border-purple-400/60 hover:shadow-2xl hover:shadow-purple-500/50 group"
-          onClick={() => onTabChange?.('ghost-mode')}
-        >
-          <CardContent className="p-4 relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 via-purple-600/10 to-purple-600/0 animate-pulse" />
-            {/* Floating ghosts on hover */}
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-              <Ghost className="absolute top-2 right-12 w-4 h-4 text-purple-400/50 animate-ghost-float" />
-              <Ghost className="absolute bottom-2 right-24 w-3 h-3 text-purple-300/40 animate-ghost-float" style={{ animationDelay: '0.3s' }} />
-              <Ghost className="absolute top-1/2 right-32 w-5 h-5 text-purple-500/30 animate-ghost-float" style={{ animationDelay: '0.6s' }} />
-            </div>
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-full bg-purple-900/50 flex items-center justify-center border border-purple-500/30 group-hover:border-purple-400/60 group-hover:bg-purple-800/60 transition-all duration-300 group-hover:scale-110">
-                  <Ghost className="w-6 h-6 text-purple-400 animate-pulse group-hover:animate-bounce" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-purple-100 flex items-center space-x-2 group-hover:text-white transition-colors">
-                    <span>Ghost Mode</span>
-                    <Badge className="bg-purple-800/50 text-purple-200 border-purple-600/30 group-hover:bg-purple-700/70 group-hover:text-purple-100 transition-all">NEW</Badge>
-                  </h3>
-                  <p className="text-sm text-purple-300 group-hover:text-purple-200 transition-colors">Train in the shadows 👻</p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-purple-400 group-hover:text-purple-300 group-hover:translate-x-1 transition-all" />
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Challenges Section */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold">Challenges</h2>
           </div>
-          
-          
-          {/* Horizontal Scrollable Challenge Cards */}
-          <div className="flex space-x-4 overflow-x-auto pb-3 scrollbar-hide">
+
+
+          {/* Horizontal Scrollable Challenge Cards - Grid on larger screens */}
+          <div className="flex lg:grid lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 space-x-4 lg:space-x-0 lg:gap-4 overflow-x-auto lg:overflow-visible pb-3 scrollbar-hide">
             {getFilteredChallenges().map((challenge) => (
-              <Card 
-                key={challenge.id} 
+              <Card
+                key={challenge.id}
                 className={`flex-shrink-0 w-48 overflow-hidden cursor-pointer hover:scale-105 transition-transform relative`}
                 onClick={() => onChallengeRedirect?.(challenge.id)}
               >
-                <div 
+                <div
                   className="h-24 bg-cover bg-center"
                   style={{
                     backgroundImage: `url(${getChallengeImage(challenge.id)})`
@@ -415,9 +364,9 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
         </div>
 
         {/* Quick Stats */}
-        <Card className="mb-6 animate-fade-in">
+        <Card className="mb-6 animate-fade-in max-w-2xl mx-auto lg:max-w-full">
           <CardContent className="p-4">
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-3 lg:grid-cols-6 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-primary">24</div>
                 <div className="text-xs text-muted-foreground">Workouts</div>
@@ -430,13 +379,25 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
                 <div className="text-2xl font-bold text-warning">45m</div>
                 <div className="text-xs text-muted-foreground">Today</div>
               </div>
+              <div className="hidden lg:block">
+                <div className="text-2xl font-bold text-info">12</div>
+                <div className="text-xs text-muted-foreground">Badges</div>
+              </div>
+              <div className="hidden lg:block">
+                <div className="text-2xl font-bold text-purple-500">5</div>
+                <div className="text-xs text-muted-foreground">Streak</div>
+              </div>
+              <div className="hidden lg:block">
+                <div className="text-2xl font-bold text-orange-500">87%</div>
+                <div className="text-xs text-muted-foreground">Goal</div>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-subtle border-t safe-bottom">
+      {/* Bottom Navigation - Hidden on large screens */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-subtle border-t safe-bottom lg:hidden">
         <div className="max-w-md mx-auto px-4 py-2">
           <div className="flex justify-around">
             {[
@@ -450,11 +411,10 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
                 variant="ghost"
                 size="sm"
                 onClick={() => onTabChange(id)}
-                className={`flex flex-col items-center space-y-1 tap-target transition-all duration-200 ${
-                  activeTab === id 
-                    ? 'scale-110 font-semibold' 
-                    : 'opacity-60 hover:opacity-100'
-                }`}
+                className={`flex flex-col items-center space-y-1 tap-target transition-all duration-200 ${activeTab === id
+                  ? 'scale-110 font-semibold'
+                  : 'opacity-60 hover:opacity-100'
+                  }`}
               >
                 <span className="text-2xl">{emoji}</span>
                 <span className={`text-xs ${activeTab === id ? 'text-primary' : 'text-muted-foreground'}`}>
@@ -465,7 +425,7 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

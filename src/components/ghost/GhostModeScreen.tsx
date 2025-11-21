@@ -168,7 +168,7 @@ const GhostModeScreen = ({ onBack, onSelectActivity, showAnimation = false }: Gh
       </div>
 
       {/* Hero Section */}
-      <div className="px-4 py-8 max-w-4xl mx-auto">
+      <div className="px-4 py-8 max-w-7xl mx-auto">
         <div className="text-center mb-8">
           <div className="inline-flex items-center space-x-2 bg-purple-900/50 px-4 py-2 rounded-full border border-purple-500/30 mb-4">
             <Flame className="w-4 h-4 text-orange-400 animate-pulse" />
@@ -183,8 +183,8 @@ const GhostModeScreen = ({ onBack, onSelectActivity, showAnimation = false }: Gh
           </p>
         </div>
 
-        {/* Activities Grid - 2 per row like Activity Focus */}
-        <div className="grid grid-cols-2 gap-3 md:gap-4">
+        {/* Activities Grid - Responsive */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4">
           {Object.entries(ACTIVITIES).map(([name, activity]) => (
             <Card
               key={name}
@@ -255,7 +255,7 @@ const GhostModeScreen = ({ onBack, onSelectActivity, showAnimation = false }: Gh
         </div>
 
         {/* Info Card */}
-        <Card className="mt-8 bg-purple-900/30 border-purple-500/30">
+        <Card className="mt-8 bg-purple-900/30 border-purple-500/30 max-w-2xl mx-auto">
           <CardContent className="p-4 text-center">
             <Ghost className="w-8 h-8 text-purple-400 mx-auto mb-2 animate-bounce" />
             <p className="text-sm text-purple-200 mb-1">

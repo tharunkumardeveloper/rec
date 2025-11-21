@@ -251,6 +251,23 @@
     user-select: none;
   }
 
+  /* Hide scrollbar for horizontal scrolling sections */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smooth transitions for responsive layouts */
+  @media (min-width: 1024px) {
+    .lg\:transition-all {
+      transition: all 0.3s ease-in-out;
+    }
+  }
+
   /* Ghost Mode Animations */
   @keyframes float {
     0%, 100% {

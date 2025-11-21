@@ -234,7 +234,7 @@ const ChallengeDetail = ({ challengeId, onBack, onStartWorkout }: ChallengeDetai
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto">
       {/* Challenge Cover Image */}
       <Card className="overflow-hidden">
         <div className="h-48 relative bg-gradient-to-br from-primary/20 to-primary/5">
@@ -293,13 +293,14 @@ const ChallengeDetail = ({ challengeId, onBack, onStartWorkout }: ChallengeDetai
         </CardContent>
       </Card>
 
-      {/* Workouts */}
+      {/* Workouts - Grid on larger screens */}
       <div className="space-y-3">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Target className="w-5 h-5" />
           Workout Plan
         </h3>
-        {challenge.workouts.map((workout, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {challenge.workouts.map((workout, index) => (
           <Card
             key={index}
             className={`${
@@ -342,9 +343,10 @@ const ChallengeDetail = ({ challengeId, onBack, onStartWorkout }: ChallengeDetai
                   </Button>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       {/* Badge Reward */}

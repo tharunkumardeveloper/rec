@@ -80,8 +80,16 @@ export default {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       screens: {
-        'xs': '375px',
+        'xs': '480px',
         'mobile': '414px',
+        '3xl': '1920px',
+      },
+      maxWidth: {
+        '8xl': '1600px',
+      },
+      gridTemplateColumns: {
+        'dashboard': '320px 1fr 320px',
+        'workout-detail': '40% 60%',
       },
       spacing: {
         'safe-top': 'env(safe-area-inset-top)',

@@ -168,10 +168,10 @@ const SetupFlow = ({ onComplete, onSkip }: SetupFlowProps) => {
 
   return (
     <div className="min-h-screen bg-background p-4 safe-top safe-bottom">
-      <div className="max-w-md mx-auto pt-8">
+      <div className="max-w-md lg:max-w-[480px] mx-auto pt-8">
         {/* Header with Skip Option */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-xl font-bold">Setup Your Profile</h1>
+          <h1 className="text-xl lg:text-2xl font-bold">Setup Your Profile</h1>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -200,30 +200,31 @@ const SetupFlow = ({ onComplete, onSkip }: SetupFlowProps) => {
         {/* Step 1: Gender Selection */}
         {step === 1 && (
           <Card className="animate-slide-up">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                <User className="w-8 h-8 text-primary" />
+            <CardHeader className="text-center lg:pt-8">
+              <div className="mx-auto mb-4 w-16 h-16 lg:w-20 lg:h-20 bg-primary/10 rounded-full flex items-center justify-center">
+                <User className="w-8 h-8 lg:w-10 lg:h-10 text-primary" />
               </div>
-              <CardTitle>Tell us about yourself</CardTitle>
+              <CardTitle className="text-xl lg:text-2xl">Tell us about yourself</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 lg:px-8 lg:pb-8">
               <div className="space-y-3">
-                <Label>Gender (Optional)</Label>
+                <Label className="text-sm lg:text-base">Gender (Optional)</Label>
                 <RadioGroup
                   value={userData.gender}
                   onValueChange={(value) => setUserData(prev => ({ ...prev, gender: value }))}
+                  className="lg:grid lg:grid-cols-2 lg:gap-3"
                 >
                   {['Male', 'Female', 'Other', 'Prefer not to say'].map((gender) => (
-                    <div key={gender} className="flex items-center space-x-2">
+                    <div key={gender} className="flex items-center space-x-2 lg:p-3 lg:border lg:rounded-lg lg:hover:bg-secondary">
                       <RadioGroupItem value={gender.toLowerCase()} id={gender.toLowerCase()} />
-                      <Label htmlFor={gender.toLowerCase()}>{gender}</Label>
+                      <Label htmlFor={gender.toLowerCase()} className="text-sm lg:text-base">{gender}</Label>
                     </div>
                   ))}
                 </RadioGroup>
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="age">Age (Optional)</Label>
+                <Label htmlFor="age" className="text-sm lg:text-base">Age (Optional)</Label>
                 <input
                   id="age"
                   type="number"
@@ -232,7 +233,7 @@ const SetupFlow = ({ onComplete, onSkip }: SetupFlowProps) => {
                   value={userData.age}
                   onChange={(e) => setUserData(prev => ({ ...prev, age: e.target.value }))}
                   placeholder="Enter your age"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-10 lg:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm lg:text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
 
@@ -259,13 +260,13 @@ const SetupFlow = ({ onComplete, onSkip }: SetupFlowProps) => {
         {/* Step 2: Fitness Goals */}
         {step === 2 && (
           <Card className="animate-slide-up">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                <Target className="w-8 h-8 text-primary" />
+            <CardHeader className="text-center lg:pt-8">
+              <div className="mx-auto mb-4 w-16 h-16 lg:w-20 lg:h-20 bg-primary/10 rounded-full flex items-center justify-center">
+                <Target className="w-8 h-8 lg:w-10 lg:h-10 text-primary" />
               </div>
-              <CardTitle>What are your fitness goals?</CardTitle>
+              <CardTitle className="text-xl lg:text-2xl">What are your fitness goals?</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 lg:px-8 lg:pb-8">
               <div className="grid gap-4">
                 {goals.map((goal) => (
                   <div
@@ -314,13 +315,13 @@ const SetupFlow = ({ onComplete, onSkip }: SetupFlowProps) => {
         {/* Step 3: Para-Athlete Setup */}
         {step === 3 && (
           <Card className="animate-slide-up">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                <Accessibility className="w-8 h-8 text-primary" />
+            <CardHeader className="text-center lg:pt-8">
+              <div className="mx-auto mb-4 w-16 h-16 lg:w-20 lg:h-20 bg-primary/10 rounded-full flex items-center justify-center">
+                <Accessibility className="w-8 h-8 lg:w-10 lg:h-10 text-primary" />
               </div>
-              <CardTitle>Accessibility Setup</CardTitle>
+              <CardTitle className="text-xl lg:text-2xl">Accessibility Setup</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 lg:px-8 lg:pb-8">
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -375,13 +376,13 @@ const SetupFlow = ({ onComplete, onSkip }: SetupFlowProps) => {
         {/* Step 4: Body Photo Upload */}
         {step === 4 && (
           <Card className="animate-slide-up">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                <Upload className="w-8 h-8 text-primary" />
+            <CardHeader className="text-center lg:pt-8">
+              <div className="mx-auto mb-4 w-16 h-16 lg:w-20 lg:h-20 bg-primary/10 rounded-full flex items-center justify-center">
+                <Upload className="w-8 h-8 lg:w-10 lg:h-10 text-primary" />
               </div>
-              <CardTitle>Body Analysis Photo</CardTitle>
+              <CardTitle className="text-xl lg:text-2xl">Body Analysis Photo</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 lg:px-8 lg:pb-8">
               <div className="space-y-3">
                 <Label>Upload Full Body Photo</Label>
                 <p className="text-sm text-muted-foreground">
@@ -436,13 +437,13 @@ const SetupFlow = ({ onComplete, onSkip }: SetupFlowProps) => {
         {/* Step 5: Height & Weight Manual Input */}
         {step === 5 && (
           <Card className="animate-slide-up">
-            <CardHeader className="text-center">
-              <CardTitle>Confirm Your Measurements</CardTitle>
-              <p className="text-sm text-muted-foreground">
+            <CardHeader className="text-center lg:pt-8">
+              <CardTitle className="text-xl lg:text-2xl">Confirm Your Measurements</CardTitle>
+              <p className="text-sm lg:text-base text-muted-foreground">
                 Adjust if our AI analysis needs correction
               </p>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 lg:px-8 lg:pb-8">
               {/* Unit Toggle */}
               <div className="flex justify-center">
                 <div className="flex bg-secondary rounded-lg p-1">

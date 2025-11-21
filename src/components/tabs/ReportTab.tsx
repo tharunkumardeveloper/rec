@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChartBar as BarChart3, Calendar, Target, TrendingUp, Download, Award, Clock, Zap, Scale, Ruler, Activity, Play } from 'lucide-react';
+import { ChartBar as BarChart3, Calendar, Target, TrendingUp, Download, Award, Clock, Zap, Scale, Ruler, Activity, Play, ChevronDown, ChevronUp } from 'lucide-react';
 import { getWorkoutHistory, getRecentWorkouts, getStorageInfo } from '@/utils/workoutStorage';
+import WeeklyProgress from '@/components/dashboard/WeeklyProgress';
 
 interface ReportTabProps {
   userSetupData?: any;
@@ -13,6 +15,23 @@ const ReportTab = ({ userSetupData }: ReportTabProps) => {
   const workoutHistory = getWorkoutHistory();
   const recentWorkouts = getRecentWorkouts(2); // Get last 2 workouts
   const storageInfo = getStorageInfo();
+
+  // Collapsible sections state - persisted in localStorage
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem('reportCollapsedSections');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  useEffect(() => {
+    localStorage.setItem('reportCollapsedSections', JSON.stringify(collapsedSections));
+  }, [collapsedSections]);
+
+  const toggleSection = (sectionId: string) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
   
   // Get current day
   const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
@@ -80,26 +99,179 @@ const ReportTab = ({ userSetupData }: ReportTabProps) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="text-center">
+      <div className="text-center max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-2">Report</h1>
         <p className="text-muted-foreground">Track your fitness progress</p>
       </div>
 
-      {/* Recent Workouts - Last 2 Only */}
-      {recentWorkouts.length > 0 && (
-        <Card className="card-elevated">
-          <CardHeader className="pb-3">
+      {/* Dashboard Grid - 3 columns on desktop: 320px (left), 1fr (center), 320px (right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr_320px] gap-6 max-w-[1600px] mx-auto">
+        {/* Left Column - BMI & Body Metrics */}
+        <div className="space-y-6 lg:order-1">
+          {/* BMI Tracker */}
+          <Card className="card-elevated">
+            <CardHeader className="pb-3 cursor-pointer" onClick={() => toggleSection('bmi')}>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Scale className="w-5 h-5 text-primary" />
+                  <span>BMI Tracker</span>
+                </div>
+                {collapsedSections['bmi'] ? (
+                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                ) : (
+                  <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                )}
+              </CardTitle>
+            </CardHeader>
+            {!collapsedSections['bmi'] && (
+            <CardContent className="transition-all duration-300">
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-1">
+                    <Ruler className="w-4 h-4 text-muted-foreground mr-1" />
+                  </div>
+                  <div className="text-sm font-medium">{userSetupData?.height || "175"} cm</div>
+                  <div className="text-xs text-muted-foreground">Height</div>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-1">
+                    <Scale className="w-4 h-4 text-muted-foreground mr-1" />
+                  </div>
+                  <div className="text-sm font-medium">{userSetupData?.weight || "70"} kg</div>
+                  <div className="text-xs text-muted-foreground">Weight</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary mb-1">{calculateBMI()}</div>
+                  <div className="text-xs text-muted-foreground">BMI</div>
+                </div>
+              </div>
+              <div className={`p-3 rounded-lg bg-${bmiInfo.color}/10 border border-${bmiInfo.color}/20`}>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Category</span>
+                  <Badge variant="outline" className={`text-${bmiInfo.color}`}>
+                    {bmiInfo.category}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+            )}
+          </Card>
+
+          {/* Key Metrics */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="card-elevated">
+              <CardContent className="p-4 text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <Zap className="w-5 h-5 text-primary mr-2" />
+                  <span className="text-2xl font-bold text-primary">{workoutHistory.length > 0 ? '92%' : '87%'}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">Weekly Goal</p>
+              </CardContent>
+            </Card>
+
+            <Card className="card-elevated">
+              <CardContent className="p-4 text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <Clock className="w-5 h-5 text-success mr-2" />
+                  <span className="text-2xl font-bold text-success">{workoutHistory.length > 0 ? '9.2h' : '8.5h'}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">This Week</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Center Column - Charts & Progress */}
+        <div className="space-y-6 lg:order-2">
+          {/* Weekly Progress - New Horizontal Component */}
+          <WeeklyProgress />
+
+          {/* Performance Insights */}
+          <Card className="card-elevated">
+            <CardHeader className="pb-3 cursor-pointer" onClick={() => toggleSection('insights')}>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="w-5 h-5 text-success" />
+                  <span>Performance Insights</span>
+                </div>
+                {collapsedSections['insights'] ? (
+                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                ) : (
+                  <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                )}
+              </CardTitle>
+            </CardHeader>
+            {!collapsedSections['insights'] && (
+            <CardContent className="space-y-4 transition-all duration-300">
+              {workoutHistory.length > 0 && (
+                <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2" />
+                    <div>
+                      <p className="text-sm font-medium text-primary">Recent Activity</p>
+                      <p className="text-xs text-muted-foreground">You've completed {workoutHistory.length} workout{workoutHistory.length !== 1 ? 's' : ''} with AI analysis</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="p-3 bg-success/10 rounded-lg border border-success/20">
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-success rounded-full mt-2" />
+                  <div>
+                    <p className="text-sm font-medium text-success">Strength Improving</p>
+                    <p className="text-xs text-muted-foreground">Your push-up performance increased by 15% this week</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-warning/10 rounded-lg border border-warning/20">
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-warning rounded-full mt-2" />
+                  <div>
+                    <p className="text-sm font-medium text-warning">Flexibility Focus</p>
+                    <p className="text-xs text-muted-foreground">Consider adding more stretching to your routine</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-info/10 rounded-lg border border-info/20">
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-info rounded-full mt-2" />
+                  <div>
+                    <p className="text-sm font-medium text-info">Consistency Bonus</p>
+                    <p className="text-xs text-muted-foreground">You're on track for your monthly goal!</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            )}
+          </Card>
+        </div>
+
+        {/* Right Column - Recent Activity & Achievements */}
+        <div className="space-y-6 lg:order-3">
+          {/* Recent Workouts - Last 2 Only */}
+          {recentWorkouts.length > 0 && (
+            <Card className="card-elevated">
+          <CardHeader className="pb-3 cursor-pointer" onClick={() => toggleSection('workouts')}>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Activity className="w-5 h-5 text-primary" />
                 <span>Recent Workouts</span>
+                <Badge variant="outline" className="text-xs">
+                  Last {recentWorkouts.length}
+                </Badge>
               </div>
-              <Badge variant="outline" className="text-xs">
-                Last {recentWorkouts.length}
-              </Badge>
+              {collapsedSections['workouts'] ? (
+                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+              ) : (
+                <ChevronUp className="w-5 h-5 text-muted-foreground" />
+              )}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          {!collapsedSections['workouts'] && (
+          <CardContent className="transition-all duration-300">
             <div className="space-y-3">
               {recentWorkouts.reverse().map((workout, index) => (
                 <Card key={workout.id || index} className="border">
@@ -168,191 +340,47 @@ const ReportTab = ({ userSetupData }: ReportTabProps) => {
               </p>
             </div>
           </CardContent>
+          )}
         </Card>
       )}
 
-      {/* BMI Tracker */}
-      <Card className="mb-6 card-elevated">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center space-x-2">
-            <Scale className="w-5 h-5 text-primary" />
-            <span>BMI Tracker</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-1">
-                <Ruler className="w-4 h-4 text-muted-foreground mr-1" />
-              </div>
-              <div className="text-sm font-medium">{userSetupData?.height || "175"} cm</div>
-              <div className="text-xs text-muted-foreground">Height</div>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-1">
-                <Scale className="w-4 h-4 text-muted-foreground mr-1" />
-              </div>
-              <div className="text-sm font-medium">{userSetupData?.weight || "70"} kg</div>
-              <div className="text-xs text-muted-foreground">Weight</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary mb-1">{calculateBMI()}</div>
-              <div className="text-xs text-muted-foreground">BMI</div>
-            </div>
-          </div>
-          <div className={`p-3 rounded-lg bg-${bmiInfo.color}/10 border border-${bmiInfo.color}/20`}>
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Category</span>
-              <Badge variant="outline" className={`text-${bmiInfo.color}`}>
-                {bmiInfo.category}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="card-elevated">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center mb-2">
-              <Zap className="w-5 h-5 text-primary mr-2" />
-              <span className="text-2xl font-bold text-primary">{workoutHistory.length > 0 ? '92%' : '87%'}</span>
-            </div>
-            <p className="text-sm text-muted-foreground">Weekly Goal</p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-elevated">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center mb-2">
-              <Clock className="w-5 h-5 text-success mr-2" />
-              <span className="text-2xl font-bold text-success">{workoutHistory.length > 0 ? '9.2h' : '8.5h'}</span>
-            </div>
-            <p className="text-sm text-muted-foreground">This Week</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Weekly Progress Chart */}
-      <Card className="card-elevated">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center space-x-2">
-            <BarChart3 className="w-5 h-5 text-primary" />
-            <span>Weekly Activity</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {weeklyStats.map((stat) => {
-              const isToday = stat.day === today;
-              return (
-                <div key={stat.day} className="flex items-center space-x-3">
-                  <span className={`text-sm font-medium w-8 ${isToday ? 'text-primary font-bold' : ''}`}>
-                    {stat.day}
-                    {isToday && <span className="ml-1 text-xs">•</span>}
-                  </span>
-                  <div className="flex-1 bg-secondary rounded-full h-3 overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-500 ${isToday ? 'bg-primary ring-2 ring-primary/30' : 'bg-primary'}`}
-                      style={{ width: `${stat.value}%` }}
-                    />
+          {/* Recent Achievements */}
+          <Card className="card-elevated">
+            <CardHeader className="pb-3 cursor-pointer" onClick={() => toggleSection('achievements')}>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Award className="w-5 h-5 text-warning" />
+                  <span>Recent Achievements</span>
+                </div>
+                {collapsedSections['achievements'] ? (
+                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                ) : (
+                  <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                )}
+              </CardTitle>
+            </CardHeader>
+            {!collapsedSections['achievements'] && (
+            <CardContent className="transition-all duration-300">
+              <div className="space-y-3">
+                {achievements.map((achievement, index) => (
+                  <div key={index} className="flex items-center space-x-3 p-3 rounded-lg bg-secondary/30">
+                    <div className="text-2xl">{achievement.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-sm">{achievement.title}</h3>
+                      <p className="text-xs text-muted-foreground">{achievement.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{achievement.date}</p>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      New
+                    </Badge>
                   </div>
-                  <span className={`text-sm w-8 ${isToday ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
-                    {stat.value}%
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-4 pt-4 border-t">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Average completion</span>
-              <span className="font-medium text-primary">{workoutHistory.length > 0 ? '88%' : '85%'}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Performance Insights */}
-      <Card className="card-elevated">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center space-x-2">
-            <TrendingUp className="w-5 h-5 text-success" />
-            <span>Performance Insights</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {workoutHistory.length > 0 && (
-            <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-primary rounded-full mt-2" />
-                <div>
-                  <p className="text-sm font-medium text-primary">Recent Activity</p>
-                  <p className="text-xs text-muted-foreground">You've completed {workoutHistory.length} workout{workoutHistory.length !== 1 ? 's' : ''} with AI analysis</p>
-                </div>
+                ))}
               </div>
-            </div>
-          )}
-          
-          <div className="p-3 bg-success/10 rounded-lg border border-success/20">
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-success rounded-full mt-2" />
-              <div>
-                <p className="text-sm font-medium text-success">Strength Improving</p>
-                <p className="text-xs text-muted-foreground">Your push-up performance increased by 15% this week</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-3 bg-warning/10 rounded-lg border border-warning/20">
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-warning rounded-full mt-2" />
-              <div>
-                <p className="text-sm font-medium text-warning">Flexibility Focus</p>
-                <p className="text-xs text-muted-foreground">Consider adding more stretching to your routine</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-3 bg-info/10 rounded-lg border border-info/20">
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-info rounded-full mt-2" />
-              <div>
-                <p className="text-sm font-medium text-info">Consistency Bonus</p>
-                <p className="text-xs text-muted-foreground">You're on track for your monthly goal!</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Achievements */}
-      <Card className="card-elevated">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center space-x-2">
-            <Award className="w-5 h-5 text-warning" />
-            <span>Recent Achievements</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {achievements.map((achievement, index) => (
-              <div key={index} className="flex items-center space-x-3 p-3 rounded-lg bg-secondary/30">
-                <div className="text-2xl">{achievement.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-sm">{achievement.title}</h3>
-                  <p className="text-xs text-muted-foreground">{achievement.description}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{achievement.date}</p>
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  New
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+            )}
+          </Card>
+        </div>
+      </div>
 
       {/* Export Options */}
       <Card>

@@ -16,13 +16,13 @@ const DiscoverTab = ({ onStartWorkout }: DiscoverTabProps) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="text-center">
+      <div className="text-center max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-2">Discover Challenges</h1>
         <p className="text-muted-foreground">Join featured challenges and earn exclusive badges</p>
       </div>
 
-      {/* Featured Challenges */}
-      <div className="space-y-4">
+      {/* Featured Challenges - Grid on larger screens */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         {FEATURED_CHALLENGES.map((challenge) => {
           const progress = getChallengeProgress(challenge.id);
 

@@ -435,44 +435,18 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Bar - Same as athlete */}
-      <div className="sticky top-0 z-50 bg-primary border-b border-primary-dark safe-top">
-        <div className="px-4 py-4">
-          <div className="flex items-center justify-between max-w-md mx-auto">
-            <div>
-              <h1 className="text-lg font-semibold text-white">Welcome, {userName}</h1>
-              <p className="text-sm text-white/80">Coach</p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="sm" className="tap-target text-white hover:bg-white/20" onClick={() => {
-                window.scrollTo(0, 0);
-                onSettingsOpen?.();
-              }}>
-                <Settings className="w-5 h-5" />
-              </Button>
-              <Button variant="ghost" size="sm" className="tap-target text-white hover:bg-white/20" onClick={() => {
-                window.scrollTo(0, 0);
-                onProfileOpen?.();
-              }}>
-                <User className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <>
       {/* Content */}
-      <div className="px-4 pb-20 max-w-md mx-auto">
-        {/* Search Bar - Same as athlete */}
-        <div className="mb-6 relative mt-8">
+      <div className="px-4 pb-20 lg:pb-8 max-w-2xl lg:max-w-7xl mx-auto pt-6">
+        {/* Search Bar */}
+        <div className="mb-6 relative">
           <div className={`relative transition-all duration-300 ${
             searchFocus ? 'transform scale-105' : ''
           }`}>
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 lg:w-5 lg:h-5" />
             <Input
               placeholder="Search athletes, challenges..."
-              className="pl-10 h-12 rounded-xl border-2 border-violet-800 bg-violet-950/20 focus:border-violet-600 focus:bg-violet-900/30"
+              className="pl-10 lg:pl-12 h-12 lg:h-14 rounded-xl border-2 text-base lg:text-lg"
               onFocus={() => setSearchFocus(true)}
               onBlur={() => setSearchFocus(false)}
             />
@@ -488,13 +462,13 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
 
         {/* Tab Content */}
         <div className="mb-6">
-          <h2 className="text-xl font-bold mb-4">{getTabTitle()}</h2>
+          <h2 className="text-xl lg:text-2xl font-bold mb-4 lg:mb-6">{getTabTitle()}</h2>
           {getTabContent()}
         </div>
       </div>
 
-      {/* Bottom Navigation - Same as athlete but different labels */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-subtle border-t safe-bottom">
+      {/* Bottom Navigation - Hidden on large screens */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-subtle border-t safe-bottom lg:hidden">
         <div className="max-w-md mx-auto px-4 py-2">
           <div className="flex justify-around">
             {[
@@ -519,7 +493,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
