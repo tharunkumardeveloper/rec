@@ -137,11 +137,20 @@
     overflow-x: hidden;
   }
 
-  /* Default portrait orientation for all pages */
+  /* Force portrait orientation for all pages except live recorder */
   @media screen and (orientation: landscape) and (max-width: 1024px) {
     body:not(.force-landscape) {
-      transform: rotate(0deg);
+      /* Prevent landscape mode on mobile */
+      max-width: 100vh;
+      max-height: 100vw;
     }
+  }
+  
+  /* Live recorder gets landscape mode */
+  body.force-landscape {
+    /* Allow landscape */
+    max-width: none;
+    max-height: none;
   }
 
   /* Mobile viewport fix */
