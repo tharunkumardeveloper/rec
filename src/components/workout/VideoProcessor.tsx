@@ -796,28 +796,28 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
                 )}
 
                 {/* Activity-specific stats */}
-                {result.stats?.maxJumpHeight && (
+                {result.stats?.maxJumpHeight && result.stats.maxJumpHeight > 0 && (
                   <div className="text-center p-3 rounded-lg bg-secondary/30">
                     <div className="text-2xl font-bold mb-1">{result.stats.maxJumpHeight.toFixed(2)}m</div>
                     <p className="text-xs text-muted-foreground">Max Height</p>
                   </div>
                 )}
 
-                {result.stats?.avgJumpHeight && (
+                {result.stats?.avgJumpHeight && result.stats.avgJumpHeight > 0 && (
                   <div className="text-center p-3 rounded-lg bg-secondary/30">
                     <div className="text-2xl font-bold mb-1">{result.stats.avgJumpHeight.toFixed(2)}m</div>
                     <p className="text-xs text-muted-foreground">Avg Height</p>
                   </div>
                 )}
 
-                {result.stats?.avgSplitTime && (
+                {result.stats?.avgSplitTime && result.stats.avgSplitTime > 0 && (
                   <div className="text-center p-3 rounded-lg bg-secondary/30">
                     <div className="text-2xl font-bold mb-1">{result.stats.avgSplitTime.toFixed(2)}s</div>
                     <p className="text-xs text-muted-foreground">Avg Split</p>
                   </div>
                 )}
 
-                {result.stats?.minElbowAngle && (
+                {result.stats?.minElbowAngle && result.stats.minElbowAngle > 0 && result.stats.totalReps > 0 && (
                   <div className="text-center p-3 rounded-lg bg-secondary/30">
                     <div className="text-2xl font-bold mb-1">{Math.round(result.stats.minElbowAngle)}°</div>
                     <p className="text-xs text-muted-foreground">Min Angle</p>
