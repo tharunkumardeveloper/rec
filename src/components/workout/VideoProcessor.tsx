@@ -498,7 +498,7 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 auto-rows-fr">
                 <div className="text-center p-3 rounded-lg bg-secondary/30">
                   <div className="text-2xl font-bold mb-1">
                     {currentReps > 0 ? currentReps : '...'}
@@ -544,14 +544,14 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
                   </>
                 )}
 
-                {!activityName.includes('Jump') && currentMetrics?.minAngle && (
+                {!activityName.includes('Jump') && currentMetrics?.minAngle && currentMetrics.minAngle > 0 && currentMetrics.minAngle < 180 && (
                   <div className="text-center p-3 rounded-lg bg-secondary/30">
                     <div className="text-2xl font-bold mb-1">{Math.round(currentMetrics.minAngle)}°</div>
                     <p className="text-xs text-muted-foreground">Min Angle</p>
                   </div>
                 )}
 
-                {currentMetrics?.currentTime !== undefined && (
+                {currentMetrics?.currentTime !== undefined && currentMetrics.currentTime > 0 && (
                   <div className="text-center p-3 rounded-lg bg-secondary/30">
                     <div className="text-2xl font-bold mb-1">{currentMetrics.currentTime.toFixed(1)}s</div>
                     <p className="text-xs text-muted-foreground">Duration</p>
