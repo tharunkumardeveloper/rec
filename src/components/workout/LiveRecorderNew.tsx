@@ -480,8 +480,8 @@ const LiveRecorderNew = ({ activityName, onBack, onComplete }: LiveRecorderProps
       ? (Date.now() - startTimeRef.current) / 1000 
       : recordingTime;
     
-    // Start metrics lower down (around 120px from top to align with UI metrics)
-    let yPosition = 120;
+    // Start metrics lower down (around 200px from top)
+    let yPosition = 200;
     
     if (currentAngle !== undefined && currentAngle !== null) {
       ctx.fillStyle = '#00FF00';
