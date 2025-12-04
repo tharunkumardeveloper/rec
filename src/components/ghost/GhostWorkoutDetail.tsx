@@ -118,14 +118,14 @@ const normalGifs: { [key: string]: string } = {
 
 // Ghost GIF mapping for "Ghost Performance" preview - Using ghost skeleton GIFs
 const ghostGifs: { [key: string]: string } = {
-  'Push-ups': '/ghost/pushup.gif',
-  'Pull-ups': '/ghost/pullup.gif',
-  'Sit-ups': '/ghost/situp.gif',
-  'Vertical Jump': '/ghost/verticaljump.gif',
-  'Shuttle Run': '/ghost/shuttlerun.gif',
-  'Sit Reach': '/ghost/sit&reach.gif',
-  'Sit & Reach': '/ghost/sit&reach.gif',
-  'Knee Push-ups': '/ghost/kneepushup.gif'
+  'Push-ups': '/ghost/pushup.gif?v=2',
+  'Pull-ups': '/ghost/pullup.gif?v=2',
+  'Sit-ups': '/ghost/situp.gif?v=2',
+  'Vertical Jump': '/ghost/verticaljump.gif?v=2',
+  'Shuttle Run': '/ghost/shuttlerun.gif?v=2',
+  'Sit Reach': '/ghost/sit&reach.gif?v=2',
+  'Sit & Reach': '/ghost/sit&reach.gif?v=2',
+  'Knee Push-ups': '/ghost/kneepushup.gif?v=2'
 };
 
 const GhostWorkoutDetail = ({ activity, onBack, onStartWorkout }: GhostWorkoutDetailProps) => {
