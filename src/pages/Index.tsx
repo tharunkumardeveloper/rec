@@ -12,6 +12,9 @@ import SAIAdminDashboard from '@/components/home/SAIAdminDashboard';
 import GhostModeScreen from '@/components/ghost/GhostModeScreen';
 import GhostWorkoutDetail from '@/components/ghost/GhostWorkoutDetail';
 import GhostWorkoutInterface from '@/components/workout/GhostWorkoutInterface';
+import TestModeTab from '@/components/test/TestModeTab';
+import TestWorkoutDetail from '@/components/test/TestWorkoutDetail';
+import TestWorkoutInterface from '@/components/test/TestWorkoutInterface';
 import DiscoverTab from '@/components/tabs/DiscoverTab';
 import ReportTab from '@/components/tabs/ReportTab';
 import RoadmapTab from '@/components/tabs/RoadmapTab';
@@ -25,7 +28,7 @@ import BadgesScreen from '@/components/badges/BadgesScreen';
 import { preloadAllAssets } from '@/utils/imagePreloader';
 import { scrollToTop, scrollToTopInstant } from '@/utils/scrollToTop';
 
-type AppState = 'loading' | 'auth' | 'setup' | 'home' | 'profile' | 'settings' | 'badges' | 'challenges' | 'challenge-detail' | 'ghost-mode' | 'ghost-workout-detail';
+type AppState = 'loading' | 'auth' | 'setup' | 'home' | 'profile' | 'settings' | 'badges' | 'challenges' | 'challenge-detail' | 'ghost-mode' | 'ghost-workout-detail' | 'test-mode' | 'test-workout-detail' | 'test-workout-interface';
 type UserRole = 'athlete' | 'coach' | 'admin';
 
 const Index = () => {
@@ -176,7 +179,16 @@ const Index = () => {
 
   const handleTabChange = (tab: string) => {
     scrollToTop();
-    setActiveTab(tab);
+    
+    // Handle special modes that need their own app state
+    if (tab === 'ghost-mode') {
+      setAppState('ghost-mode');
+      setShowGhostAnimation(true);
+    } else if (tab === 'test-mode') {
+      setAppState('test-mode');
+    } else {
+      setActiveTab(tab);
+    }
   };
 
   const handleChallengeRedirect = (challengeId: string) => {
@@ -236,6 +248,54 @@ const Index = () => {
           setShowGhostAnimation(false); // No animation when going to detail
         }}
         showAnimation={showGhostAnimation}
+      />
+    );
+  }
+
+  if (appState === 'test-mode') {
+    return (
+      <TestModeTab
+        onBack={handleBackToHome}
+        onWorkoutSelect={(workout) => {
+          setSelectedActivity(workout);
+          setAppState('test-workout-detail');
+        }}
+      />
+    );
+  }
+
+  if (appState === 'test-workout-detail' && selectedActivity) {
+    return (
+      <TestWorkoutDetail
+        activity={selectedActivity}
+        onBack={() => {
+          setAppState('test-mode');
+          setSelectedActivity(null);
+        }}
+        onStartWorkout={() => {
+          setAppState('test-workout-interface');
+        }}
+      />
+    );
+  }
+
+  if (appState === 'test-workout-interface' && selectedActivity) {
+    return (
+      <TestWorkoutInterface
+        activity={selectedActivity}
+        onBack={() => {
+          setAppState('test-workout-detail');
+        }}
+        onComplete={(results) => {
+          console.log('Test Mode workout complete:', results);
+          // Save results to workout history
+          import('@/utils/workoutStorage').then(({ addWorkoutToHistory }) => {
+            addWorkoutToHistory(results, results.videoBlob);
+          });
+          toast.success('Test evaluation complete!');
+          setAppState('test-mode');
+          setSelectedActivity(null);
+        }}
       />
     );
   }
@@ -464,14 +524,7 @@ const Index = () => {
                     <HomeScreen
                       userRole={userRole}
                       userName={userName}
-                      onTabChange={(tab) => {
-                        if (tab === 'ghost-mode') {
-                          setShowGhostAnimation(true);
-                          setAppState('ghost-mode');
-                        } else {
-                          handleTabChange(tab);
-                        }
-                      }}
+                      onTabChange={handleTabChange}
                       activeTab={activeTab}
                       onProfileOpen={handleProfileOpen}
                       onSettingsOpen={handleSettingsOpen}

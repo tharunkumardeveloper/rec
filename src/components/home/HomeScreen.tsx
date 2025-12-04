@@ -330,10 +330,7 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
         <div className="mb-6 max-w-2xl mx-auto lg:max-w-full">
           <Card
             className="overflow-hidden cursor-pointer hover:scale-[1.02] active:scale-95 transition-all duration-300 bg-gradient-to-r from-red-900 via-gray-800 to-red-900 border-red-500/50 hover:border-red-400/80 shadow-xl shadow-red-500/30 hover:shadow-2xl hover:shadow-red-500/50 group"
-            onClick={() => {
-              // TODO: Add Test Mode navigation
-              console.log('Test Mode clicked');
-            }}
+            onClick={() => onTabChange?.('test-mode')}
           >
             <CardContent className="p-6 lg:p-8 relative w-full">
               <div className="absolute inset-0 bg-gradient-to-r from-red-600/0 via-red-600/10 to-red-600/0 animate-pulse" />

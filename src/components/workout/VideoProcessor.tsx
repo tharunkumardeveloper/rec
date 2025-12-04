@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,26 @@ import {
 import CSVDataDisplay from './CSVDataDisplay';
 import VideoPlayer from './VideoPlayer';
 import FramePlayer from './FramePlayer';
+
+// Memoized Metric Box Component for better performance
+interface MetricBoxProps {
+  value: string | number;
+  label: string;
+  color?: string;
+}
+
+const MetricBox = memo(({ value, label, color }: MetricBoxProps) => (
+  <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50 shadow-sm">
+    <div className={`text-2xl lg:text-3xl font-bold mb-1 ${color || ''}`}>
+      {value}
+    </div>
+    <p className="text-xs lg:text-sm text-muted-foreground font-medium">
+      {label}
+    </p>
+  </div>
+));
+
+MetricBox.displayName = 'MetricBox';
 
 interface VideoProcessorProps {
   videoFile: File | null;
@@ -408,176 +428,179 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
     return (
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-subtle border-b safe-top">
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-subtle border-b safe-top transform-gpu">
           <div className="px-4 py-4">
-            <div className="flex items-center space-x-3 max-w-4xl mx-auto">
+            <div className="flex items-center space-x-3 max-w-7xl mx-auto">
               <Button variant="ghost" size="sm" onClick={handleBackDuringProcessing} className="tap-target">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="flex-1">
-                <h1 className="text-lg font-semibold">Processing {activityName}</h1>
-                <p className="text-sm text-muted-foreground">AI Analysis in Progress</p>
+                <h1 className="text-lg lg:text-xl font-semibold">Processing {activityName}</h1>
+                <p className="text-sm lg:text-base text-muted-foreground">AI Analysis in Progress</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="px-4 pb-20 max-w-4xl mx-auto pt-6 space-y-6">
-          {/* Progress Card - MOVED TO TOP */}
-          <Card className="card-elevated">
-            <CardContent className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold">Processing Progress</h3>
-                  <p className="text-sm text-muted-foreground">{processingMessage}</p>
-                </div>
-                <div className="text-2xl font-bold text-primary">{Math.round(progress)}%</div>
-              </div>
-
-              <Progress value={progress} className="h-3" />
-
-              {/* Processing Steps */}
-              <div className="space-y-2 text-sm">
-                <div className={`flex items-center space-x-2 ${progress > 0 ? 'text-primary' : 'text-muted-foreground'}`}>
-                  <CheckCircle className="w-4 h-4" />
-                  <p>Detecting body landmarks with MediaPipe</p>
-                </div>
-                <div className={`flex items-center space-x-2 ${progress > 25 ? 'text-primary' : 'text-muted-foreground'}`}>
-                  <CheckCircle className="w-4 h-4" />
-                  <p>Tracking joint angles and movements</p>
-                </div>
-                <div className={`flex items-center space-x-2 ${progress > 50 ? 'text-primary' : 'text-muted-foreground'}`}>
-                  <CheckCircle className="w-4 h-4" />
-                  <p>Counting reps and validating form</p>
-                </div>
-                <div className={`flex items-center space-x-2 ${progress > 75 ? 'text-primary' : 'text-muted-foreground'}`}>
-                  <CheckCircle className="w-4 h-4" />
-                  <p>Generating annotated video with skeleton overlay</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Live Processing Preview */}
-          {liveFrame && (
-            <Card className="card-elevated">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                    <span>Live Processing</span>
+        <div className="px-4 pb-20 lg:pb-8 max-w-7xl mx-auto pt-6 space-y-6">
+          {/* Mobile: Vertical Stack, Desktop: Two Column Layout */}
+          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6">
+            {/* 1. Live Processing Section - TOP (Mobile Order 1) */}
+            {liveFrame && (
+              <Card className="card-elevated order-1 lg:order-2">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base lg:text-lg flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                      <span>Live Processing</span>
+                    </div>
+                    {currentReps > 0 && (
+                      <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30">
+                        {currentReps} {activityName.includes('Jump') ? 'Jumps' : 'Reps'}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                    <img
+                      src={liveFrame}
+                      alt="Processing frame"
+                      className="w-full h-full object-contain"
+                    />
                   </div>
-                  {currentReps > 0 && (
-                    <Badge variant="secondary" className="bg-primary/20 text-primary">
-                      {currentReps} {activityName.includes('Jump') ? 'Jumps' : 'Reps'}
-                    </Badge>
-                  )}
+                  <p className="text-xs lg:text-sm text-muted-foreground mt-2 text-center">
+                    Real-time skeleton tracking and rep counting
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 2. Processing Progress Section - SECOND (Mobile Order 2) */}
+            <Card className="card-elevated order-2 lg:order-1">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-base lg:text-lg">Processing Progress</h3>
+                    <p className="text-sm lg:text-base text-muted-foreground mt-1">{processingMessage}</p>
+                  </div>
+                  <div className="text-3xl lg:text-4xl font-bold text-primary ml-4">{Math.round(progress)}%</div>
+                </div>
+
+                <Progress value={progress} className="h-3" />
+
+                {/* Processing Steps */}
+                <div className="space-y-3 text-sm lg:text-base">
+                  <div className={`flex items-center space-x-3 ${progress > 0 ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                    <p>Detecting body landmarks with MediaPipe</p>
+                  </div>
+                  <div className={`flex items-center space-x-3 ${progress > 25 ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                    <p>Tracking joint angles and movements</p>
+                  </div>
+                  <div className={`flex items-center space-x-3 ${progress > 50 ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                    <p>Counting reps and validating form</p>
+                  </div>
+                  <div className={`flex items-center space-x-3 ${progress > 75 ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                    <p>Generating annotated video with skeleton overlay</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 3. Live Metrics Section - THIRD (Mobile Order 3) - CENTERED ON PC */}
+            <Card className="card-elevated order-3 lg:order-3 lg:col-span-2 lg:mx-auto lg:max-w-4xl lg:w-full">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base lg:text-lg flex items-center justify-center space-x-2">
+                  <Trophy className="w-5 h-5 text-primary animate-pulse" />
+                  <span>Live Metrics</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0">
-                <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                  <img
-                    src={liveFrame}
-                    alt="Processing frame"
-                    className="w-full h-full object-contain"
-                  />
+                <div className="grid grid-cols-2 gap-4 auto-rows-fr">
+                  <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50">
+                    <div className="text-2xl lg:text-3xl font-bold mb-1">
+                      {currentReps > 0 ? currentReps : '...'}
+                    </div>
+                    <p className="text-xs lg:text-sm text-muted-foreground font-medium">
+                      {activityName.includes('Jump') ? 'Jumps' : 'Reps'} Detected
+                    </p>
+                  </div>
+
+                  {activityName.includes('Jump') ? (
+                    <>
+                      <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50">
+                        <div className="text-2xl lg:text-3xl font-bold mb-1">
+                          {currentReps > 0 && currentMetrics?.maxJumpHeight
+                            ? `${currentMetrics.maxJumpHeight.toFixed(2)}m`
+                            : '...'}
+                        </div>
+                        <p className="text-xs lg:text-sm text-muted-foreground font-medium">Max Height</p>
+                      </div>
+                      <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50">
+                        <div className="text-2xl lg:text-3xl font-bold mb-1">
+                          {currentReps > 0 && currentMetrics?.avgJumpHeight !== undefined && currentMetrics.avgJumpHeight > 0
+                            ? `${currentMetrics.avgJumpHeight.toFixed(2)}m`
+                            : '...'}
+                        </div>
+                        <p className="text-xs lg:text-sm text-muted-foreground font-medium">Avg Height</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50">
+                        <div className="text-2xl lg:text-3xl font-bold mb-1 text-green-500">
+                          {currentMetrics?.correctCount !== undefined ? currentMetrics.correctCount : '...'}
+                        </div>
+                        <p className="text-xs lg:text-sm text-muted-foreground font-medium">Correct Form</p>
+                      </div>
+                      <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50">
+                        <div className="text-2xl lg:text-3xl font-bold mb-1 text-red-500">
+                          {currentMetrics?.incorrectCount !== undefined ? currentMetrics.incorrectCount : '...'}
+                        </div>
+                        <p className="text-xs lg:text-sm text-muted-foreground font-medium">Bad Form</p>
+                      </div>
+                    </>
+                  )}
+
+                  {!activityName.includes('Jump') && currentMetrics?.minAngle && currentMetrics.minAngle > 0 && currentMetrics.minAngle < 180 && (
+                    <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50">
+                      <div className="text-2xl lg:text-3xl font-bold mb-1">{Math.round(currentMetrics.minAngle)}°</div>
+                      <p className="text-xs lg:text-sm text-muted-foreground font-medium">Min Angle</p>
+                    </div>
+                  )}
+
+                  {currentMetrics?.currentTime !== undefined && currentMetrics.currentTime > 0 && (
+                    <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50">
+                      <div className="text-2xl lg:text-3xl font-bold mb-1">{currentMetrics.currentTime.toFixed(1)}s</div>
+                      <p className="text-xs lg:text-sm text-muted-foreground font-medium">Duration</p>
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-2 text-center">
-                  Real-time skeleton tracking and rep counting
+
+                {progress < 100 && (
+                  <p className="text-xs lg:text-sm text-center text-muted-foreground mt-4">
+                    ⏳ Metrics updating in real-time...
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* 4. Privacy Text - BOTTOM (Mobile Order 4) */}
+            <Card className="bg-white border-primary/20 order-4 lg:order-4 lg:col-span-2">
+              <CardContent className="p-4 lg:p-6 space-y-2">
+                <p className="text-sm lg:text-base text-center text-black">
+                  💡 Processing happens entirely in your browser - no data is sent to any server!
+                </p>
+                <p className="text-xs lg:text-sm text-center text-black">
+                  ⚡ Processing continues even when this tab is minimized or inactive
                 </p>
               </CardContent>
             </Card>
-          )}
-
-          {/* Real-time Metrics (Loading State) */}
-          <Card className="card-elevated">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center space-x-2">
-                <Trophy className="w-4 h-4 text-primary animate-pulse" />
-                <span>Live Metrics</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="grid grid-cols-2 gap-3 auto-rows-fr">
-                <div className="text-center p-3 rounded-lg bg-secondary/30">
-                  <div className="text-2xl font-bold mb-1">
-                    {currentReps > 0 ? currentReps : '...'}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {activityName.includes('Jump') ? 'Jumps' : 'Reps'} Detected
-                  </p>
-                </div>
-
-                {activityName.includes('Jump') ? (
-                  <>
-                    <div className="text-center p-3 rounded-lg bg-secondary/30">
-                      <div className="text-2xl font-bold mb-1">
-                        {currentReps > 0 && currentMetrics?.maxJumpHeight
-                          ? `${currentMetrics.maxJumpHeight.toFixed(2)}m`
-                          : '...'}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Max Height</p>
-                    </div>
-                    <div className="text-center p-3 rounded-lg bg-secondary/30">
-                      <div className="text-2xl font-bold mb-1">
-                        {currentReps > 0 && currentMetrics?.avgJumpHeight !== undefined && currentMetrics.avgJumpHeight > 0
-                          ? `${currentMetrics.avgJumpHeight.toFixed(2)}m`
-                          : '...'}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Avg Height</p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-center p-3 rounded-lg bg-secondary/30">
-                      <div className="text-2xl font-bold mb-1 text-green-500">
-                        {currentMetrics?.correctCount !== undefined ? currentMetrics.correctCount : '...'}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Correct Form</p>
-                    </div>
-                    <div className="text-center p-3 rounded-lg bg-secondary/30">
-                      <div className="text-2xl font-bold mb-1 text-red-500">
-                        {currentMetrics?.incorrectCount !== undefined ? currentMetrics.incorrectCount : '...'}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Bad Form</p>
-                    </div>
-                  </>
-                )}
-
-                {!activityName.includes('Jump') && currentMetrics?.minAngle && currentMetrics.minAngle > 0 && currentMetrics.minAngle < 180 && (
-                  <div className="text-center p-3 rounded-lg bg-secondary/30">
-                    <div className="text-2xl font-bold mb-1">{Math.round(currentMetrics.minAngle)}°</div>
-                    <p className="text-xs text-muted-foreground">Min Angle</p>
-                  </div>
-                )}
-
-                {currentMetrics?.currentTime !== undefined && currentMetrics.currentTime > 0 && (
-                  <div className="text-center p-3 rounded-lg bg-secondary/30">
-                    <div className="text-2xl font-bold mb-1">{currentMetrics.currentTime.toFixed(1)}s</div>
-                    <p className="text-xs text-muted-foreground">Duration</p>
-                  </div>
-                )}
-              </div>
-
-              {progress < 100 && (
-                <p className="text-xs text-center text-muted-foreground mt-3">
-                  ⏳ Metrics updating in real-time...
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Info Card */}
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="p-4 space-y-2">
-              <p className="text-sm text-center">
-                💡 Processing happens entirely in your browser - no data is sent to any server!
-              </p>
-              <p className="text-xs text-center text-muted-foreground">
-                ⚡ Processing continues even when this tab is minimized or inactive
-              </p>
-            </CardContent>
-          </Card>
+          </div>
         </div>
       </div>
     );
@@ -616,9 +639,9 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
     return (
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-subtle border-b safe-top">
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-subtle border-b safe-top transform-gpu">
           <div className="px-4 py-4">
-            <div className="flex items-center space-x-3 max-w-md mx-auto">
+            <div className="flex items-center space-x-3 max-w-7xl mx-auto">
               <Button variant="ghost" size="sm" onClick={() => {
                 window.scrollTo(0, 0);
                 onBack();
@@ -626,14 +649,14 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="flex-1">
-                <h1 className="text-lg font-semibold">Workout Results</h1>
-                <p className="text-sm text-muted-foreground">{activityName}</p>
+                <h1 className="text-lg lg:text-xl font-semibold">Workout Results</h1>
+                <p className="text-sm lg:text-base text-muted-foreground">{activityName}</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="px-4 pb-20 max-w-md mx-auto pt-6 space-y-6">
+        <div className="px-4 pb-20 lg:pb-8 max-w-7xl mx-auto pt-6 space-y-6">
           {/* Annotated Video Preview - FIRST ELEMENT */}
           {result.videoUrl ? (
             <Card className="card-elevated">
@@ -644,7 +667,7 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0">
-                <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
+                <div className="aspect-video bg-black rounded-lg overflow-hidden relative w-full max-w-5xl mx-auto max-h-[50vh] lg:max-h-[60vh] xl:max-h-[65vh]">
                   {outputId && result.videoUrl ? (
                     <>
                       <FramePlayer
@@ -713,12 +736,12 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
             </Card>
           ) : (
             <Card className="card-elevated">
-              <CardContent className="p-4">
-                <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/10 rounded-lg flex items-center justify-center">
+              <CardContent className="p-4 lg:p-6">
+                <div className="aspect-video bg-primary/10 border-2 border-primary/20 rounded-lg flex items-center justify-center">
                   <div className="text-center">
                     <div className="text-6xl mb-4">📹</div>
-                    <h3 className="text-lg font-semibold mb-2">Live Recording Completed</h3>
-                    <p className="text-sm text-muted-foreground">Analysis based on real-time processing</p>
+                    <h3 className="text-lg lg:text-xl font-semibold mb-2">Live Recording Completed</h3>
+                    <p className="text-sm lg:text-base text-muted-foreground">Analysis based on real-time processing</p>
                   </div>
                 </div>
               </CardContent>
@@ -728,7 +751,7 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
           {/* Stats Card */}
           <Card className="card-elevated">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
+              <CardTitle className="text-base lg:text-lg flex items-center space-x-2">
                 {result.posture === 'Good' ? (
                   <CheckCircle className="w-5 h-5 text-success" />
                 ) : (
@@ -739,57 +762,57 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Dynamic stats grid based on activity type */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {/* Sit and Reach - Show max reach prominently */}
                 {activityName === 'Sit Reach' && result.stats?.maxReach !== undefined ? (
                   <>
-                    <div className="col-span-2 text-center p-4 rounded-lg bg-success/10 border border-success/20">
-                      <div className="text-4xl font-bold mb-1 text-success">{result.stats.maxReach.toFixed(2)}m</div>
-                      <p className="text-sm text-muted-foreground">Maximum Reach Distance</p>
+                    <div className="col-span-2 md:col-span-3 lg:col-span-4 text-center p-6 rounded-lg bg-success/10 border-2 border-success/30 shadow-sm">
+                      <div className="text-4xl lg:text-5xl font-bold mb-2 text-success">{result.stats.maxReach.toFixed(2)}m</div>
+                      <p className="text-sm lg:text-base text-muted-foreground font-medium">Maximum Reach Distance</p>
                     </div>
                     {result.duration && (
-                      <div className="col-span-2 text-center p-3 rounded-lg bg-secondary/30">
-                        <div className="text-2xl font-bold mb-1">{result.duration}</div>
-                        <p className="text-xs text-muted-foreground">Duration</p>
+                      <div className="col-span-2 md:col-span-3 lg:col-span-4 text-center p-4 rounded-lg bg-secondary/30 border border-border/50">
+                        <div className="text-2xl lg:text-3xl font-bold mb-1">{result.duration}</div>
+                        <p className="text-xs lg:text-sm text-muted-foreground font-medium">Duration</p>
                       </div>
                     )}
                   </>
                 ) : (
                   <>
                     {result.posture && (
-                      <div className="text-center p-3 rounded-lg bg-secondary/30">
-                        <div className="text-2xl font-bold mb-1">{result.posture}</div>
-                        <p className="text-xs text-muted-foreground">Posture</p>
+                      <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50 shadow-sm">
+                        <div className="text-2xl lg:text-3xl font-bold mb-1">{result.posture}</div>
+                        <p className="text-xs lg:text-sm text-muted-foreground font-medium">Posture</p>
                       </div>
                     )}
 
                     {result.setsCompleted !== undefined && (
-                      <div className="text-center p-3 rounded-lg bg-secondary/30">
-                        <div className="text-2xl font-bold mb-1">{result.setsCompleted}</div>
-                        <p className="text-xs text-muted-foreground">
+                      <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50 shadow-sm">
+                        <div className="text-2xl lg:text-3xl font-bold mb-1">{result.setsCompleted}</div>
+                        <p className="text-xs lg:text-sm text-muted-foreground font-medium">
                           {activityName.includes('Jump') ? 'Jumps' : 'Reps'}
                         </p>
                       </div>
                     )}
 
                     {result.stats?.incorrectReps !== undefined && result.stats.totalReps > 0 && !activityName.includes('Jump') && (
-                      <div className="text-center p-3 rounded-lg bg-secondary/30">
-                        <div className="text-2xl font-bold mb-1 text-red-500">{result.stats.incorrectReps}</div>
-                        <p className="text-xs text-muted-foreground">Bad Form</p>
+                      <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50 shadow-sm">
+                        <div className="text-2xl lg:text-3xl font-bold mb-1 text-red-500">{result.stats.incorrectReps}</div>
+                        <p className="text-xs lg:text-sm text-muted-foreground font-medium">Bad Form</p>
                       </div>
                     )}
                     
                     {result.stats?.correctReps !== undefined && result.stats.totalReps > 0 && !activityName.includes('Jump') && (
-                      <div className="text-center p-3 rounded-lg bg-secondary/30">
-                        <div className="text-2xl font-bold mb-1 text-green-500">{result.stats.correctReps}</div>
-                        <p className="text-xs text-muted-foreground">Correct Form</p>
+                      <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50 shadow-sm">
+                        <div className="text-2xl lg:text-3xl font-bold mb-1 text-green-500">{result.stats.correctReps}</div>
+                        <p className="text-xs lg:text-sm text-muted-foreground font-medium">Correct Form</p>
                       </div>
                     )}
 
                     {result.duration && (
-                      <div className="text-center p-3 rounded-lg bg-secondary/30">
-                        <div className="text-2xl font-bold mb-1">{result.duration}</div>
-                        <p className="text-xs text-muted-foreground">Duration</p>
+                      <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50 shadow-sm">
+                        <div className="text-2xl lg:text-3xl font-bold mb-1">{result.duration}</div>
+                        <p className="text-xs lg:text-sm text-muted-foreground font-medium">Duration</p>
                       </div>
                     )}
                   </>
@@ -797,37 +820,37 @@ const VideoProcessor = ({ videoFile, activityName, onBack, onRetry, onComplete, 
 
                 {/* Activity-specific stats */}
                 {result.stats?.maxJumpHeight && result.stats.maxJumpHeight > 0 && (
-                  <div className="text-center p-3 rounded-lg bg-secondary/30">
-                    <div className="text-2xl font-bold mb-1">{result.stats.maxJumpHeight.toFixed(2)}m</div>
-                    <p className="text-xs text-muted-foreground">Max Height</p>
+                  <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50 shadow-sm">
+                    <div className="text-2xl lg:text-3xl font-bold mb-1">{result.stats.maxJumpHeight.toFixed(2)}m</div>
+                    <p className="text-xs lg:text-sm text-muted-foreground font-medium">Max Height</p>
                   </div>
                 )}
 
                 {result.stats?.avgJumpHeight && result.stats.avgJumpHeight > 0 && (
-                  <div className="text-center p-3 rounded-lg bg-secondary/30">
-                    <div className="text-2xl font-bold mb-1">{result.stats.avgJumpHeight.toFixed(2)}m</div>
-                    <p className="text-xs text-muted-foreground">Avg Height</p>
+                  <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50 shadow-sm">
+                    <div className="text-2xl lg:text-3xl font-bold mb-1">{result.stats.avgJumpHeight.toFixed(2)}m</div>
+                    <p className="text-xs lg:text-sm text-muted-foreground font-medium">Avg Height</p>
                   </div>
                 )}
 
                 {result.stats?.avgSplitTime && result.stats.avgSplitTime > 0 && (
-                  <div className="text-center p-3 rounded-lg bg-secondary/30">
-                    <div className="text-2xl font-bold mb-1">{result.stats.avgSplitTime.toFixed(2)}s</div>
-                    <p className="text-xs text-muted-foreground">Avg Split</p>
+                  <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50 shadow-sm">
+                    <div className="text-2xl lg:text-3xl font-bold mb-1">{result.stats.avgSplitTime.toFixed(2)}s</div>
+                    <p className="text-xs lg:text-sm text-muted-foreground font-medium">Avg Split</p>
                   </div>
                 )}
 
                 {result.stats?.minElbowAngle && result.stats.minElbowAngle > 0 && result.stats.totalReps > 0 && (
-                  <div className="text-center p-3 rounded-lg bg-secondary/30">
-                    <div className="text-2xl font-bold mb-1">{Math.round(result.stats.minElbowAngle)}°</div>
-                    <p className="text-xs text-muted-foreground">Min Angle</p>
+                  <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50 shadow-sm">
+                    <div className="text-2xl lg:text-3xl font-bold mb-1">{Math.round(result.stats.minElbowAngle)}°</div>
+                    <p className="text-xs lg:text-sm text-muted-foreground font-medium">Min Angle</p>
                   </div>
                 )}
 
                 {result.stats?.avgRepDuration && result.stats.avgRepDuration > 0 && result.stats.totalReps > 0 && (
-                  <div className="text-center p-3 rounded-lg bg-secondary/30">
-                    <div className="text-2xl font-bold mb-1">{result.stats.avgRepDuration.toFixed(1)}s</div>
-                    <p className="text-xs text-muted-foreground">Avg Rep Time</p>
+                  <div className="text-center p-4 rounded-lg bg-secondary/30 border border-border/50 shadow-sm">
+                    <div className="text-2xl lg:text-3xl font-bold mb-1">{result.stats.avgRepDuration.toFixed(1)}s</div>
+                    <p className="text-xs lg:text-sm text-muted-foreground font-medium">Avg Rep Time</p>
                   </div>
                 )}
               </div>

@@ -363,6 +363,7 @@ const previewImages: { [key: string]: string } = {
   'Sit Reach': '/sit&reach.gif',
   'Inclined Push-up': '/pushup.gif',
   'Knee Push-ups': '/kneepushup.gif',
+  'Knee Push-up': '/kneepushup.gif',
   'Wide Arm Push-up': '/pushup.gif'
 };
 
@@ -377,6 +378,7 @@ const previewGifs: { [key: string]: string } = {
   'Sit Reach': '/sit&reach.gif',
   'Inclined Push-up': '/pushup.gif',
   'Knee Push-ups': '/kneepushup.gif',
+  'Knee Push-up': '/kneepushup.gif',
   'Wide Arm Push-up': '/pushup.gif'
 };
 

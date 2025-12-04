@@ -1,0 +1,544 @@
+/* Test Mode Red Theme Overrides */
+/* Apply red theme to VideoProcessor when wrapped in test-mode-wrapper */
+
+.test-mode-wrapper {
+  /* Override primary colors with red variants */
+  --primary: 220 38 38; /* red-600 */
+  --primary-dark: 185 28 28; /* red-700 */
+  --primary-foreground: 254 226 226; /* red-100 */
+  
+  /* Performance optimizations */
+  contain: layout style paint;
+}
+
+/* Header Text - WHITE for "Processing {activityName}" */
+.test-mode-wrapper .sticky h1,
+.test-mode-wrapper .bg-background\/80 h1 {
+  color: #ffffff !important;
+}
+
+.test-mode-wrapper .sticky .text-muted-foreground,
+.test-mode-wrapper .bg-background\/80 .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* RED GRADIENT OVERRIDES FOR PROCESSING SCREEN */
+
+/* Processing Progress Card - Darker Red Gradient with Black Text */
+.test-mode-wrapper .card-elevated.order-2 {
+  background: linear-gradient(to right, #991b1b, #b91c1c, #991b1b) !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.test-mode-wrapper .card-elevated.order-2 h3,
+.test-mode-wrapper .card-elevated.order-2 p,
+.test-mode-wrapper .card-elevated.order-2 .space-y-3 p {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+/* Progress percentage - WHITE */
+.test-mode-wrapper .card-elevated.order-2 .text-primary {
+  color: #ffffff !important;
+}
+
+/* Progress bar - BLACK fill on WHITE background */
+.test-mode-wrapper .card-elevated.order-2 [role="progressbar"] {
+  background-color: #ffffff !important;
+  border: 2px solid #000000 !important;
+}
+
+.test-mode-wrapper .card-elevated.order-2 [role="progressbar"] > div {
+  background-color: #000000 !important;
+}
+
+/* Live Metrics Card - Darker Red Gradient Outer, White Inner */
+.test-mode-wrapper .card-elevated.order-3 {
+  background: linear-gradient(to right, #991b1b, #b91c1c, #991b1b) !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.test-mode-wrapper .card-elevated.order-3 .text-base,
+.test-mode-wrapper .card-elevated.order-3 .text-lg {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+/* Live Metrics Inner Boxes - WHITE background with DARKER colors */
+.test-mode-wrapper .card-elevated.order-3 .bg-secondary\/30 {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.test-mode-wrapper .card-elevated.order-3 .bg-secondary\/30 .font-bold {
+  color: #991b1b !important; /* red-800 - darker */
+  font-weight: 800 !important;
+}
+
+.test-mode-wrapper .card-elevated.order-3 .bg-secondary\/30 .text-green-500 {
+  color: #15803d !important; /* green-700 - darker */
+}
+
+.test-mode-wrapper .card-elevated.order-3 .bg-secondary\/30 .text-red-500 {
+  color: #991b1b !important; /* red-800 - darker */
+}
+
+.test-mode-wrapper .card-elevated.order-3 .bg-secondary\/30 .text-muted-foreground {
+  color: #1f2937 !important; /* gray-800 - darker */
+  font-weight: 600 !important;
+}
+
+/* Privacy Text Card - WHITE background with BLACK text */
+.test-mode-wrapper .card-elevated.order-4 {
+  background-color: #ffffff !important;
+  border-color: rgba(220, 38, 38, 0.3) !important;
+}
+
+.test-mode-wrapper .card-elevated.order-4 p {
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+/* Background - solid color instead of gradient */
+.test-mode-wrapper .bg-background {
+  background-color: rgb(17, 24, 39);
+}
+
+/* Header styling */
+.test-mode-wrapper .bg-background\/80 {
+  background-color: rgba(69, 10, 10, 0.9);
+  border-bottom-color: rgba(239, 68, 68, 0.3);
+}
+
+.test-mode-wrapper .backdrop-blur-subtle {
+  backdrop-filter: blur(12px);
+}
+
+/* Primary buttons - solid colors, no gradients */
+.test-mode-wrapper .btn-hero,
+.test-mode-wrapper button[class*="bg-primary"] {
+  background-color: rgb(220, 38, 38);
+}
+
+.test-mode-wrapper .btn-hero:hover,
+.test-mode-wrapper button[class*="bg-primary"]:hover {
+  background-color: rgb(185, 28, 28);
+}
+
+/* Progress bars - solid color */
+.test-mode-wrapper [class*="bg-gradient-to-r"][class*="from-primary"] {
+  background-color: rgb(220, 38, 38);
+}
+
+/* Cards and borders */
+.test-mode-wrapper .card-elevated {
+  border-color: rgba(239, 68, 68, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1), 0 2px 4px -1px rgba(220, 38, 38, 0.06);
+}
+
+.test-mode-wrapper .border-primary\/20 {
+  border-color: rgba(220, 38, 38, 0.2);
+}
+
+.test-mode-wrapper .border-primary\/10 {
+  border-color: rgba(220, 38, 38, 0.1);
+}
+
+.test-mode-wrapper .border-primary\/30 {
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+/* Success/Primary badges and indicators - solid backgrounds */
+.test-mode-wrapper .bg-primary\/20 {
+  background-color: rgba(220, 38, 38, 0.2);
+}
+
+.test-mode-wrapper .bg-primary\/10 {
+  background-color: rgba(220, 38, 38, 0.1);
+}
+
+.test-mode-wrapper .bg-primary\/5 {
+  background-color: rgba(220, 38, 38, 0.05);
+}
+
+.test-mode-wrapper .text-primary {
+  color: rgb(248, 113, 113); /* red-400 - improved contrast */
+}
+
+/* Secondary backgrounds - solid colors */
+.test-mode-wrapper .bg-secondary\/30 {
+  background-color: rgba(127, 29, 29, 0.3);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Checkmarks and success indicators - keep green for clarity */
+.test-mode-wrapper .text-success {
+  color: rgb(134, 239, 172);
+}
+
+.test-mode-wrapper .bg-success\/10 {
+  background-color: rgba(34, 197, 94, 0.1);
+}
+
+.test-mode-wrapper .bg-success\/30 {
+  background-color: rgba(34, 197, 94, 0.3);
+}
+
+.test-mode-wrapper .border-success\/30 {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* Warning indicators - keep orange/yellow for clarity */
+.test-mode-wrapper .text-warning {
+  color: rgb(251, 191, 36);
+}
+
+/* Video player overlay */
+.test-mode-wrapper .bg-black\/80 {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Metric cards - solid backgrounds with borders */
+.test-mode-wrapper [class*="rounded-lg"][class*="p-3"],
+.test-mode-wrapper [class*="rounded-lg"][class*="p-4"] {
+  background-color: rgba(127, 29, 29, 0.3);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Live processing indicator */
+.test-mode-wrapper .bg-red-500 {
+  background-color: rgb(239, 68, 68);
+}
+
+/* Trophy and icon colors - improved contrast */
+.test-mode-wrapper [class*="text-primary"] {
+  color: rgb(248, 113, 113);
+}
+
+/* Hover states - smooth transitions */
+.test-mode-wrapper button:hover {
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
+/* Focus states */
+.test-mode-wrapper button:focus {
+  outline: 2px solid rgb(220, 38, 38);
+  outline-offset: 2px;
+}
+
+/* Results screen specific - solid shadow */
+.test-mode-wrapper .shadow-2xl {
+  box-shadow: 0 20px 25px -5px rgba(220, 38, 38, 0.2), 0 10px 10px -5px rgba(220, 38, 38, 0.1);
+}
+
+.test-mode-wrapper .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(220, 38, 38, 0.05);
+}
+
+/* Badge styling - solid background */
+.test-mode-wrapper .badge {
+  background-color: rgba(220, 38, 38, 0.2);
+  color: rgb(254, 202, 202);
+  border-color: rgba(220, 38, 38, 0.5);
+}
+
+/* Video player controls */
+.test-mode-wrapper video {
+  border-radius: 0.75rem;
+}
+
+/* Loading spinner */
+.test-mode-wrapper .animate-spin {
+  color: rgb(248, 113, 113);
+}
+
+/* Text colors - improved readability */
+.test-mode-wrapper .text-muted-foreground {
+  color: rgb(252, 165, 165); /* red-300 */
+}
+
+/* Info panels - solid background */
+.test-mode-wrapper .bg-primary\/5 {
+  background-color: rgba(220, 38, 38, 0.05);
+  border-color: rgba(220, 38, 38, 0.1);
+}
+
+/* Scroll performance optimizations */
+.test-mode-wrapper .sticky {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Reduce motion for better scroll performance */
+@media (prefers-reduced-motion: reduce) {
+  .test-mode-wrapper * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Pause animations during scroll for better performance */
+.test-mode-wrapper.scrolling .animate-pulse,
+.test-mode-wrapper.scrolling .animate-bounce {
+  animation-play-state: paused;
+}
+
+/* Content containment for better performance */
+.test-mode-wrapper [class*="space-y"] {
+  contain: layout;
+}
+
+/* Border utilities */
+.test-mode-wrapper .border-border\/50 {
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
+/* Font weight for better readability */
+.test-mode-wrapper .font-medium {
+  font-weight: 500;
+}
+
+/* Responsive text sizing */
+@media (min-width: 1024px) {
+  .test-mode-wrapper .text-base {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+  
+  .test-mode-wrapper .text-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+}
+
+/* Additional scroll performance optimizations for test mode pages */
+.test-mode-page {
+  contain: layout style paint;
+}
+
+.test-mode-page .sticky {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Pause animations during scroll */
+body.scrolling .test-mode-page .animate-pulse,
+body.scrolling .test-mode-page .animate-bounce {
+  animation-play-state: paused;
+}
+
+/* Optimize content sections */
+.test-mode-page [class*="space-y"] {
+  contain: layout;
+}
+
+/* Prevent layout shifts */
+.test-mode-page img {
+  content-visibility: auto;
+}
+
+/* GPU acceleration for smooth scrolling */
+.test-mode-page {
+  -webkit-overflow-scrolling: touch;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Bright Red Gradient Utilities for Test Mode Processing Screens */
+
+/* Primary bright red gradient */
+.test-mode-bright-red-gradient {
+  background: linear-gradient(135deg, #ff0000 0%, #ff3333 25%, #ff0000 50%, #cc0000 75%, #ff0000 100%);
+}
+
+/* Horizontal bright red gradient */
+.test-mode-gradient-horizontal {
+  background: linear-gradient(to right, #ff0000, #ff3333, #ff0000);
+}
+
+/* Diagonal bright red gradient */
+.test-mode-gradient-diagonal {
+  background: linear-gradient(to bottom right, #ff1744, #f50057, #ff0000);
+}
+
+/* Animated gradient option */
+.test-mode-animated-gradient {
+  background: linear-gradient(45deg, #ff0000, #ff3333, #ff0000, #cc0000);
+  background-size: 400% 400%;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Black text on bright red backgrounds */
+.test-mode-text-on-red {
+  color: #000000;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Small text on bright red */
+.test-mode-small-text-on-red {
+  color: #000000;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+/* White inner containers for metrics */
+.test-mode-metric-inner {
+  background: #ffffff;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+}
+
+/* Metric values with vibrant colors on white */
+.test-mode-metric-value {
+  color: #dc2626; /* Red-600 */
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.test-mode-metric-value-success {
+  color: #16a34a; /* Green-600 */
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.test-mode-metric-value-warning {
+  color: #ea580c; /* Orange-600 */
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.test-mode-metric-value-info {
+  color: #2563eb; /* Blue-600 */
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+/* Metric labels on white */
+.test-mode-metric-label {
+  color: #374151; /* Gray-700 */
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Bright red container utilities */
+.test-mode-container-red {
+  background: linear-gradient(to right, #ff0000, #ff3333, #ff0000);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.test-mode-container-red-diagonal {
+  background: linear-gradient(to bottom right, #ff1744, #f50057, #ff0000);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+/* Progress bar on bright red background */
+.test-mode-progress-bar {
+  background: #7f1d1d; /* Red-900 */
+  border-radius: 9999px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.test-mode-progress-fill {
+  background: rgba(0, 0, 0, 0.3);
+  height: 100%;
+  transition: width 0.3s ease-out;
+}
+
+/* Ensure proper contrast ratios */
+.test-mode-high-contrast-text {
+  color: #000000;
+  font-weight: 600;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Responsive adjustments for bright red gradients */
+@media (min-width: 1024px) {
+  .test-mode-container-red,
+  .test-mode-container-red-diagonal {
+    padding: 2rem;
+  }
+  
+  .test-mode-metric-value,
+  .test-mode-metric-value-success,
+  .test-mode-metric-value-warning,
+  .test-mode-metric-value-info {
+    font-size: 2rem;
+  }
+}
+
+
+/* OUTPUT/RESULTS SCREEN - RED GRADIENT STYLING */
+
+/* Stats Card - Red Gradient Background */
+.test-mode-wrapper .card-elevated:has(.grid.grid-cols-2.md\:grid-cols-3) {
+  background: linear-gradient(to right, #991b1b, #b91c1c, #991b1b) !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+  padding: 1.5rem !important;
+}
+
+/* Stats Card Title - Black Text */
+.test-mode-wrapper .card-elevated:has(.grid.grid-cols-2.md\:grid-cols-3) h3 {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+/* Metric Boxes in Results - White Background with Darker Colors */
+.test-mode-wrapper .card-elevated:has(.grid.grid-cols-2.md\:grid-cols-3) .bg-secondary\/30 {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.test-mode-wrapper .card-elevated:has(.grid.grid-cols-2.md\:grid-cols-3) .bg-secondary\/30 .font-bold {
+  font-weight: 800 !important;
+}
+
+.test-mode-wrapper .card-elevated:has(.grid.grid-cols-2.md\:grid-cols-3) .bg-secondary\/30 .text-green-500 {
+  color: #15803d !important; /* green-700 */
+}
+
+.test-mode-wrapper .card-elevated:has(.grid.grid-cols-2.md\:grid-cols-3) .bg-secondary\/30 .text-red-500 {
+  color: #991b1b !important; /* red-800 */
+}
+
+.test-mode-wrapper .card-elevated:has(.grid.grid-cols-2.md\:grid-cols-3) .text-muted-foreground {
+  color: #1f2937 !important; /* gray-800 */
+  font-weight: 600 !important;
+}
+
+/* Video Container Optimization for PC */
+.test-mode-wrapper .aspect-video {
+  max-height: 40vh !important;
+}
+
+@media (min-width: 768px) {
+  .test-mode-wrapper .aspect-video {
+    max-height: 45vh !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .test-mode-wrapper .aspect-video {
+    max-height: 50vh !important;
+  }
+}
+
+@media (min-width: 1440px) {
+  .test-mode-wrapper .aspect-video {
+    max-height: 55vh !important;
+  }
+}
