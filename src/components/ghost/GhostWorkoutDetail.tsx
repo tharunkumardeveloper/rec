@@ -116,16 +116,16 @@ const normalGifs: { [key: string]: string } = {
   'Knee Push-ups': '/kneepushup.gif'
 };
 
-// Ghost GIF mapping for "Ghost Performance" preview - Using Ghost Mode GIFs from root folder
+// Ghost GIF mapping for "Ghost Performance" preview - Using ghost skeleton GIFs
 const ghostGifs: { [key: string]: string } = {
-  'Push-ups': '/GHOST MODE GIFS/PUSHUP.gif',
-  'Pull-ups': '/GHOST MODE GIFS/PULLUP.gif',
-  'Sit-ups': '/GHOST MODE GIFS/SITUP.gif',
-  'Vertical Jump': '/GHOST MODE GIFS/VERTICAL JUMP.gif',
-  'Shuttle Run': '/GHOST MODE GIFS/SHUTTLERUN.gif',
-  'Sit Reach': '/GHOST MODE GIFS/SIT & REACH.gif',
-  'Sit & Reach': '/GHOST MODE GIFS/SIT & REACH.gif',
-  'Knee Push-ups': '/GHOST MODE GIFS/PUSHUP.gif' // Using regular pushup as fallback
+  'Push-ups': '/ghost/pushup.gif',
+  'Pull-ups': '/ghost/pullup.gif',
+  'Sit-ups': '/ghost/situp.gif',
+  'Vertical Jump': '/ghost/verticaljump.gif',
+  'Shuttle Run': '/ghost/shuttlerun.gif',
+  'Sit Reach': '/ghost/sit&reach.gif',
+  'Sit & Reach': '/ghost/sit&reach.gif',
+  'Knee Push-ups': '/ghost/kneepushup.gif'
 };
 
 const GhostWorkoutDetail = ({ activity, onBack, onStartWorkout }: GhostWorkoutDetailProps) => {
