@@ -126,11 +126,14 @@ const Index = () => {
   };
 
   const handleActivitySelect = (activity: any) => {
+    console.log('🎯 handleActivitySelect called with:', activity);
     scrollToTop();
     // Handle both string (exercise name) and object (activity)
     if (typeof activity === 'string') {
+      console.log('📝 Setting activity from string:', activity);
       setSelectedActivity({ name: activity });
     } else {
+      console.log('📝 Setting activity from object:', activity);
       setSelectedActivity(activity);
     }
   };

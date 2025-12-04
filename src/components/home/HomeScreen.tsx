@@ -446,9 +446,10 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
           }
         }}
         onNavigate={(destination, payload) => {
-          console.log('ChatWidget navigation:', destination, payload);
+          console.log('🤖 ChatWidget navigation triggered:', { destination, payload });
           
           if (destination === 'ghost-mode' || destination === 'test-mode') {
+            console.log('🎯 Navigating to special mode:', destination);
             onTabChange(destination);
           } else if (destination === 'workout' && payload?.workoutId) {
             // Map workout IDs to proper activity names
@@ -462,20 +463,31 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
               'broad-jump': 'Broad Jump'
             };
             const activityName = workoutNameMap[payload.workoutId];
-            console.log('Mapped activity name:', activityName);
+            console.log('🏋️ Mapped workout ID to activity name:', { workoutId: payload.workoutId, activityName });
             
             if (activityName) {
               // First switch to training tab
+              console.log('📍 Step 1: Switching to training tab');
               onTabChange('training');
-              // Then trigger activity selection
+              
+              // Then trigger activity selection after a short delay
               setTimeout(() => {
+                console.log('📍 Step 2: Selecting activity:', activityName);
                 if (onActivitySelect) {
                   onActivitySelect(activityName);
+                  console.log('✅ Activity selection triggered');
+                } else {
+                  console.error('❌ onActivitySelect is not defined');
                 }
-              }, 100);
+              }, 150);
+            } else {
+              console.error('❌ Could not map workout ID:', payload.workoutId);
             }
           } else if (['training', 'discover', 'report', 'roadmap'].includes(destination)) {
+            console.log('📑 Navigating to tab:', destination);
             onTabChange(destination);
+          } else {
+            console.warn('⚠️ Unknown navigation destination:', destination);
           }
         }}
       />
