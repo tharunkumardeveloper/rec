@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import Groq from 'groq-sdk';
-import { retrieveContext, buildSystemPrompt } from './rag-engine';
+import { retrieveContext, buildSystemPrompt } from './rag-engine.js';
 
 // Initialize Groq client
 const groq = new Groq({

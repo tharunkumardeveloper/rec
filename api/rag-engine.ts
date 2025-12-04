@@ -1,4 +1,9 @@
-import knowledgeBase from './knowledge-base.json';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+// Load knowledge base from JSON file
+const knowledgeBasePath = join(process.cwd(), 'api', 'knowledge-base.json');
+const knowledgeBase = JSON.parse(readFileSync(knowledgeBasePath, 'utf-8'));
 
 export interface KnowledgeEntry {
   id: string;
