@@ -97,7 +97,7 @@ class MediaPipeProcessor {
   async initialize() {
     try {
       console.log('🔧 Initializing MediaPipe...');
-
+      
       // Wait for MediaPipe to be available (if loading from CDN)
       if (typeof window !== 'undefined' && !window.Pose) {
         console.log('Waiting for MediaPipe to load from CDN...');
@@ -259,19 +259,19 @@ class MediaPipeProcessor {
 
     // Store Test Mode flag for use in processing
     this.isTestMode = isTestMode || false;
-
+    
     // Apply mode-specific MediaPipe configuration
     if (this.isTestMode) {
-      console.log('�  TEST MODE: ABSOLUTE MAXIMUM SPEED CONFIGURATION!');
+      console.log('🎯 TEST MODE: Using optimized MediaPipe configuration for faster processing');
       this.pose.setOptions({
-        modelComplexity: 0, // TEST MODE: LITE model for maximum speed!
-        smoothLandmarks: false, // TEST MODE: No smoothing = instant results
+        modelComplexity: 1,
+        smoothLandmarks: false, // TEST MODE: Disable smoothing for faster processing
         enableSegmentation: false,
         smoothSegmentation: false,
-        minDetectionConfidence: 0.2, // TEST MODE: MINIMUM confidence for ZERO-WAIT detection
-        minTrackingConfidence: 0.2 // TEST MODE: MINIMUM confidence for ZERO-WAIT tracking
+        minDetectionConfidence: 0.4, // TEST MODE: Lower confidence for faster detection
+        minTrackingConfidence: 0.4 // TEST MODE: Lower confidence for faster tracking
       });
-      console.log('✅ TEST MODE: LITE model + confidence=0.2 = INSANE SPEED! �');
+      console.log('✅ TEST MODE config applied: smoothLandmarks=false, confidence=0.4');
     } else {
       console.log('🎬 NORMAL MODE: Using standard MediaPipe configuration');
       this.pose.setOptions({
@@ -311,533 +311,504 @@ class MediaPipeProcessor {
         this.canvas = document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d')!;
 
-        // Use video detector instead of manual state management
-        const detector = getVideoDetectorForActivity(activityName) as any;
-        let frameCount = 0;
-        let totalFrames = 0;
-        let poseResultsReceived = 0;
-        let originalFPS = 30; // Default to 30fps, will try to detect actual FPS
+      // Use video detector instead of manual state management
+      const detector = getVideoDetectorForActivity(activityName) as any;
+      let frameCount = 0;
+      let totalFrames = 0;
+      let poseResultsReceived = 0;
+      let originalFPS = 30; // Default to 30fps, will try to detect actual FPS
 
-        video.onloadedmetadata = () => {
-          console.log('✅ Video metadata loaded');
-          console.log('  Dimensions:', video.videoWidth, 'x', video.videoHeight);
-          console.log('  Duration:', video.duration, 'seconds');
-          console.log('  Ready state:', video.readyState);
+      video.onloadedmetadata = () => {
+        console.log('✅ Video metadata loaded');
+        console.log('  Dimensions:', video.videoWidth, 'x', video.videoHeight);
+        console.log('  Duration:', video.duration, 'seconds');
+        console.log('  Ready state:', video.readyState);
 
-          if (!video.videoWidth || !video.videoHeight) {
-            console.error('❌ Invalid video dimensions:', video.videoWidth, video.videoHeight);
-            reject(new Error('Invalid video dimensions'));
+        if (!video.videoWidth || !video.videoHeight) {
+          console.error('❌ Invalid video dimensions:', video.videoWidth, video.videoHeight);
+          reject(new Error('Invalid video dimensions'));
+          return;
+        }
+
+        if (!video.duration || !isFinite(video.duration) || video.duration === 0) {
+          console.error('❌ Invalid video duration:', video.duration);
+          reject(new Error('Invalid video duration: ' + video.duration));
+          return;
+        }
+
+        // Use 640p for good quality
+        const targetWidth = 640;
+        const scale = Math.min(1, targetWidth / video.videoWidth);
+        this.canvas!.width = Math.floor(video.videoWidth * scale);
+        this.canvas!.height = Math.floor(video.videoHeight * scale);
+
+        // Process at 20 FPS for accurate rep detection and smooth output
+        // 20 FPS = 1 frame every 0.05 seconds, ensures no reps are missed
+        originalFPS = 20;
+        totalFrames = Math.floor(video.duration * originalFPS);
+        console.log(`Video: ${video.duration.toFixed(1)}s, Processing at ${originalFPS} FPS (${totalFrames} frames)`);
+
+        console.log('Processing at:', this.canvas!.width, 'x', this.canvas!.height);
+        console.log('Target FPS:', originalFPS);
+        console.log('Total frames to process:', totalFrames);
+
+        // Don't use MediaRecorder - we'll collect frames and create video at the end
+        this.processedFrames = [];
+        console.log('Starting video processing (frame-by-frame)...');
+        console.log(`📹 Video duration: ${video.duration.toFixed(1)}s`);
+        console.log(`⚡ Processing every frame at ${originalFPS}fps for maximum accuracy`);
+
+        // CRITICAL: Manual frame-by-frame processing for consistent behavior across all devices
+        // This ensures mobile gets the same accuracy as desktop
+        processingStarted = true;
+        processVideoFrameByFrame();
+      };
+
+      video.onerror = (e) => {
+        console.error('Video error event:', e);
+        reject(new Error('Video loading failed'));
+      };
+
+      let lastCapturedFrame = '';
+      let safetyTimeout: NodeJS.Timeout;
+      let processingStarted = false;
+
+      // Manual frame-by-frame processing - GUARANTEED same behavior on all devices
+      const processVideoFrameByFrame = async () => {
+        console.log('🎬 Starting manual frame-by-frame processing...');
+        
+        // Track processing start time for performance metrics
+        const processingStartTime = performance.now();
+
+        const frameInterval = 1 / originalFPS; // Time between frames
+        let currentFrameIndex = 0;
+        const totalFramesToProcess = Math.floor(video.duration * originalFPS);
+
+        console.log(`Will process ${totalFramesToProcess} frames (${originalFPS}fps × ${video.duration.toFixed(2)}s)`);
+
+        let lastVideoTime = -1;
+        let consecutiveStucks = 0;
+
+        // Process each frame sequentially
+        for (let i = 0; i < totalFramesToProcess; i++) {
+          // Check for cancellation
+          if (this.cancelProcessing) {
+            console.log('⚠️ Processing cancelled by user');
+            reject(new Error('Processing cancelled'));
             return;
           }
 
-          if (!video.duration || !isFinite(video.duration) || video.duration === 0) {
-            console.error('❌ Invalid video duration:', video.duration);
-            reject(new Error('Invalid video duration: ' + video.duration));
-            return;
-          }
+          const targetTime = i * frameInterval;
 
-          // TEST MODE: Use 240p for INSANE SPEED (86% fewer pixels!)
-          // NORMAL MODE: Use 640p for good quality
-          const targetWidth = this.isTestMode ? 240 : 640;
-          const scale = Math.min(1, targetWidth / video.videoWidth);
-          this.canvas!.width = Math.floor(video.videoWidth * scale);
-          this.canvas!.height = Math.floor(video.videoHeight * scale);
+          // Seek to exact frame time
+          video.currentTime = targetTime;
 
-          // TEST MODE: Process at 3 FPS for INSANE SPEED (6.6x faster!)
-          // NORMAL MODE: Process at 20 FPS for accurate rep detection and smooth output
-          if (this.isTestMode) {
-            originalFPS = 3; // TEST MODE: INSANE SPEED - 3 FPS is enough for rep detection!
-            console.log('� TESST MODE: Processing at 3 FPS for INSANE SPEED!');
-          } else {
-            originalFPS = 20; // NORMAL MODE: 20 FPS for accuracy
-          }
-          totalFrames = Math.floor(video.duration * originalFPS);
-          console.log(`Video: ${video.duration.toFixed(1)}s, Processing at ${originalFPS} FPS (${totalFrames} frames)`);
-
-          console.log('Processing at:', this.canvas!.width, 'x', this.canvas!.height);
-          console.log('Target FPS:', originalFPS);
-          console.log('Total frames to process:', totalFrames);
-
-          // Don't use MediaRecorder - we'll collect frames and create video at the end
-          this.processedFrames = [];
-          console.log('Starting video processing (frame-by-frame)...');
-          console.log(`📹 Video duration: ${video.duration.toFixed(1)}s`);
-          console.log(`⚡ Processing every frame at ${originalFPS}fps for maximum accuracy`);
-
-          // CRITICAL: Manual frame-by-frame processing for consistent behavior across all devices
-          // This ensures mobile gets the same accuracy as desktop
-          processingStarted = true;
-          processVideoFrameByFrame();
-        };
-
-        video.onerror = (e) => {
-          console.error('Video error event:', e);
-          reject(new Error('Video loading failed'));
-        };
-
-        let lastCapturedFrame = '';
-        let safetyTimeout: NodeJS.Timeout;
-        let processingStarted = false;
-
-        // Manual frame-by-frame processing - GUARANTEED same behavior on all devices
-        const processVideoFrameByFrame = async () => {
-          console.log('🎬 Starting manual frame-by-frame processing...');
-
-          // Track processing start time for performance metrics
-          const processingStartTime = performance.now();
-
-          const frameInterval = 1 / originalFPS; // Time between frames
-          let currentFrameIndex = 0;
-          const totalFramesToProcess = Math.floor(video.duration * originalFPS);
-
-          console.log(`Will process ${totalFramesToProcess} frames (${originalFPS}fps × ${video.duration.toFixed(2)}s)`);
-
-          let lastVideoTime = -1;
-          let consecutiveStucks = 0;
-
-          // Process each frame sequentially
-          for (let i = 0; i < totalFramesToProcess; i++) {
-            // Check for cancellation
-            if (this.cancelProcessing) {
-              console.log('⚠️ Processing cancelled by user');
-              reject(new Error('Processing cancelled'));
-              return;
-            }
-
-            const targetTime = i * frameInterval;
-
-            // Seek to exact frame time
-            video.currentTime = targetTime;
-
-            // Wait for seek with timeout (conditional based on mode)
-            // TEST MODE: 10ms timeout (2 attempts × 5ms) for ZERO-WAIT seeking
-            // NORMAL MODE: 300ms timeout (60 attempts × 5ms) for reliable seeking
-            const seekAttempts = this.isTestMode ? 2 : 60;
-            await new Promise<void>((seekResolve) => {
-              let attempts = 0;
-              const checkSeek = () => {
-                attempts++;
-                if (Math.abs(video.currentTime - targetTime) < 0.02 || video.readyState >= 2) {
-                  seekResolve();
-                } else if (attempts > seekAttempts) {
-                  if (this.isTestMode && attempts === seekAttempts + 1) {
-                    // Reduced logging in test mode for speed
-                  } else if (!this.isTestMode && attempts === seekAttempts + 1) {
-                    console.warn(`Seek timeout at ${targetTime.toFixed(2)}s`);
-                  }
-                  seekResolve();
-                } else {
-                  setTimeout(checkSeek, 5);
+          // Wait for seek with timeout (conditional based on mode)
+          const seekAttempts = this.isTestMode ? 40 : 60; // TEST MODE: 200ms, NORMAL MODE: 300ms
+          await new Promise<void>((seekResolve) => {
+            let attempts = 0;
+            const checkSeek = () => {
+              attempts++;
+              if (Math.abs(video.currentTime - targetTime) < 0.02 || video.readyState >= 2) {
+                seekResolve();
+              } else if (attempts > seekAttempts) {
+                if (this.isTestMode && attempts === seekAttempts + 1) {
+                  console.log(`⚡ TEST MODE: Fast seek timeout at ${targetTime.toFixed(2)}s (${seekAttempts * 5}ms)`);
+                } else if (!this.isTestMode && attempts === seekAttempts + 1) {
+                  console.warn(`Seek timeout at ${targetTime.toFixed(2)}s`);
                 }
-              };
-              checkSeek();
-            });
-
-            // Track video time for logging
-            lastVideoTime = video.currentTime;
-
-            frameCount++;
-            const progress = Math.min((i / totalFramesToProcess) * 100, 99);
-
-            // Reduce logging frequency for better performance
-            // TEST MODE: Log every 100 frames for ZERO overhead
-            // NORMAL MODE: Log every 30 frames for detailed tracking
-            const logInterval = this.isTestMode ? 100 : 30;
-            if (frameCount % logInterval === 0 || frameCount === 1) {
-              const currentReps = detector.getReps ? detector.getReps().length : 0;
-              if (this.isTestMode) {
-                console.log(`⚡ Frame: ${frameCount}/${totalFramesToProcess}, Progress: ${progress.toFixed(0)}%, Reps: ${currentReps}`);
+                seekResolve();
               } else {
-                console.log(`Frame: ${frameCount}/${totalFramesToProcess}, Time: ${targetTime.toFixed(2)}s/${video.duration.toFixed(2)}s, Progress: ${progress.toFixed(1)}%, Reps: ${currentReps}`);
+                setTimeout(checkSeek, 5);
               }
-            }
-
-            // Draw current frame to canvas
-            this.ctx!.drawImage(video, 0, 0, this.canvas!.width, this.canvas!.height);
-
-            // CRITICAL: Process frame with MediaPipe and WAIT for result
-            let resultReceived = false;
-
-            // Setup one-time result handler for this specific frame
-            const frameResultPromise = new Promise<void>((resultResolve) => {
-              const originalHandler = this.pose!.onResults;
-
-              this.pose!.onResults = (results: any) => {
-                // Call original handler to process and draw
-                originalHandler.call(this.pose, results);
-                resultReceived = true;
-                resultResolve();
-              };
-            });
-
-            // Send frame to MediaPipe
-            try {
-              await this.pose!.send({ image: video });
-
-              // Wait for result with timeout (conditional based on mode)
-              // TEST MODE: 50ms timeout for ZERO-WAIT processing
-              // NORMAL MODE: 500ms timeout for reliable processing
-              const timeoutMs = this.isTestMode ? 50 : 500;
-              const timeoutPromise = new Promise<void>((_, timeoutReject) => {
-                setTimeout(() => timeoutReject(new Error('timeout')), timeoutMs);
-              });
-
-              await Promise.race([frameResultPromise, timeoutPromise]).catch(() => {
-                if (!resultReceived) {
-                  // Minimal logging in test mode for speed
-                  if (!this.isTestMode) {
-                    console.warn(`Frame ${frameCount}: MediaPipe timeout after ${timeoutMs}ms`);
-                  }
-                }
-              });
-
-            } catch (err) {
-              console.error(`Frame ${frameCount} processing error:`, err);
-            }
-
-            // Update progress
-            const currentReps = detector.getReps ? detector.getReps() : [];
-            const correctCount = currentReps.filter((r: any) => r.correct === 'True' || r.correct === true).length;
-            const currentAngle = detector.getCurrentAngle ? detector.getCurrentAngle() : undefined;
-            const dipTime = detector.getDipTime ? detector.getDipTime(targetTime) : 0;
-            const maxJumpHeight = (detector as any).getMaxJumpHeight ? (detector as any).getMaxJumpHeight() : undefined;
-
-            let avgJumpHeight = undefined;
-            if (currentReps.length > 0) {
-              const heights = currentReps
-                .map((r: any) => r.jump_height_m)
-                .filter((h: number) => h !== undefined && h > 0);
-              if (heights.length > 0) {
-                avgJumpHeight = heights.reduce((a: number, b: number) => a + b, 0) / heights.length;
-              }
-            }
-
-            const metrics = {
-              correctCount,
-              incorrectCount: currentReps.length - correctCount,
-              minAngle: currentAngle,
-              currentTime: targetTime,
-              dipTime: dipTime,
-              maxJumpHeight: maxJumpHeight,
-              avgJumpHeight: avgJumpHeight,
-              landmarksCaptured: this.capturedLandmarks.length,
-              framesProcessed: frameCount
             };
-
-            // Send progress update with mode-specific frequency
-            // TEST MODE: Update EVERY frame for REAL-TIME feedback
-            // NORMAL MODE: Update every 10 frames for better performance
-            const progressInterval = this.isTestMode ? 1 : 10;
-            if (frameCount % progressInterval === 0) {
-              // Capture frame for preview
-              // TEST MODE: MINIMUM quality (0.1) for ZERO-WAIT encoding
-              // NORMAL MODE: Medium quality (0.5) for balance
-              try {
-                const quality = this.isTestMode ? 0.1 : 0.5;
-                lastCapturedFrame = this.canvas!.toDataURL('image/jpeg', quality);
-              } catch (err) {
-                console.error('Error capturing frame:', err);
-              }
-              // Ensure progress reaches 99% max before completion
-              const reportedProgress = Math.min(progress, 99);
-              onProgress(reportedProgress, lastCapturedFrame || '', currentReps.length, metrics);
-            }
-          }
-
-          // All frames processed - Calculate performance metrics
-          const actualDuration = video.duration;
-          const processingEndTime = performance.now();
-          const totalProcessingTime = (processingEndTime - processingStartTime) / 1000; // Convert to seconds
-          const processingFPS = frameCount / totalProcessingTime;
-          const speedRatio = actualDuration / totalProcessingTime;
-
-          console.log('✅ Video processing complete!');
-          console.log('  Video duration:', video.duration.toFixed(2), 'seconds');
-          console.log('  Frames collected:', this.processedFrames.length);
-          console.log('  Expected frames:', totalFramesToProcess);
-
-          // Frame completeness validation
-          const frameCompleteness = (this.processedFrames.length / totalFramesToProcess) * 100;
-          if (frameCompleteness < 95) {
-            console.warn(`⚠️ Frame completeness: ${frameCompleteness.toFixed(1)}% - Some frames may have been skipped`);
-          } else {
-            console.log(`✅ Frame completeness: ${frameCompleteness.toFixed(1)}% - All frames captured`);
-          }
-
-          // Performance metrics
-          if (this.isTestMode) {
-            console.log('⚡ TEST MODE Performance Metrics:');
-            console.log(`  ⏱️  Total processing time: ${totalProcessingTime.toFixed(2)}s`);
-            console.log(`  🚀 Processing FPS: ${processingFPS.toFixed(2)} fps`);
-            console.log(`  ⚡ Speed ratio: ${speedRatio.toFixed(2)}x ${speedRatio > 1 ? '(faster than real-time!)' : '(slower than real-time)'}`);
-            console.log(`  📊 Frames processed: ${frameCount} at 3 FPS (INSANE SPEED! 🔥)`);
-            if (speedRatio > 1) {
-              console.log(`  ✅ Processed ${actualDuration.toFixed(1)}s video in ${totalProcessingTime.toFixed(1)}s - ${((1 - totalProcessingTime / actualDuration) * 100).toFixed(0)}% faster!`);
-            }
-          } else {
-            console.log(`📊 Processing time: ${totalProcessingTime.toFixed(2)}s (${processingFPS.toFixed(2)} fps)`);
-          }
-
-          const finalReps = detector.getReps ? detector.getReps() : [];
-
-          // CRITICAL: Calculate exact FPS to match duration precisely
-          // Use high precision to ensure output duration matches input exactly
-          const playbackFPS = this.processedFrames.length / actualDuration;
-
-          console.log(`📹 Original video: ${actualDuration.toFixed(3)}s`);
-          console.log(`📊 Frames collected: ${this.processedFrames.length}`);
-          console.log(`🎬 Output FPS: ${playbackFPS.toFixed(3)} (${this.processedFrames.length} frames / ${actualDuration.toFixed(3)}s)`);
-          console.log(`✅ Output duration will be: ${actualDuration.toFixed(3)}s`);
-
-          // Log landmark capture summary
-          console.log('✅ Processing complete');
-          console.log(`📊 Total frames processed: ${frameCount}`);
-          console.log(`📊 Total landmarks captured: ${this.capturedLandmarks.length}`);
-          const framesWithPose = this.capturedLandmarks.filter(f => f.length > 0).length;
-          console.log(`📊 Frames with pose detected: ${framesWithPose}`);
-          const poseDetectionRate = this.capturedLandmarks.length > 0 ? (framesWithPose / this.capturedLandmarks.length) * 100 : 0;
-          console.log(`📊 Pose detection rate: ${poseDetectionRate.toFixed(1)}%`);
-
-          // Validate landmarks were captured
-          if (this.capturedLandmarks.length === 0) {
-            console.error('❌ No landmarks were captured during processing');
-            if (wakeLock) wakeLock.release();
-            reject(new Error('Failed to extract pose data from video'));
-            return;
-          }
-
-          // Warn if pose detection rate is low
-          if (poseDetectionRate < 50) {
-            console.warn('⚠️ Low pose detection rate - video quality may be poor');
-          }
-
-          console.log('Creating video from', this.processedFrames.length, 'frames...');
-          this.createVideoFromFrames(this.processedFrames, playbackFPS, actualDuration).then(videoBlob => {
-            console.log('✅ Created video blob:', videoBlob.size, 'bytes');
-            if (wakeLock) wakeLock.release();
-            const result = this.calculateStats(finalReps, activityName, actualDuration, videoBlob, this.capturedLandmarks);
-            resolve(result);
-          }).catch(err => {
-            console.error('Error creating video:', err);
-            if (wakeLock) wakeLock.release();
-            reject(err);
+            checkSeek();
           });
-        };
 
-        this.pose!.onResults((results: any) => {
-          poseResultsReceived++;
+          // Track video time for logging
+          lastVideoTime = video.currentTime;
 
-          // Capture landmarks for this frame
-          if (results.poseLandmarks) {
-            const frameLandmarks: PoseLandmark[] = results.poseLandmarks.map((lm: any) => ({
-              x: lm.x,
-              y: lm.y,
-              z: lm.z || 0,
-              visibility: lm.visibility || 1
-            }));
-            this.capturedLandmarks.push(frameLandmarks);
-          } else {
-            // No pose detected in this frame - store empty array
-            this.capturedLandmarks.push([]);
-            if (poseResultsReceived % 30 === 0) {
-              console.warn(`Frame ${poseResultsReceived}: No pose detected`);
-            }
-          }
-
-          if (poseResultsReceived === 1) {
-            console.log('✅ First pose result received');
-            console.log('Detector type:', detector.constructor.name);
-            console.log('Activity:', activityName);
-            console.log('Canvas:', this.canvas?.width, 'x', this.canvas?.height);
-          }
+          frameCount++;
+          const progress = Math.min((i / totalFramesToProcess) * 100, 99);
 
           // Reduce logging frequency for better performance
-          // TEST MODE: Minimal logging for maximum speed
-          // NORMAL MODE: Regular logging for tracking
-          if (!this.isTestMode && poseResultsReceived % 60 === 0) {
-            console.log(`Pose results: ${poseResultsReceived}, Frames stored: ${this.processedFrames.length}`);
-            console.log(`📊 Landmarks captured: ${this.capturedLandmarks.length} frames`);
+          if (frameCount % 30 === 0 || frameCount === 1) {
+            const currentReps = detector.getReps ? detector.getReps().length : 0;
+            console.log(`Frame: ${frameCount}/${totalFramesToProcess}, Time: ${targetTime.toFixed(2)}s/${video.duration.toFixed(2)}s, Progress: ${progress.toFixed(1)}%, Reps: ${currentReps}`);
           }
 
-          // Process with video detector
-          let reps: any[] = [];
-          let currentAngle = 0;
-          let state = 'up';
-          let dipTime = 0;
-          let maxJumpHeight = 0;
+          // Draw current frame to canvas
+          this.ctx!.drawImage(video, 0, 0, this.canvas!.width, this.canvas!.height);
 
-          if (results.poseLandmarks) {
-            // Process frame with detector
-            reps = detector.process(results.poseLandmarks, video.currentTime);
+          // CRITICAL: Process frame with MediaPipe and WAIT for result
+          let resultReceived = false;
 
-            // Get current state and angle from detector
-            if (typeof detector.getState === 'function') {
-              state = detector.getState();
-            }
-            if (typeof detector.getCurrentAngle === 'function') {
-              currentAngle = detector.getCurrentAngle();
-            }
-            if (typeof detector.getDipTime === 'function') {
-              dipTime = detector.getDipTime(video.currentTime);
-            }
-            if (typeof (detector as any).getMaxJumpHeight === 'function') {
-              maxJumpHeight = (detector as any).getMaxJumpHeight();
-            }
+          // Setup one-time result handler for this specific frame
+          const frameResultPromise = new Promise<void>((resultResolve) => {
+            const originalHandler = this.pose!.onResults;
 
-            // Log when reps are detected
-            if (reps.length > 0 && reps.length !== (window as any).lastRepCount) {
-              console.log('✅ Rep detected! Total:', reps.length);
-              (window as any).lastRepCount = reps.length;
-            }
+            this.pose!.onResults = (results: any) => {
+              // Call original handler to process and draw
+              originalHandler.call(this.pose, results);
+              resultReceived = true;
+              resultResolve();
+            };
+          });
 
-            // Log every 30 frames for debugging (skip in test mode for speed)
-            if (!this.isTestMode && poseResultsReceived % 30 === 0) {
-              console.log(`Frame ${poseResultsReceived}: angle=${currentAngle.toFixed(1)}° state=${state} reps=${reps.length}`);
-            }
-          } else {
-            // Reduce warning logging in test mode for speed
-            if (!this.isTestMode && poseResultsReceived % 30 === 0) {
-              console.warn('No pose landmarks detected in frame');
-            }
+          // Send frame to MediaPipe
+          try {
+            await this.pose!.send({ image: video });
+
+            // Wait for result with timeout (conditional based on mode)
+            const timeoutMs = this.isTestMode ? 300 : 500; // TEST MODE: 300ms, NORMAL MODE: 500ms
+            const timeoutPromise = new Promise<void>((_, timeoutReject) => {
+              setTimeout(() => timeoutReject(new Error('timeout')), timeoutMs);
+            });
+
+            await Promise.race([frameResultPromise, timeoutPromise]).catch(() => {
+              if (!resultReceived) {
+                if (this.isTestMode) {
+                  console.log(`⚡ TEST MODE: Fast processing timeout at frame ${frameCount} (${timeoutMs}ms)`);
+                } else {
+                  console.warn(`Frame ${frameCount}: MediaPipe timeout after ${timeoutMs}ms`);
+                }
+              }
+            });
+
+          } catch (err) {
+            console.error(`Frame ${frameCount} processing error:`, err);
           }
 
-          // Draw with updated metrics (EXACTLY like Python)
-          const correctCount = reps.filter(r => r.correct === true || r.correct === 'True').length;
-          const incorrectCount = reps.length - correctCount;
+          // Update progress
+          const currentReps = detector.getReps ? detector.getReps() : [];
+          const correctCount = currentReps.filter((r: any) => r.correct === 'True' || r.correct === true).length;
+          const currentAngle = detector.getCurrentAngle ? detector.getCurrentAngle() : undefined;
+          const dipTime = detector.getDipTime ? detector.getDipTime(targetTime) : 0;
+          const maxJumpHeight = (detector as any).getMaxJumpHeight ? (detector as any).getMaxJumpHeight() : undefined;
 
-          // Get distance for shuttle run, broad jump, and sit reach
-          let distance = undefined;
-          let currentReach = undefined;
-          if ((detector as any).getDistance) {
-            distance = (detector as any).getDistance();
-          } else if ((detector as any).getMaxDistance) {
-            distance = (detector as any).getMaxDistance();
-          } else if ((detector as any).getMaxReach) {
-            distance = (detector as any).getMaxReach();
-            // Also get current reach for sit-and-reach
-            if ((detector as any).getCurrentReach) {
-              currentReach = (detector as any).getCurrentReach();
+          let avgJumpHeight = undefined;
+          if (currentReps.length > 0) {
+            const heights = currentReps
+              .map((r: any) => r.jump_height_m)
+              .filter((h: number) => h !== undefined && h > 0);
+            if (heights.length > 0) {
+              avgJumpHeight = heights.reduce((a: number, b: number) => a + b, 0) / heights.length;
             }
           }
 
-          this.drawResults(
-            results,
-            activityName,
-            reps.length,
-            state,
-            currentAngle,
+          const metrics = {
             correctCount,
-            incorrectCount,
-            video.currentTime,
-            dipTime,
-            maxJumpHeight,
-            distance,
-            currentReach
-          );
+            incorrectCount: currentReps.length - correctCount,
+            minAngle: currentAngle,
+            currentTime: targetTime,
+            dipTime: dipTime,
+            maxJumpHeight: maxJumpHeight,
+            avgJumpHeight: avgJumpHeight,
+            landmarksCaptured: this.capturedLandmarks.length,
+            framesProcessed: frameCount
+          };
 
-          // Capture frame for preview (every 15th frame for better performance)
-          if (poseResultsReceived % 15 === 0 || poseResultsReceived === 1) {
+          // Send progress update every 10 frames for better performance
+          if (frameCount % 10 === 0) {
+            // Capture frame for preview
             try {
               lastCapturedFrame = this.canvas!.toDataURL('image/jpeg', 0.5);
             } catch (err) {
               console.error('Error capturing frame:', err);
             }
+            // Ensure progress reaches 99% max before completion
+            const reportedProgress = Math.min(progress, 99);
+            onProgress(reportedProgress, lastCapturedFrame || '', currentReps.length, metrics);
           }
+        }
 
-          // Store frame for video output immediately after drawing
-          // But skip duplicate frames (when video is stuck)
-          if (this.ctx && this.canvas) {
-            const frameData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-
-            // Check if this frame is different from the last one (detect stuck frames)
-            // Use conditional duplicate detection based on mode
-            let isDuplicate = false;
-            if (this.processedFrames.length > 0) {
-              const lastFrame = this.processedFrames[this.processedFrames.length - 1];
-              // Simple duplicate check: compare a few pixels
-              const sampleSize = 50;
-              let differences = 0;
-              for (let i = 0; i < sampleSize; i++) {
-                const idx = Math.floor((i / sampleSize) * frameData.data.length);
-                if (frameData.data[idx] !== lastFrame.data[idx]) {
-                  differences++;
-                }
-              }
-              // Conditional threshold for duplicate detection
-              // TEST MODE: 1% threshold (very aggressive) to skip more duplicates and speed up processing
-              // NORMAL MODE: 5% threshold (conservative) to keep more frames for quality
-              const duplicateThreshold = this.isTestMode ? 1 : 5;
-              isDuplicate = differences < duplicateThreshold;
-            }
-
-            if (!isDuplicate) {
-              this.processedFrames.push(frameData);
-
-              // Log every 60 frames to track progress (skip in test mode for speed)
-              if (!this.isTestMode && this.processedFrames.length % 60 === 0) {
-                console.log(`✅ Stored ${this.processedFrames.length} frames with pose data`);
-              }
-            } else {
-              // Skip duplicate frame
-              // Reduce logging in test mode for speed
-              if (!this.isTestMode && poseResultsReceived % 30 === 0) {
-                console.log(`⏭️ Skipped duplicate frame (video stuck)`);
-              }
-            }
+        // All frames processed - Calculate performance metrics
+        const actualDuration = video.duration;
+        const processingEndTime = performance.now();
+        const totalProcessingTime = (processingEndTime - processingStartTime) / 1000; // Convert to seconds
+        const processingFPS = frameCount / totalProcessingTime;
+        const speedRatio = actualDuration / totalProcessingTime;
+        
+        console.log('✅ Video processing complete!');
+        console.log('  Video duration:', video.duration.toFixed(2), 'seconds');
+        console.log('  Frames collected:', this.processedFrames.length);
+        console.log('  Expected frames:', totalFramesToProcess);
+        
+        // Frame completeness validation
+        const frameCompleteness = (this.processedFrames.length / totalFramesToProcess) * 100;
+        if (frameCompleteness < 95) {
+          console.warn(`⚠️ Frame completeness: ${frameCompleteness.toFixed(1)}% - Some frames may have been skipped`);
+        } else {
+          console.log(`✅ Frame completeness: ${frameCompleteness.toFixed(1)}% - All frames captured`);
+        }
+        
+        // Performance metrics
+        if (this.isTestMode) {
+          console.log('⚡ TEST MODE Performance Metrics:');
+          console.log(`  ⏱️  Total processing time: ${totalProcessingTime.toFixed(2)}s`);
+          console.log(`  🚀 Processing FPS: ${processingFPS.toFixed(2)} fps`);
+          console.log(`  ⚡ Speed ratio: ${speedRatio.toFixed(2)}x ${speedRatio > 1 ? '(faster than real-time!)' : '(slower than real-time)'}`);
+          if (speedRatio > 1) {
+            console.log(`  ✅ Processed ${actualDuration.toFixed(1)}s video in ${totalProcessingTime.toFixed(1)}s`);
           }
+        } else {
+          console.log(`📊 Processing time: ${totalProcessingTime.toFixed(2)}s (${processingFPS.toFixed(2)} fps)`);
+        }
+
+        const finalReps = detector.getReps ? detector.getReps() : [];
+
+        // CRITICAL: Calculate exact FPS to match duration precisely
+        // Use high precision to ensure output duration matches input exactly
+        const playbackFPS = this.processedFrames.length / actualDuration;
+
+        console.log(`📹 Original video: ${actualDuration.toFixed(3)}s`);
+        console.log(`📊 Frames collected: ${this.processedFrames.length}`);
+        console.log(`🎬 Output FPS: ${playbackFPS.toFixed(3)} (${this.processedFrames.length} frames / ${actualDuration.toFixed(3)}s)`);
+        console.log(`✅ Output duration will be: ${actualDuration.toFixed(3)}s`);
+        
+        // Log landmark capture summary
+        console.log('✅ Processing complete');
+        console.log(`📊 Total frames processed: ${frameCount}`);
+        console.log(`📊 Total landmarks captured: ${this.capturedLandmarks.length}`);
+        const framesWithPose = this.capturedLandmarks.filter(f => f.length > 0).length;
+        console.log(`📊 Frames with pose detected: ${framesWithPose}`);
+        const poseDetectionRate = this.capturedLandmarks.length > 0 ? (framesWithPose / this.capturedLandmarks.length) * 100 : 0;
+        console.log(`📊 Pose detection rate: ${poseDetectionRate.toFixed(1)}%`);
+        
+        // Validate landmarks were captured
+        if (this.capturedLandmarks.length === 0) {
+          console.error('❌ No landmarks were captured during processing');
+          if (wakeLock) wakeLock.release();
+          reject(new Error('Failed to extract pose data from video'));
+          return;
+        }
+        
+        // Warn if pose detection rate is low
+        if (poseDetectionRate < 50) {
+          console.warn('⚠️ Low pose detection rate - video quality may be poor');
+        }
+
+        console.log('Creating video from', this.processedFrames.length, 'frames...');
+        this.createVideoFromFrames(this.processedFrames, playbackFPS, actualDuration).then(videoBlob => {
+          console.log('✅ Created video blob:', videoBlob.size, 'bytes');
+          if (wakeLock) wakeLock.release();
+          const result = this.calculateStats(finalReps, activityName, actualDuration, videoBlob, this.capturedLandmarks);
+          resolve(result);
+        }).catch(err => {
+          console.error('Error creating video:', err);
+          if (wakeLock) wakeLock.release();
+          reject(err);
         });
+      };
 
-        video.onerror = (e) => {
-          console.error('Video error event:', e);
-          reject(new Error('Video loading failed'));
-        };
+      this.pose!.onResults((results: any) => {
+        poseResultsReceived++;
 
-        // Add timeout to prevent infinite processing
-        const timeout = setTimeout(() => {
-          console.error('Processing timeout - video may be stuck');
-          if (!video.paused && !video.ended) {
-            video.pause();
+        // Capture landmarks for this frame
+        if (results.poseLandmarks) {
+          const frameLandmarks: PoseLandmark[] = results.poseLandmarks.map((lm: any) => ({
+            x: lm.x,
+            y: lm.y,
+            z: lm.z || 0,
+            visibility: lm.visibility || 1
+          }));
+          this.capturedLandmarks.push(frameLandmarks);
+        } else {
+          // No pose detected in this frame - store empty array
+          this.capturedLandmarks.push([]);
+          if (poseResultsReceived % 30 === 0) {
+            console.warn(`Frame ${poseResultsReceived}: No pose detected`);
           }
-        }, 120000); // 2 minute timeout
+        }
 
-        // Clear timeout when done
-        const originalResolve = resolve;
-        resolve = (result: any) => {
-          clearTimeout(timeout);
-          originalResolve(result);
-        };
+        if (poseResultsReceived === 1) {
+          console.log('✅ First pose result received');
+          console.log('Detector type:', detector.constructor.name);
+          console.log('Activity:', activityName);
+          console.log('Canvas:', this.canvas?.width, 'x', this.canvas?.height);
+        }
 
-        // Safety timeout - if processing takes too long, force completion
-        const maxProcessingTime = Math.max((video.duration || 60) * 5000, 300000); // 5x video duration or 5 minutes minimum
-        safetyTimeout = setTimeout(() => {
-          console.warn('Processing timeout - forcing completion after', maxProcessingTime / 1000, 'seconds');
+        // Reduce logging frequency for better performance
+        if (poseResultsReceived % 60 === 0) {
+          console.log(`Pose results: ${poseResultsReceived}, Frames stored: ${this.processedFrames.length}`);
+          console.log(`📊 Landmarks captured: ${this.capturedLandmarks.length} frames`);
+        }
 
-          // Get final reps from detector
-          const finalReps = detector.getReps ? detector.getReps() : [];
-          const actualDuration = video.duration && isFinite(video.duration) ? video.duration : video.currentTime;
+        // Process with video detector
+        let reps: any[] = [];
+        let currentAngle = 0;
+        let state = 'up';
+        let dipTime = 0;
+        let maxJumpHeight = 0;
 
-          console.log('Timeout triggered - Reps:', finalReps.length, 'Duration:', actualDuration, 'Frames:', this.processedFrames.length);
+        if (results.poseLandmarks) {
+          // Process frame with detector
+          reps = detector.process(results.poseLandmarks, video.currentTime);
 
-          // Calculate the exact playback FPS needed to match original duration
-          const playbackFPS = this.processedFrames.length / actualDuration;
-          console.log(`📹 Original video: ${actualDuration.toFixed(2)}s`);
-          console.log(`📊 Frames collected: ${this.processedFrames.length}`);
-          console.log(`🎬 Playback FPS: ${playbackFPS.toFixed(2)}`);
+          // Get current state and angle from detector
+          if (typeof detector.getState === 'function') {
+            state = detector.getState();
+          }
+          if (typeof detector.getCurrentAngle === 'function') {
+            currentAngle = detector.getCurrentAngle();
+          }
+          if (typeof detector.getDipTime === 'function') {
+            dipTime = detector.getDipTime(video.currentTime);
+          }
+          if (typeof (detector as any).getMaxJumpHeight === 'function') {
+            maxJumpHeight = (detector as any).getMaxJumpHeight();
+          }
 
-          // Create video from collected frames with calculated FPS
-          this.createVideoFromFrames(this.processedFrames, playbackFPS, actualDuration).then(videoBlob => {
-            const result = this.calculateStats(finalReps, activityName, actualDuration, videoBlob, this.capturedLandmarks);
-            resolve(result);
-          }).catch(err => {
-            console.error('Error creating video:', err);
-            const emptyBlob = new Blob([], { type: 'video/webm' });
-            const result = this.calculateStats(finalReps, activityName, actualDuration, emptyBlob, this.capturedLandmarks);
-            resolve(result);
-          });
-        }, maxProcessingTime);
+          // Log when reps are detected
+          if (reps.length > 0 && reps.length !== (window as any).lastRepCount) {
+            console.log('✅ Rep detected! Total:', reps.length);
+            (window as any).lastRepCount = reps.length;
+          }
+
+          // Log every 30 frames for debugging
+          if (poseResultsReceived % 30 === 0) {
+            console.log(`Frame ${poseResultsReceived}: angle=${currentAngle.toFixed(1)}° state=${state} reps=${reps.length}`);
+          }
+        } else {
+          if (poseResultsReceived % 30 === 0) {
+            console.warn('No pose landmarks detected in frame');
+          }
+        }
+
+        // Draw with updated metrics (EXACTLY like Python)
+        const correctCount = reps.filter(r => r.correct === true || r.correct === 'True').length;
+        const incorrectCount = reps.length - correctCount;
+
+        // Get distance for shuttle run, broad jump, and sit reach
+        let distance = undefined;
+        let currentReach = undefined;
+        if ((detector as any).getDistance) {
+          distance = (detector as any).getDistance();
+        } else if ((detector as any).getMaxDistance) {
+          distance = (detector as any).getMaxDistance();
+        } else if ((detector as any).getMaxReach) {
+          distance = (detector as any).getMaxReach();
+          // Also get current reach for sit-and-reach
+          if ((detector as any).getCurrentReach) {
+            currentReach = (detector as any).getCurrentReach();
+          }
+        }
+
+        this.drawResults(
+          results,
+          activityName,
+          reps.length,
+          state,
+          currentAngle,
+          correctCount,
+          incorrectCount,
+          video.currentTime,
+          dipTime,
+          maxJumpHeight,
+          distance,
+          currentReach
+        );
+
+        // Capture frame for preview (every 15th frame for better performance)
+        if (poseResultsReceived % 15 === 0 || poseResultsReceived === 1) {
+          try {
+            lastCapturedFrame = this.canvas!.toDataURL('image/jpeg', 0.5);
+          } catch (err) {
+            console.error('Error capturing frame:', err);
+          }
+        }
+
+        // Store frame for video output immediately after drawing
+        // But skip duplicate frames (when video is stuck)
+        if (this.ctx && this.canvas) {
+          const frameData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+
+          // Check if this frame is different from the last one (detect stuck frames)
+          // Use conditional duplicate detection based on mode
+          let isDuplicate = false;
+          if (this.processedFrames.length > 0) {
+            const lastFrame = this.processedFrames[this.processedFrames.length - 1];
+            // Simple duplicate check: compare a few pixels
+            const sampleSize = 50;
+            let differences = 0;
+            for (let i = 0; i < sampleSize; i++) {
+              const idx = Math.floor((i / sampleSize) * frameData.data.length);
+              if (frameData.data[idx] !== lastFrame.data[idx]) {
+                differences++;
+              }
+            }
+            // Conditional threshold: TEST MODE is less aggressive (2%) to capture more frames
+            const duplicateThreshold = this.isTestMode ? 2 : 5;
+            isDuplicate = differences < duplicateThreshold;
+          }
+
+          if (!isDuplicate) {
+            this.processedFrames.push(frameData);
+
+            // Log every 60 frames to track progress
+            if (this.processedFrames.length % 60 === 0) {
+              console.log(`✅ Stored ${this.processedFrames.length} frames with pose data`);
+            }
+          } else {
+            // Skip duplicate frame
+            if (poseResultsReceived % 30 === 0) {
+              console.log(`⏭️ Skipped duplicate frame (video stuck)`);
+            }
+          }
+        }
+      });
+
+      video.onerror = (e) => {
+        console.error('Video error event:', e);
+        reject(new Error('Video loading failed'));
+      };
+
+      // Add timeout to prevent infinite processing
+      const timeout = setTimeout(() => {
+        console.error('Processing timeout - video may be stuck');
+        if (!video.paused && !video.ended) {
+          video.pause();
+        }
+      }, 120000); // 2 minute timeout
+
+      // Clear timeout when done
+      const originalResolve = resolve;
+      resolve = (result: any) => {
+        clearTimeout(timeout);
+        originalResolve(result);
+      };
+
+      // Safety timeout - if processing takes too long, force completion
+      const maxProcessingTime = Math.max((video.duration || 60) * 5000, 300000); // 5x video duration or 5 minutes minimum
+      safetyTimeout = setTimeout(() => {
+        console.warn('Processing timeout - forcing completion after', maxProcessingTime / 1000, 'seconds');
+
+        // Get final reps from detector
+        const finalReps = detector.getReps ? detector.getReps() : [];
+        const actualDuration = video.duration && isFinite(video.duration) ? video.duration : video.currentTime;
+
+        console.log('Timeout triggered - Reps:', finalReps.length, 'Duration:', actualDuration, 'Frames:', this.processedFrames.length);
+
+        // Calculate the exact playback FPS needed to match original duration
+        const playbackFPS = this.processedFrames.length / actualDuration;
+        console.log(`📹 Original video: ${actualDuration.toFixed(2)}s`);
+        console.log(`📊 Frames collected: ${this.processedFrames.length}`);
+        console.log(`🎬 Playback FPS: ${playbackFPS.toFixed(2)}`);
+
+        // Create video from collected frames with calculated FPS
+        this.createVideoFromFrames(this.processedFrames, playbackFPS, actualDuration).then(videoBlob => {
+          const result = this.calculateStats(finalReps, activityName, actualDuration, videoBlob, this.capturedLandmarks);
+          resolve(result);
+        }).catch(err => {
+          console.error('Error creating video:', err);
+          const emptyBlob = new Blob([], { type: 'video/webm' });
+          const result = this.calculateStats(finalReps, activityName, actualDuration, emptyBlob, this.capturedLandmarks);
+          resolve(result);
+        });
+      }, maxProcessingTime);
       } catch (error) {
         console.error('❌ Video processing failed:', error);
-
+        
         // Clean up wake lock
         if (wakeLock) {
           try {
@@ -846,7 +817,7 @@ class MediaPipeProcessor {
             console.error('Failed to release wake lock:', e);
           }
         }
-
+        
         // Provide helpful error message
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         reject(new Error(`Video processing failed: ${errorMessage}`));
