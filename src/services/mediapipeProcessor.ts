@@ -719,41 +719,16 @@ class MediaPipeProcessor {
         }
 
         // Store frame for video output immediately after drawing
-        // But skip duplicate frames (when video is stuck)
+        // ALWAYS store frames for smooth output - no skipping!
         if (this.ctx && this.canvas) {
           const frameData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+          
+          // Store every frame for smooth output
+          this.processedFrames.push(frameData);
 
-          // Check if this frame is different from the last one (detect stuck frames)
-          // Use conditional duplicate detection based on mode
-          let isDuplicate = false;
-          if (this.processedFrames.length > 0) {
-            const lastFrame = this.processedFrames[this.processedFrames.length - 1];
-            // Simple duplicate check: compare a few pixels
-            const sampleSize = 50;
-            let differences = 0;
-            for (let i = 0; i < sampleSize; i++) {
-              const idx = Math.floor((i / sampleSize) * frameData.data.length);
-              if (frameData.data[idx] !== lastFrame.data[idx]) {
-                differences++;
-              }
-            }
-            // Conditional threshold: TEST MODE is less aggressive (2%) to capture more frames
-            const duplicateThreshold = this.isTestMode ? 2 : 5;
-            isDuplicate = differences < duplicateThreshold;
-          }
-
-          if (!isDuplicate) {
-            this.processedFrames.push(frameData);
-
-            // Log every 60 frames to track progress
-            if (this.processedFrames.length % 60 === 0) {
-              console.log(`✅ Stored ${this.processedFrames.length} frames with pose data`);
-            }
-          } else {
-            // Skip duplicate frame
-            if (poseResultsReceived % 30 === 0) {
-              console.log(`⏭️ Skipped duplicate frame (video stuck)`);
-            }
+          // Log every 60 frames to track progress
+          if (this.processedFrames.length % 60 === 0) {
+            console.log(`✅ Stored ${this.processedFrames.length} frames with pose data`);
           }
         }
       });
