@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { StopCircle, SwitchCamera, Play } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
+import { PushupLiveDetector } from '@/services/workoutDetectors/PushupLiveDetector';
 
 interface LiveRecorderCleanProps {
   activityName: string;
@@ -17,6 +18,17 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
   const [repCount, setRepCount] = useState(0);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Push-up specific metrics
+  const [metrics, setMetrics] = useState({
+    elbowAngle: 0,
+    plankAngle: 0,
+    chestDepth: 0,
+    state: 'up' as 'up' | 'down',
+    elbowOk: false,
+    plankOk: false,
+    chestOk: false
+  });
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -86,8 +98,14 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       poseInstance.onResults(onPoseResults);
       setPose(poseInstance);
 
-      const { getVideoDetectorForActivity } = await import('@/services/videoDetectors');
-      detectorRef.current = getVideoDetectorForActivity(activityName);
+      // Initialize workout detector based on activity
+      if (activityName === 'Push-ups') {
+        detectorRef.current = new PushupLiveDetector();
+      } else {
+        // Use generic detector for other workouts
+        const { getVideoDetectorForActivity } = await import('@/services/videoDetectors');
+        detectorRef.current = getVideoDetectorForActivity(activityName);
+      }
 
       processFrame(poseInstance);
     } catch (error) {
@@ -120,6 +138,12 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         const currentTime = (Date.now() - recordingStartTimeRef.current) / 1000;
         const reps = detectorRef.current.process(results.poseLandmarks, currentTime);
         setRepCount(reps.length);
+        
+        // Update metrics for push-ups
+        if (activityName === 'Push-ups' && detectorRef.current.getCurrentMetrics) {
+          const currentMetrics = detectorRef.current.getCurrentMetrics();
+          setMetrics(currentMetrics);
+        }
       }
 
       if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {
@@ -152,7 +176,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       });
 
       chunksRef.current = [];
-      mediaRecorderRef.current.ondataavailable = (e) => {
+      mediaRecorderRef.current.ondataavailable = (e: BlobEvent) => {
         if (e.data.size > 0) {
           chunksRef.current.push(e.data);
         }
@@ -206,7 +230,9 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
           totalReps: reps.length,
           correctReps,
           incorrectReps: reps.length - correctReps
-        }
+        },
+        repDetails: reps, // Include detailed rep data
+        activityName
       };
 
       console.log('Recording complete:', results);
@@ -292,6 +318,33 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
 
         <div className="absolute bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-black/90 via-black/70 to-transparent safe-bottom">
           <div className="px-4 py-6 space-y-4">
+            {/* Live Metrics for Push-ups */}
+            {isRecording && activityName === 'Push-ups' && (
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className={`bg-black/50 rounded-lg p-3 border-2 ${metrics.elbowOk ? 'border-green-500' : 'border-red-500'}`}>
+                  <div className="text-xs text-white/60 mb-1">Elbow Angle</div>
+                  <div className="text-2xl font-bold text-white">{metrics.elbowAngle}°</div>
+                  <div className={`text-xs mt-1 ${metrics.elbowOk ? 'text-green-400' : 'text-red-400'}`}>
+                    {metrics.elbowOk ? '✓ Good' : '✗ Too high'}
+                  </div>
+                </div>
+                <div className={`bg-black/50 rounded-lg p-3 border-2 ${metrics.plankOk ? 'border-green-500' : 'border-red-500'}`}>
+                  <div className="text-xs text-white/60 mb-1">Body Align</div>
+                  <div className="text-2xl font-bold text-white">{metrics.plankAngle}°</div>
+                  <div className={`text-xs mt-1 ${metrics.plankOk ? 'text-green-400' : 'text-red-400'}`}>
+                    {metrics.plankOk ? '✓ Straight' : '✗ Bent'}
+                  </div>
+                </div>
+                <div className={`bg-black/50 rounded-lg p-3 border-2 ${metrics.chestOk ? 'border-green-500' : 'border-red-500'}`}>
+                  <div className="text-xs text-white/60 mb-1">Chest Depth</div>
+                  <div className="text-2xl font-bold text-white">{metrics.chestDepth}</div>
+                  <div className={`text-xs mt-1 ${metrics.chestOk ? 'text-green-400' : 'text-red-400'}`}>
+                    {metrics.chestOk ? '✓ Deep' : '✗ Shallow'}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-center space-x-8 text-white">
               <div className="text-center">
                 <div className="text-4xl font-bold">{repCount}</div>

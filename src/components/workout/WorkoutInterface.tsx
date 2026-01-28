@@ -6,6 +6,7 @@ import LiveCameraProcessor from './LiveCameraProcessor';
 import LiveRecorderClean from './LiveRecorderClean';
 import HowToPerformScreen from './HowToPerformScreen';
 import PostureCheckScreen from './PostureCheckScreen';
+import WorkoutResultsScreen from './WorkoutResultsScreen';
 import { BADGES, checkBadgeUnlock, updateUserStats } from '@/utils/badgeSystem';
 import { getUserStats, saveUserStats, getUnlockedBadges, unlockBadge } from '@/utils/workoutStorage';
 
@@ -241,6 +242,25 @@ const WorkoutInterface = ({ activity, mode, onBack }: WorkoutInterfaceProps) => 
   }
 
   if (stage === 'liveResults') {
+    // Show results screen for live recording
+    if (liveResults) {
+      return (
+        <WorkoutResultsScreen
+          activityName={activity.name}
+          totalReps={liveResults.reps || 0}
+          correctReps={liveResults.correctReps || 0}
+          incorrectReps={(liveResults.reps || 0) - (liveResults.correctReps || 0)}
+          duration={liveResults.duration || 0}
+          repDetails={liveResults.repDetails}
+          onHome={async () => {
+            // Process and save workout before going home
+            await handleWorkoutComplete(liveResults);
+          }}
+        />
+      );
+    }
+    
+    // Fallback to VideoProcessor if no results
     return (
       <VideoProcessor
         videoFile={null}
