@@ -94,10 +94,22 @@ export class PushupLiveDetector {
         this.currentElbowAngle = elbowAngle;
         this.currentPlankAngle = plankAngle;
         this.currentChestDepth = chestDepth;
+        
+        // DEBUG: Log calculated values occasionally
+        if (Math.random() < 0.02) {
+          console.log('🔢 Calculated:', {
+            elbowAngle: Math.round(elbowAngle),
+            plankAngle: Math.round(plankAngle),
+            chestDepth: Math.round(chestDepth),
+            ls, le, lw
+          });
+        }
       } catch (error) {
         // EXACT: except: pass
-        console.error('Error calculating angles:', error);
+        console.error('❌ Error calculating angles:', error);
       }
+    } else {
+      console.warn('⚠️ No landmarks or invalid count:', landmarks?.length);
     }
 
     // EXACT: if elbow_angle is not None:
@@ -166,6 +178,11 @@ export class PushupLiveDetector {
       // EXACT: if in_dip:
       if (this.inDip) {
         this.currentDipMinAngle = Math.min(this.currentDipMinAngle, elbowSm);
+      }
+    } else {
+      // DEBUG: Log when elbow angle is null
+      if (Math.random() < 0.01) {
+        console.warn('⚠️ Elbow angle is null - not processing rep logic');
       }
     }
 

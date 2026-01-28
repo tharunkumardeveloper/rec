@@ -91,6 +91,11 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       if (activityName === 'Push-ups') {
         detectorRef.current = new PushupLiveDetector();
         console.log('✅ Push-up detector initialized');
+        
+        // TEST: Log first landmark to verify structure
+        setTimeout(() => {
+          console.log('🧪 Waiting for first pose detection...');
+        }, 2000);
       }
 
       processFrame(poseInstance);
@@ -127,12 +132,25 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
           detectorRef.current.setDimensions(canvas.width, canvas.height);
         }
         
+        // TEST: Log landmark structure on first frame
+        if (repCount === 0 && Math.random() < 0.1) {
+          console.log('🧪 Landmark sample:', {
+            landmark11: results.poseLandmarks[11],
+            canvasSize: { width: canvas.width, height: canvas.height }
+          });
+        }
+        
         const currentTime = (Date.now() - recordingStartTimeRef.current) / 1000;
-        const repCount = detectorRef.current.process(results.poseLandmarks, currentTime);
-        setRepCount(repCount);
+        const newRepCount = detectorRef.current.process(results.poseLandmarks, currentTime);
+        setRepCount(newRepCount);
         
         // Get current metrics for display
         const metrics = detectorRef.current.getCurrentMetrics();
+        
+        // Log metrics occasionally
+        if (Math.random() < 0.05) {
+          console.log('📊 Metrics:', metrics);
+        }
         
         // Draw metrics on canvas (matching Python HUD)
         ctx.font = 'bold 24px Arial';
@@ -164,6 +182,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         ctx.font = 'bold 20px Arial';
         ctx.fillStyle = '#FF0000';
         ctx.fillText('⚠️ Detector not initialized!', 15, 40);
+        console.error('⚠️ Detector not initialized!');
       } else if (isRecording && !results.poseLandmarks) {
         // Warning if no landmarks detected
         ctx.font = 'bold 20px Arial';
