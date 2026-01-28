@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Volume2, Play, Info, Cloud } from 'lucide-react';
+import { Volume2, Play, Info, Sparkles } from 'lucide-react';
 import { ttsCoach } from '@/services/ttsCoach';
-import { cloudTTS } from '@/services/cloudTTS';
+import { elevenLabsTTS } from '@/services/elevenLabsTTS';
 
 const TTSSettings = () => {
   const [enabled, setEnabled] = useState(ttsCoach.getSettings().enabled);
@@ -18,10 +18,10 @@ const TTSSettings = () => {
   };
 
   const testVoice = () => {
-    cloudTTS.speak("10 reps! You're crushing it!", true);
+    elevenLabsTTS.speak("10 reps! You're crushing it!", true);
     // Update voice info after speaking
     setTimeout(() => {
-      setVoiceInfo(cloudTTS.getVoiceInfo());
+      setVoiceInfo(elevenLabsTTS.getVoiceInfo());
     }, 100);
   };
 
@@ -69,8 +69,8 @@ const TTSSettings = () => {
           )}
           
           <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-            <Cloud className="w-3 h-3" />
-            <span>Cloud-powered TTS • Works on all devices</span>
+            <Sparkles className="w-3 h-3" />
+            <span>Powered by ElevenLabs AI • Ultra-realistic voice</span>
           </div>
         </div>
       </CardContent>
