@@ -18,6 +18,8 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
   const [repCount, setRepCount] = useState(0);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(3); // Start with countdown
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -26,7 +28,9 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
   const detectorRef = useRef<PushupLiveDetector | null>(null);
   const recordingStartTimeRef = useRef<number>(0);
   const timerIntervalRef = useRef<number | null>(null);
-  const isRecordingRef = useRef<boolean>(false); // Add ref for recording state
+  const isRecordingRef = useRef<boolean>(false);
+  const countdownIntervalRef = useRef<number | null>(null);
+  const autoStartTriggeredRef = useRef<boolean>(false);
 
   useEffect(() => {
     initializeCamera();
@@ -34,6 +38,34 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       cleanup();
     };
   }, [facingMode]);
+
+  // Auto-start countdown after initialization
+  useEffect(() => {
+    if (isInitialized && !autoStartTriggeredRef.current && countdown !== null && !isRecording) {
+      autoStartTriggeredRef.current = true;
+      
+      let currentCount = 3;
+      setCountdown(currentCount);
+      
+      countdownIntervalRef.current = window.setInterval(() => {
+        currentCount--;
+        
+        if (currentCount <= 0) {
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+          setCountdown(null);
+          // Auto-start recording
+          setTimeout(() => {
+            startRecording();
+          }, 100);
+        } else {
+          setCountdown(currentCount);
+        }
+      }, 1000);
+    }
+  }, [isInitialized]);
 
   const initializeCamera = async () => {
     try {
@@ -94,6 +126,9 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       }
 
       processFrame(poseInstance);
+      
+      // Mark as initialized to trigger countdown
+      setIsInitialized(true);
     } catch (error) {
       console.error('MediaPipe initialization error:', error);
     }
@@ -250,6 +285,10 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
   };
 
   const cleanup = () => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
     if (stream) {
       stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
     }
@@ -282,6 +321,15 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
           className="absolute inset-0 w-full h-full object-cover"
         />
 
+        {/* Countdown Overlay */}
+        {countdown !== null && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-50">
+            <div className="text-white text-9xl font-bold animate-pulse">
+              {countdown}
+            </div>
+          </div>
+        )}
+
         <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/80 to-transparent safe-top">
           <div className="px-4 py-4">
             <div className="flex items-center justify-between">
@@ -297,7 +345,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
                   size="sm" 
                   onClick={toggleCamera} 
                   className="text-white hover:bg-white/20"
-                  disabled={isRecording}
+                  disabled={isRecording || countdown !== null}
                   title="Switch Camera"
                 >
                   <SwitchCamera className="w-5 h-5" />
@@ -307,7 +355,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
                   size="sm" 
                   onClick={onBack} 
                   className="text-white hover:bg-white/20"
-                  disabled={isRecording}
+                  disabled={isRecording || countdown !== null}
                 >
                   Cancel
                 </Button>
@@ -332,17 +380,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
             </div>
 
             <div className="flex items-center justify-center">
-              {!isRecording ? (
-                <Button
-                  size="lg"
-                  onClick={startRecording}
-                  className="bg-green-600 hover:bg-green-700 px-8"
-                  disabled={isProcessing}
-                >
-                  <Play className="w-5 h-5 mr-2" />
-                  Start Recording
-                </Button>
-              ) : (
+              {isRecording ? (
                 <Button
                   size="lg"
                   onClick={stopRecording}
@@ -351,7 +389,12 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
                   <StopCircle className="w-5 h-5 mr-2" />
                   Stop Recording
                 </Button>
-              )}
+              ) : countdown !== null ? (
+                <div className="text-white text-center">
+                  <div className="text-lg font-semibold">Get Ready...</div>
+                  <div className="text-sm text-white/80 mt-1">Starting in {countdown}</div>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
