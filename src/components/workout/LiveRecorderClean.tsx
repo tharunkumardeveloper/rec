@@ -298,7 +298,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       const correctReps = reps.filter((r: any) => r.correct === true).length;
       
       // TTS: Announce workout completion
-      ttsCoach.onWorkoutEnd(reps.length, correctReps, activityName);
+      ttsCoach.onWorkoutEnd(reps.length, correctReps);
       
       const results = {
         videoBlob,
