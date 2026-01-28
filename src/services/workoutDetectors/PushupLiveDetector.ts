@@ -45,7 +45,15 @@ export class PushupLiveDetector {
 
   process(landmarks: any[], currentTime: number): number {
     if (!landmarks || landmarks.length < 33) {
+      if (Math.random() < 0.01) {
+        console.warn('⚠️ Invalid landmarks count:', landmarks?.length);
+      }
       return this.reps.length;
+    }
+
+    // Debug: Confirm we're processing
+    if (Math.random() < 0.01) {
+      console.log('🔄 Detector processing landmarks, time:', currentTime.toFixed(2));
     }
 
     try {
