@@ -22,22 +22,50 @@ class EdgeTTSService {
     const loadVoices = () => {
       const voices = this.synth!.getVoices();
       
-      // ONLY use Microsoft Edge female voices - Zira or Aria
-      this.edgeVoice = voices.find(v => 
-        v.name.includes('Microsoft') && 
-        v.name.includes('Zira')
-      ) || voices.find(v => 
-        v.name.includes('Microsoft') && 
-        v.name.includes('Aria')
-      ) || voices.find(v => 
-        v.name.includes('Microsoft') && 
-        v.lang.startsWith('en-US')
-      );
+      console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+      
+      // ONLY use US English Microsoft female voices - NO Indian voices
+      this.edgeVoice = 
+        // First priority: Microsoft Zira (US English female)
+        voices.find(v => 
+          v.name.includes('Microsoft') && 
+          v.name.includes('Zira') &&
+          v.lang === 'en-US'
+        ) ||
+        // Second priority: Microsoft Aria (US English female)
+        voices.find(v => 
+          v.name.includes('Microsoft') && 
+          v.name.includes('Aria') &&
+          v.lang === 'en-US'
+        ) ||
+        // Third priority: Any Microsoft US English female
+        voices.find(v => 
+          v.name.includes('Microsoft') && 
+          v.lang === 'en-US' &&
+          !v.name.includes('Male') &&
+          !v.name.includes('Guy') &&
+          !v.name.includes('David')
+        ) ||
+        // Fourth priority: Google US English female
+        voices.find(v => 
+          v.name.includes('Google') && 
+          v.lang === 'en-US' &&
+          v.name.includes('Female')
+        ) ||
+        // Last resort: Any US English female (NOT Indian)
+        voices.find(v => 
+          v.lang === 'en-US' &&
+          !v.lang.includes('IN') &&
+          !v.name.includes('Indian') &&
+          !v.name.includes('Heera') &&
+          !v.name.includes('Neerja') &&
+          !v.name.includes('Male')
+        );
 
       if (this.edgeVoice) {
-        console.log('✅ Edge TTS Voice:', this.edgeVoice.name);
+        console.log('✅ Selected Voice:', this.edgeVoice.name, '(' + this.edgeVoice.lang + ')');
       } else {
-        console.warn('⚠️ Microsoft Edge voice not found. Voice coach disabled.');
+        console.warn('⚠️ No suitable US English female voice found. Voice coach disabled.');
         this.isEnabled = false;
       }
     };
