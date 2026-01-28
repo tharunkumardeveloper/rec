@@ -21,6 +21,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
   const [countdown, setCountdown] = useState<number | null>(3); // Start with countdown
   const [isInitialized, setIsInitialized] = useState(false);
   const [showInstructionOverlay, setShowInstructionOverlay] = useState(true); // Show instruction first
+  const [bodyDepthPercent, setBodyDepthPercent] = useState(50); // 0-100, 50 is middle
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -185,6 +186,21 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         ctx.fillStyle = '#FFFF00';
         ctx.strokeText(`Reps: ${metrics.repCount}`, 20, 50);
         ctx.fillText(`Reps: ${metrics.repCount}`, 20, 50);
+      }
+
+      // Track body depth for visual indicator (during recording)
+      if (isRecordingRef.current && results.poseLandmarks) {
+        // Use shoulder midpoint Y position to track depth
+        const leftShoulder = results.poseLandmarks[11];
+        const rightShoulder = results.poseLandmarks[12];
+        
+        if (leftShoulder && rightShoulder) {
+          const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+          // Convert Y position (0-1) to depth percentage (0-100)
+          // Lower Y value = higher on screen = more dipped
+          const depthPercent = Math.max(0, Math.min(100, shoulderY * 100));
+          setBodyDepthPercent(depthPercent);
+        }
       }
 
       if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {
@@ -437,6 +453,35 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
           <div className="absolute top-20 left-4 z-40 flex items-center space-x-2 bg-red-600 px-3 py-2 rounded-full">
             <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
             <span className="text-white text-sm font-semibold">REC</span>
+          </div>
+        )}
+
+        {/* Depth Indicator - Right side center */}
+        {isRecording && (
+          <div className="absolute right-8 top-1/2 -translate-y-1/2 z-40">
+            <div className="relative w-16 h-48 bg-black/40 backdrop-blur-sm rounded-full border-2 border-white/30 p-2">
+              {/* Top reference line */}
+              <div className="absolute left-2 right-2 top-8 h-1 bg-white/50 rounded-full" />
+              
+              {/* Middle reference line (target) */}
+              <div className="absolute left-2 right-2 top-1/2 -translate-y-1/2 h-1.5 bg-green-400 rounded-full" />
+              
+              {/* Bottom reference line */}
+              <div className="absolute left-2 right-2 bottom-8 h-1 bg-white/50 rounded-full" />
+              
+              {/* Moving indicator (user's position) */}
+              <div 
+                className="absolute left-1/2 -translate-x-1/2 w-10 h-3 bg-yellow-400 rounded-full transition-all duration-100 shadow-lg"
+                style={{
+                  top: `${bodyDepthPercent}%`,
+                  transform: 'translate(-50%, -50%)'
+                }}
+              />
+              
+              {/* Labels */}
+              <div className="absolute -left-12 top-6 text-xs text-white/70 font-semibold">UP</div>
+              <div className="absolute -left-16 bottom-6 text-xs text-white/70 font-semibold">DOWN</div>
+            </div>
           </div>
         )}
 
