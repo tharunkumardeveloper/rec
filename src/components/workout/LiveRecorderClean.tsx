@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { StopCircle, SwitchCamera } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { PushupLiveDetector } from '@/services/workoutDetectors/PushupLiveDetector';
+import { ttsCoach } from '@/services/ttsCoach';
 
 interface LiveRecorderCleanProps {
   activityName: string;
@@ -22,6 +23,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
   const [isInitialized, setIsInitialized] = useState(false);
   const [showInstructionOverlay, setShowInstructionOverlay] = useState(true); // Show instruction first
   const [bodyDepthPercent, setBodyDepthPercent] = useState(50); // 0-100, 50 is middle
+  const [previousRepCount, setPreviousRepCount] = useState(0);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -175,6 +177,16 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         
         const currentTime = (Date.now() - recordingStartTimeRef.current) / 1000;
         const newRepCount = detectorRef.current.process(results.poseLandmarks, currentTime);
+        
+        // TTS: Trigger voice feedback on rep completion
+        if (newRepCount > previousRepCount) {
+          const reps = detectorRef.current.getReps();
+          const lastRep = reps[reps.length - 1];
+          const isCorrect = lastRep?.correct === true;
+          ttsCoach.onRepCompleted(newRepCount, activityName, isCorrect);
+          setPreviousRepCount(newRepCount);
+        }
+        
         setRepCount(newRepCount);
         
         // Only show rep count on canvas - removed distracting metrics
@@ -254,6 +266,12 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         detectorRef.current.reset();
       }
       setRepCount(0);
+      setPreviousRepCount(0);
+
+      // TTS: Announce workout start
+      setTimeout(() => {
+        ttsCoach.onWorkoutStart(activityName);
+      }, 500);
 
       toast.success('Recording started');
     } catch (error) {
@@ -278,6 +296,9 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       // Get results from detector
       const reps = detectorRef.current ? detectorRef.current.getReps() : [];
       const correctReps = reps.filter((r: any) => r.correct === true).length;
+      
+      // TTS: Announce workout completion
+      ttsCoach.onWorkoutEnd(reps.length, correctReps);
       
       const results = {
         videoBlob,
@@ -326,6 +347,8 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
     }
+    // Stop TTS
+    ttsCoach.stop();
   };
 
   const formatTime = (seconds: number) => {
