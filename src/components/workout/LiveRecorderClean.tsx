@@ -465,24 +465,26 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         {/* Depth Indicator - Right side center */}
         {isRecording && (
           <div className="absolute right-6 top-1/2 -translate-y-1/2 z-40">
-            <div className="relative w-1 h-64 bg-white/20 rounded-full">
+            <div className="relative w-1.5 h-64 bg-gradient-to-b from-purple-500/30 via-purple-500/20 to-purple-500/30 rounded-full backdrop-blur-sm">
               {/* Top marker */}
-              <div className="absolute -left-2 top-0 w-5 h-0.5 bg-white/60" />
+              <div className="absolute -left-2 top-0 w-5 h-0.5 bg-purple-400/60 rounded-full" />
               
-              {/* Middle target line */}
-              <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-7 h-1 bg-green-400 rounded-full shadow-lg shadow-green-400/50" />
+              {/* Middle target line - Green theme */}
+              <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-7 h-1 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full shadow-lg shadow-green-400/50" />
               
               {/* Bottom marker */}
-              <div className="absolute -left-2 bottom-0 w-5 h-0.5 bg-white/60" />
+              <div className="absolute -left-2 bottom-0 w-5 h-0.5 bg-purple-400/60 rounded-full" />
               
-              {/* Moving position indicator */}
+              {/* Moving position indicator - Purple theme */}
               <div 
-                className="absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-400 rounded-full shadow-lg transition-all duration-100 border-2 border-white"
+                className="absolute left-1/2 -translate-x-1/2 w-4 h-4 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full shadow-lg shadow-purple-500/50 transition-all duration-100 border-2 border-white/80"
                 style={{
                   top: `${bodyDepthPercent}%`,
                   transform: 'translate(-50%, -50%)'
                 }}
-              />
+              >
+                <div className="absolute inset-0.5 bg-white/20 rounded-full" />
+              </div>
             </div>
           </div>
         )}
