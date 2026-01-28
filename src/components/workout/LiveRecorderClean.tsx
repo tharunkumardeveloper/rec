@@ -148,6 +148,11 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         drawText(`Plank: ${metrics.plankAngle}°`, metrics.plankAngle >= 165 ? '#00FF00' : '#FF0000');
         drawText(`Depth: ${metrics.chestDepth}`, metrics.chestDepth >= 40 ? '#00FF00' : '#FF0000');
         drawText(`State: ${metrics.state}`, '#C8C8C8');
+      } else if (isRecording && !detectorRef.current) {
+        // Warning if detector not initialized
+        ctx.font = 'bold 20px Arial';
+        ctx.fillStyle = '#FF0000';
+        ctx.fillText('⚠️ Detector not initialized!', 15, 40);
       }
 
       if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {

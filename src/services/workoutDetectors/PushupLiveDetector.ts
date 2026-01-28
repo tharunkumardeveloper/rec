@@ -45,7 +45,6 @@ export class PushupLiveDetector {
 
   process(landmarks: any[], currentTime: number): number {
     if (!landmarks || landmarks.length < 33) {
-      console.log('⚠️ Invalid landmarks:', landmarks?.length);
       return this.reps.length;
     }
 
@@ -85,15 +84,20 @@ export class PushupLiveDetector {
       const elbowSmooth = this.angleHistory.reduce((a, b) => a + b, 0) / this.angleHistory.length;
       this.currentElbowSmooth = elbowSmooth;
 
+      // Log every 30 frames (about once per second at 30fps)
+      if (Math.random() < 0.033) {
+        console.log(`📊 Elbow: ${Math.round(elbowSmooth)}° | State: ${this.state} | Reps: ${this.reps.length} | Down<=${this.DOWN_ANGLE} | Up>=${this.UP_ANGLE}`);
+      }
+
       // Rep detection logic (exactly matching Python)
       if (this.state === 'up' && elbowSmooth <= this.DOWN_ANGLE) {
-        console.log('🔽 Going DOWN - Elbow:', elbowSmooth);
+        console.log('🔽 Going DOWN - Elbow:', Math.round(elbowSmooth), '<=', this.DOWN_ANGLE);
         this.state = 'down';
         this.inDip = true;
         this.dipStartTime = currentTime;
         this.currentDipMinAngle = elbowSmooth;
       } else if (this.state === 'down' && elbowSmooth >= this.UP_ANGLE) {
-        console.log('🔼 Going UP - Elbow:', elbowSmooth);
+        console.log('🔼 Going UP - Elbow:', Math.round(elbowSmooth), '>=', this.UP_ANGLE);
         this.state = 'up';
         
         if (this.inDip && this.dipStartTime !== null) {
@@ -108,11 +112,17 @@ export class PushupLiveDetector {
 
           console.log('✅ REP COMPLETED!', {
             rep: this.reps.length + 1,
-            minElbow: this.currentDipMinAngle,
-            plankAngle,
-            chestDepth,
-            duration: dipDuration,
-            correct: isCorrect
+            minElbow: Math.round(this.currentDipMinAngle),
+            plankAngle: Math.round(plankAngle),
+            chestDepth: Math.round(chestDepth),
+            duration: dipDuration.toFixed(2),
+            correct: isCorrect,
+            checks: {
+              elbowOk: this.currentDipMinAngle <= this.DOWN_ANGLE,
+              durationOk: dipDuration >= this.MIN_DIP_DURATION,
+              plankOk: plankAngle >= this.PLANK_MIN_ANGLE,
+              depthOk: chestDepth >= this.CHEST_DEPTH_MIN
+            }
           });
 
           this.reps.push({
