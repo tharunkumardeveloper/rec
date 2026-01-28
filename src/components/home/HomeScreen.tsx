@@ -35,6 +35,9 @@ import verticalJumpImage from '@/assets/activities/vertical-jump.jpg';
 import pushupImage from '@/assets/activities/pushup.jpg';
 import pullupImage from '@/assets/activities/pullup.webp';
 
+// Squat image from public folder
+const squatImage = '/squat.webp';
+
 interface HomeScreenProps {
   userRole: 'athlete' | 'coach' | 'admin';
   userName: string;
@@ -146,6 +149,7 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
     { name: 'Wide Arm Push-up', rating: 4.6, image: wideArmPushupImage, muscles: 'Chest, Arms', tags: ['Arm', 'Chest'] },
 
     // Leg exercises
+    { name: 'Squats', rating: 4.9, image: squatImage, muscles: 'Quads, Glutes, Hamstrings', tags: ['Leg'] },
     { name: 'Vertical Jump', rating: 4.6, image: verticalJumpImage, muscles: 'Legs', tags: ['Leg'] },
 
     // Endurance exercises

@@ -69,6 +69,20 @@ const TestModeTab = ({ onWorkoutSelect, onBack }: TestModeTabProps) => {
       mistakes: ['Using momentum', 'Neck strain', 'Incomplete reps']
     },
     {
+      name: 'Squats',
+      image: '/squat.webp',
+      description: 'Lower body strength and endurance assessment measuring quad, glute, and hamstring power.',
+      muscles: ['Quadriceps', 'Glutes', 'Hamstrings', 'Core'],
+      category: 'Strength Training',
+      steps: [
+        'Stand with feet shoulder-width apart, toes slightly out.',
+        'Lower hips back and down until thighs are parallel to ground.',
+        'Keep chest up, knees tracking over toes.',
+        'Drive through heels to return to standing position.'
+      ],
+      mistakes: ['Knees caving inward', 'Heels lifting off ground', 'Leaning too far forward', 'Not reaching parallel depth']
+    },
+    {
       name: 'Shuttle Run',
       image: shuttleRunImage,
       description: 'Short shuttle run to test acceleration, deceleration and change-of-direction agility.',

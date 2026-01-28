@@ -287,6 +287,54 @@ export const workoutMessages = {
       "You're not done yet! Let's stretch!",
       "Reach forward! Let's go!"
     ]
+  },
+  
+  'Squats': {
+    repCount: [
+      "{count} squats! Your legs are getting powerful!",
+      "That's {count}! Feel those quads burning!",
+      "{count} reps down! Your glutes are on fire!",
+      "{count}! Your leg strength is building!",
+      "Amazing! {count} squats completed!",
+      "{count}! You're getting stronger with each rep!",
+      "Fantastic! {count} squats with solid form!"
+    ],
+    encouragement: [
+      "Your squat form is looking absolutely perfect!",
+      "I can see that leg strength developing!",
+      "Keep that depth consistent!",
+      "You're building serious lower body power!",
+      "That's elite level squat technique!",
+      "Your depth is getting better each rep!",
+      "Feel those glutes and quads working together!"
+    ],
+    posture: [
+      "Perfect depth! Thighs parallel to the ground!",
+      "Your knees are tracking beautifully!",
+      "Love that straight back! Great form!",
+      "Chest up! That's perfect posture!",
+      "Your squat form is textbook!",
+      "Controlled descent! Excellent technique!",
+      "Full range of motion! Beautiful!"
+    ],
+    energy: [
+      "You're crushing these squats!",
+      "This is your leg day! Own it!",
+      "Nothing but pure leg power!",
+      "You're a squat machine!",
+      "Feel that lower body strength!",
+      "You're unstoppable! Keep squatting!",
+      "This is what dedication looks like!"
+    ],
+    idle: [
+      "Come on! Let's see another squat!",
+      "Don't stop now! Your legs want more!",
+      "Let's see that depth! You've got this!",
+      "Keep moving! Your quads are ready!",
+      "Come on! One more deep squat!",
+      "You're not done yet! Let's go!",
+      "Drop it low! Let's squat!"
+    ]
   }
 };
 
