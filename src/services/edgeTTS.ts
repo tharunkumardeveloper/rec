@@ -31,42 +31,63 @@ class EdgeTTSService {
 
       console.log('🎤 Available voices:', voices.map(v => `${v.name} (${v.lang})`));
       
-      // Priority order for natural female voices
-      // Focus on Microsoft voices first (available in Edge browser)
+      // Priority order for natural, humanized female voices
+      // Ava Neural is prioritized as the most natural voice
       this.selectedVoice = 
-        // 1. Microsoft Jenny Neural (most natural - Edge browser)
+        // 1. Microsoft Ava Neural (most natural and humanized)
+        voices.find(v => v.name.includes('Ava') && v.name.includes('Neural')) ||
+        voices.find(v => v.name.includes('Ava') && v.lang.startsWith('en-US')) ||
+        
+        // 2. Other top Microsoft Neural voices
+        voices.find(v => v.name.includes('Jenny') && v.name.includes('Neural')) ||
+        voices.find(v => v.name.includes('Aria') && v.name.includes('Neural')) ||
+        
+        // 3. Australian English Neural voices
+        voices.find(v => v.name.includes('Natasha') && v.name.includes('Neural') && v.lang.startsWith('en-AU')) ||
+        
+        // 4. Australian English female voices
+        voices.find(v => v.name.includes('Catherine') && v.lang.startsWith('en-AU')) ||
+        voices.find(v => v.name.includes('Karen') && v.lang.startsWith('en-AU')) ||
+        voices.find(v => v.lang.startsWith('en-AU') && !v.name.toLowerCase().includes('male')) ||
+        
+        // 5. US English Neural voices
         voices.find(v => v.name.includes('Jenny') && v.lang.startsWith('en-US')) ||
-        // 2. Microsoft Aria Neural (Edge browser)
         voices.find(v => v.name.includes('Aria') && v.lang.startsWith('en-US')) ||
-        // 3. Microsoft Zira (Edge browser)
-        voices.find(v => v.name.includes('Zira') && v.lang.startsWith('en-US')) ||
-        // 4. Microsoft Michelle (Edge browser)
         voices.find(v => v.name.includes('Michelle') && v.lang.startsWith('en-US')) ||
-        // 5. Google US English Female (Chrome)
-        voices.find(v => v.name.includes('Google') && v.name.includes('Female') && v.lang.startsWith('en-US')) ||
-        // 6. Any Microsoft US English female (not male names)
+        
+        // 6. British English female voices
+        voices.find(v => v.name.includes('Hazel') && v.lang.startsWith('en-GB')) ||
+        voices.find(v => v.name.includes('Susan') && v.lang.startsWith('en-GB')) ||
+        
+        // 7. Google female voices (any English)
+        voices.find(v => v.name.includes('Google') && v.name.includes('Female') && v.lang.startsWith('en')) ||
+        
+        // 8. Any Microsoft English female (not male names)
         voices.find(v => 
           v.name.includes('Microsoft') && 
-          v.lang.startsWith('en-US') &&
+          v.lang.startsWith('en') &&
           !v.name.includes('David') &&
           !v.name.includes('Mark') &&
           !v.name.includes('Guy') &&
-          !v.name.includes('James')
+          !v.name.includes('James') &&
+          !v.name.includes('George')
         ) ||
-        // 7. Samantha (macOS/iOS)
+        
+        // 9. Samantha (macOS/iOS - very natural)
         voices.find(v => v.name.includes('Samantha')) ||
-        // 8. Any US English female voice
+        
+        // 10. Any English female voice
         voices.find(v => 
-          v.lang.startsWith('en-US') &&
+          v.lang.startsWith('en') &&
           (v.name.toLowerCase().includes('female') || 
            v.name.toLowerCase().includes('woman') ||
            (!v.name.toLowerCase().includes('male') && !v.name.toLowerCase().includes('man')))
         ) ||
-        // 9. First US English voice
-        voices.find(v => v.lang.startsWith('en-US')) ||
-        // 10. First English voice
+        
+        // 11. First English voice
         voices.find(v => v.lang.startsWith('en')) ||
-        // 11. Any voice as last resort
+        
+        // 12. Any voice as last resort
         voices[0];
 
       if (this.selectedVoice) {
@@ -133,9 +154,9 @@ class EdgeTTSService {
         console.warn('⚠️ No voice selected, using default');
       }
       
-      // Natural, encouraging settings
-      utterance.rate = 1.05; // Slightly faster for energy
-      utterance.pitch = 1.1; // Slightly higher for enthusiasm
+      // Natural, humanized settings
+      utterance.rate = 0.95; // Slightly slower for more natural, clear speech
+      utterance.pitch = 1.05; // Subtle pitch increase for warmth
       utterance.volume = 1.0;
       utterance.lang = 'en-US';
 
