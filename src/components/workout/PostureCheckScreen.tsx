@@ -192,86 +192,93 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-primary border-b border-primary-dark safe-top">
-        <div className="px-4 py-4">
-          <div className="flex items-center justify-between max-w-7xl mx-auto">
-            <div>
-              <h1 className="text-lg font-semibold text-white">Posture Check</h1>
-              <p className="text-sm text-white/80">{activityName}</p>
+    <div className="fixed inset-0 bg-black flex flex-col">
+      {/* Video - Full Screen */}
+      <div className="relative flex-1">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 w-full h-full object-cover opacity-0"
+        />
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        
+        {/* Countdown Overlay */}
+        {countdown !== null && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-50">
+            <div className="text-white text-9xl font-bold animate-pulse">
+              {countdown}
             </div>
-            <Button variant="ghost" size="sm" onClick={onBack} className="text-white hover:bg-white/20">
-              Cancel
+          </div>
+        )}
+
+        {/* Header Overlay */}
+        <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/80 to-transparent safe-top">
+          <div className="px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-lg font-semibold text-white">Posture Check</h1>
+                <p className="text-sm text-white/80">{activityName}</p>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onBack} 
+                className="text-white hover:bg-white/20"
+                disabled={countdown !== null}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Status Overlay - Bottom */}
+        <div className="absolute bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-black/90 via-black/70 to-transparent safe-bottom">
+          <div className="px-4 py-6 space-y-4">
+            {/* Status Message */}
+            <div className="flex items-center space-x-3 bg-black/50 backdrop-blur-sm rounded-lg p-4">
+              <div className="flex-shrink-0">
+                {getStatusIcon()}
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-white mb-1">
+                  {postureResult?.status === 'STANDING' ? 'Ready to Start!' : 'Position Yourself'}
+                </h3>
+                <p className="text-sm text-white/80">
+                  {postureResult?.message || 'Initializing camera...'}
+                </p>
+              </div>
+            </div>
+
+            {/* Requirements Checklist */}
+            <div className="flex items-center justify-center space-x-6 text-sm text-white">
+              <div className="flex items-center space-x-2">
+                <div className={`w-3 h-3 rounded-full ${postureResult?.isFullBodyVisible ? 'bg-green-500' : 'bg-gray-500'}`} />
+                <span>Full Body</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className={`w-3 h-3 rounded-full ${postureResult?.isStanding ? 'bg-green-500' : 'bg-gray-500'}`} />
+                <span>Standing</span>
+              </div>
+            </div>
+
+            {/* Action Button */}
+            <Button
+              size="lg"
+              onClick={handleContinue}
+              disabled={!isReady || countdown !== null}
+              className="w-full"
+              style={{ backgroundColor: isReady ? '#10B981' : undefined }}
+            >
+              {countdown !== null ? 'Starting...' : isReady ? 'Continue to Workout' : 'Adjust Your Position'}
             </Button>
           </div>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 space-y-6">
-        {/* Video Preview */}
-        <Card className="relative w-full max-w-2xl aspect-video bg-black overflow-hidden">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="absolute inset-0 w-full h-full object-cover opacity-0"
-          />
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          
-          {/* Countdown Overlay */}
-          {countdown !== null && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-              <div className="text-white text-9xl font-bold animate-pulse">
-                {countdown}
-              </div>
-            </div>
-          )}
-        </Card>
-
-        {/* Status Card */}
-        <Card className="w-full max-w-2xl p-6">
-          <div className="flex items-start space-x-4">
-            <div className="flex-shrink-0 mt-1">
-              {getStatusIcon()}
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold mb-2">
-                {postureResult?.status === 'STANDING' ? 'Ready to Start!' : 'Position Yourself'}
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                {postureResult?.message || 'Initializing camera...'}
-              </p>
-              
-              {/* Instructions */}
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <div className={`w-2 h-2 rounded-full ${postureResult?.isFullBodyVisible ? 'bg-green-500' : 'bg-gray-400'}`} />
-                  <span>Full body visible (head to feet)</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className={`w-2 h-2 rounded-full ${postureResult?.isStanding ? 'bg-green-500' : 'bg-gray-400'}`} />
-                  <span>Standing straight with legs extended</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Action Button */}
-        <Button
-          size="lg"
-          onClick={handleContinue}
-          disabled={!isReady || countdown !== null}
-          className="w-full max-w-2xl"
-        >
-          {countdown !== null ? 'Starting...' : isReady ? 'Continue to Workout' : 'Adjust Your Position'}
-        </Button>
       </div>
     </div>
   );
