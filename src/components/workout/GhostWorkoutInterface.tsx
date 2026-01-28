@@ -3,6 +3,7 @@ import { toast } from '@/components/ui/sonner';
 import GhostWorkoutUploadScreen from '@/components/workout/GhostWorkoutUploadScreen';
 import GhostVideoProcessor from '@/components/workout/GhostVideoProcessor';
 import GhostLiveRecorder from '@/components/workout/GhostLiveRecorder';
+import PostureCheckScreen from './PostureCheckScreen';
 import { BADGES, checkBadgeUnlock, updateUserStats } from '@/utils/badgeSystem';
 import { getUserStats, saveUserStats, getUnlockedBadges, unlockBadge } from '@/utils/workoutStorage';
 
@@ -18,8 +19,8 @@ interface GhostWorkoutInterfaceProps {
 }
 
 const GhostWorkoutInterface = ({ activity, mode, ghostGif, onBack }: GhostWorkoutInterfaceProps) => {
-    const [stage, setStage] = useState<'upload' | 'processing' | 'liveRecording' | 'liveResults'>(
-        mode === 'live' ? 'liveRecording' : 'upload'
+    const [stage, setStage] = useState<'upload' | 'processing' | 'postureCheck' | 'liveRecording' | 'liveResults'>(
+        mode === 'live' ? 'postureCheck' : 'upload'
     );
     const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
     const [liveResults, setLiveResults] = useState<any>(null);
@@ -36,6 +37,10 @@ const GhostWorkoutInterface = ({ activity, mode, ghostGif, onBack }: GhostWorkou
         console.log('Retrying upload');
         setSelectedVideo(null);
         setStage('upload');
+    };
+
+    const handlePostureConfirmed = () => {
+        setStage('liveRecording');
     };
 
     const handleWorkoutComplete = async (results: any) => {
@@ -139,6 +144,16 @@ const GhostWorkoutInterface = ({ activity, mode, ghostGif, onBack }: GhostWorkou
 
         onBack();
     };
+
+    if (stage === 'postureCheck') {
+        return (
+            <PostureCheckScreen
+                activityName={activity.name}
+                onPostureConfirmed={handlePostureConfirmed}
+                onBack={onBack}
+            />
+        );
+    }
 
     if (stage === 'processing') {
         return (

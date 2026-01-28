@@ -4,6 +4,7 @@ import WorkoutUploadScreen from './WorkoutUploadScreen';
 import VideoProcessor from './VideoProcessor';
 import LiveCameraProcessor from './LiveCameraProcessor';
 import LiveRecorder from './LiveRecorderNew';
+import PostureCheckScreen from './PostureCheckScreen';
 import { BADGES, checkBadgeUnlock, updateUserStats } from '@/utils/badgeSystem';
 import { getUserStats, saveUserStats, getUnlockedBadges, unlockBadge } from '@/utils/workoutStorage';
 
@@ -18,8 +19,8 @@ interface WorkoutInterfaceProps {
 }
 
 const WorkoutInterface = ({ activity, mode, onBack }: WorkoutInterfaceProps) => {
-  const [stage, setStage] = useState<'upload' | 'processing' | 'live' | 'liveRecording' | 'liveResults'>(
-    mode === 'live' ? 'liveRecording' : 'upload'
+  const [stage, setStage] = useState<'upload' | 'processing' | 'live' | 'postureCheck' | 'liveRecording' | 'liveResults'>(
+    mode === 'live' ? 'postureCheck' : 'upload'
   );
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [liveResults, setLiveResults] = useState<any>(null);
@@ -66,7 +67,11 @@ const WorkoutInterface = ({ activity, mode, onBack }: WorkoutInterfaceProps) => 
   const handleRetry = () => {
     setSelectedVideo(null);
     setLiveResults(null);
-    setStage(mode === 'live' ? 'liveRecording' : 'upload');
+    setStage(mode === 'live' ? 'postureCheck' : 'upload');
+  };
+
+  const handlePostureConfirmed = () => {
+    setStage('liveRecording');
   };
 
   const handleWorkoutComplete = async (results: any) => {
@@ -174,6 +179,16 @@ const WorkoutInterface = ({ activity, mode, onBack }: WorkoutInterfaceProps) => 
     onBack();
   };
 
+  if (stage === 'postureCheck') {
+    return (
+      <PostureCheckScreen
+        activityName={activity.name}
+        onPostureConfirmed={handlePostureConfirmed}
+        onBack={onBack}
+      />
+    );
+  }
+
   if (stage === 'processing') {
     return (
       <VideoProcessor
@@ -216,7 +231,7 @@ const WorkoutInterface = ({ activity, mode, onBack }: WorkoutInterfaceProps) => 
         videoFile={null}
         activityName={activity.name}
         onBack={onBack}
-        onRetry={() => setStage('liveRecording')}
+        onRetry={() => setStage('postureCheck')}
         onComplete={handleWorkoutComplete}
         liveResults={liveResults}
       />
