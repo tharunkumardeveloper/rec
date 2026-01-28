@@ -1,5 +1,5 @@
 // TTS Coach Service - Manages voice feedback during workouts
-import { edgeTTS } from './edgeTTS';
+import { cloudTTS } from './cloudTTS';
 
 interface TTSSettings {
   enabled: boolean;
@@ -15,13 +15,13 @@ class TTSCoach {
       enabled: true
     };
     
-    edgeTTS.setEnabled(this.settings.enabled);
+    cloudTTS.setEnabled(this.settings.enabled);
   }
 
   updateSettings(settings: Partial<TTSSettings>) {
     this.settings = { ...this.settings, ...settings };
     localStorage.setItem('tts_settings', JSON.stringify(this.settings));
-    edgeTTS.setEnabled(this.settings.enabled);
+    cloudTTS.setEnabled(this.settings.enabled);
   }
 
   getSettings(): TTSSettings {
@@ -31,34 +31,34 @@ class TTSCoach {
   onRepCompleted(rep: number, activityName: string, isCorrect: boolean) {
     // Speak every 3 seconds automatically
     if (rep !== this.lastSpokenRep) {
-      const message = edgeTTS.getEncouragement(rep, isCorrect);
-      edgeTTS.speak(message);
+      const message = cloudTTS.getEncouragement(rep, isCorrect);
+      cloudTTS.speak(message);
       this.lastSpokenRep = rep;
     }
   }
 
   onWorkoutStart(activityName: string) {
-    edgeTTS.announceStart(activityName);
+    cloudTTS.announceStart(activityName);
   }
 
   onWorkoutEnd(totalReps: number, correctReps: number, activityName: string = 'workout') {
     const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
-    edgeTTS.announceEnd(totalReps, accuracy);
+    cloudTTS.announceEnd(totalReps, accuracy);
   }
 
   onHighScore(currentReps: number, previousBest: number) {
     if (currentReps > previousBest) {
-      edgeTTS.speak(`New personal record! ${currentReps} reps!`, true);
+      cloudTTS.speak(`New personal record! ${currentReps} reps!`, true);
     }
   }
 
   reset() {
     this.lastSpokenRep = 0;
-    edgeTTS.reset();
+    cloudTTS.reset();
   }
 
   stop() {
-    edgeTTS.stop();
+    cloudTTS.stop();
   }
 }
 

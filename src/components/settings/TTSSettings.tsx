@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Volume2, Play, Info } from 'lucide-react';
+import { Volume2, Play, Info, Cloud } from 'lucide-react';
 import { ttsCoach } from '@/services/ttsCoach';
-import { edgeTTS } from '@/services/edgeTTS';
+import { cloudTTS } from '@/services/cloudTTS';
 
 const TTSSettings = () => {
   const [enabled, setEnabled] = useState(ttsCoach.getSettings().enabled);
@@ -18,10 +18,10 @@ const TTSSettings = () => {
   };
 
   const testVoice = () => {
-    edgeTTS.speak("10 reps! You're crushing it!", true);
+    cloudTTS.speak("10 reps! You're crushing it!", true);
     // Update voice info after speaking
     setTimeout(() => {
-      setVoiceInfo(edgeTTS.getVoiceInfo());
+      setVoiceInfo(cloudTTS.getVoiceInfo());
     }, 100);
   };
 
@@ -63,14 +63,15 @@ const TTSSettings = () => {
             <div className="flex items-start gap-2 p-2 bg-muted/50 rounded-md">
               <Info className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
               <p className="text-xs text-muted-foreground">
-                Using: {voiceInfo}
+                {voiceInfo}
               </p>
             </div>
           )}
           
-          <p className="text-xs text-muted-foreground text-center">
-            Best experience in Microsoft Edge browser
-          </p>
+          <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+            <Cloud className="w-3 h-3" />
+            <span>Cloud-powered TTS • Works on all devices</span>
+          </div>
         </div>
       </CardContent>
     </Card>
