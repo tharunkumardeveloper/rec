@@ -208,7 +208,7 @@ const LiveRecorder = ({ activityName, onBack, onComplete }: LiveRecorderProps) =
   const [incorrectCount, setIncorrectCount] = useState(0);
   const [poseDetector, setPoseDetector] = useState<any>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
-  const [showDemoDialog, setShowDemoDialog] = useState(true); // Show on mount
+  const [showDemoDialog, setShowDemoDialog] = useState(false); // Don't show on mount - already shown before
 
   const tips = WORKOUT_TIPS[activityName] || WORKOUT_TIPS['Push-ups'];
   const demo = WORKOUT_DEMOS[activityName] || WORKOUT_DEMOS['Push-ups'];
