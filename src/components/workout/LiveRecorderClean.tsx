@@ -356,17 +356,22 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
               <h2 className="text-4xl font-bold text-white mb-4">Get Into Position</h2>
               <div className="bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10">
                 <img 
-                  src="/overlay/pushup.png"
-                  alt="Push-up form" 
+                  src="/pushup.gif"
+                  alt="Push-up form demonstration" 
                   className="w-full h-auto mx-auto rounded-2xl"
                   style={{ maxHeight: '400px', objectFit: 'contain' }}
+                  onError={(e) => {
+                    console.error('Failed to load pushup image');
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
                 />
               </div>
               <p className="text-2xl text-white font-semibold">
                 Position yourself for push-ups
               </p>
               <p className="text-base text-white/80">
-                Recording will start automatically in a moment...
+                Get into plank position • Recording starts automatically
               </p>
             </div>
           </div>
