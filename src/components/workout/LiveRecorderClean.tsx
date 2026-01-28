@@ -351,20 +351,21 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
 
         {/* Instruction Overlay - Shows pushup image */}
         {showInstructionOverlay && activityName === 'Push-ups' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-50">
-            <div className="text-center space-y-6 px-6">
-              <h2 className="text-3xl font-bold text-white mb-4">Get Into Position</h2>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border-2 border-white/20">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-50">
+            <div className="text-center space-y-6 px-6 max-w-2xl">
+              <h2 className="text-4xl font-bold text-white mb-4">Get Into Position</h2>
+              <div className="bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10">
                 <img 
                   src="/overlay/pushup.png"
                   alt="Push-up form" 
-                  className="w-full max-w-md mx-auto rounded-xl shadow-2xl"
+                  className="w-full h-auto mx-auto rounded-2xl"
+                  style={{ maxHeight: '400px', objectFit: 'contain' }}
                 />
               </div>
-              <p className="text-xl text-white/90 font-semibold">
+              <p className="text-2xl text-white font-semibold">
                 Position yourself for push-ups
               </p>
-              <p className="text-sm text-white/70">
+              <p className="text-base text-white/80">
                 Recording will start automatically in a moment...
               </p>
             </div>

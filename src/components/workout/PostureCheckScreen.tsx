@@ -15,54 +15,95 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
   const [postureResult, setPostureResult] = useState<PostureCheckResult | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
-  const [autoStartTriggered, setAutoStartTriggered] = useState(false);
+  const [continuousStandingTime, setContinuousStandingTime] = useState(0); // Track continuous standing
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const countdownIntervalRef = useRef<number | null>(null);
+  const standingTimerRef = useRef<number | null>(null);
+  const lastStandingCheckRef = useRef<number>(Date.now());
 
-  // Auto-start countdown when posture becomes ready
+  // Track continuous standing time
   useEffect(() => {
-    if (isReady && !autoStartTriggered && countdown === null) {
-      console.log('✅ Perfect posture detected! Auto-starting countdown...');
-      setAutoStartTriggered(true);
-      
-      // Start countdown from 3
-      setCountdown(3);
-      
-      // Clear any existing interval
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
+    if (isReady && countdown === null) {
+      // User is standing, increment continuous time
+      if (!standingTimerRef.current) {
+        lastStandingCheckRef.current = Date.now();
+        standingTimerRef.current = window.setInterval(() => {
+          const now = Date.now();
+          const elapsed = (now - lastStandingCheckRef.current) / 1000;
+          lastStandingCheckRef.current = now;
+          
+          setContinuousStandingTime(prev => {
+            const newTime = prev + elapsed;
+            console.log(`⏱️ Continuous standing: ${newTime.toFixed(1)}s / 3s`);
+            
+            // Start countdown when 3 seconds reached
+            if (newTime >= 3 && countdown === null) {
+              console.log('✅ 3 seconds of continuous standing! Starting countdown...');
+              startCountdown();
+            }
+            
+            return newTime;
+          });
+        }, 100); // Check every 100ms for smooth progress
       }
-      
-      // Create new countdown interval
-      let currentCount = 3;
-      countdownIntervalRef.current = window.setInterval(() => {
-        currentCount--;
-        console.log('⏱️ Countdown:', currentCount);
-        
-        if (currentCount <= 0) {
-          // Countdown finished
-          console.log('✅ Countdown complete! Proceeding to workout...');
-          if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-            countdownIntervalRef.current = null;
-          }
-          setCountdown(null);
-          cleanup();
-          onPostureConfirmed();
-        } else {
-          setCountdown(currentCount);
-        }
-      }, 1000);
+    } else {
+      // User is not standing or countdown started, reset continuous time
+      if (standingTimerRef.current) {
+        clearInterval(standingTimerRef.current);
+        standingTimerRef.current = null;
+      }
+      if (!isReady && continuousStandingTime > 0) {
+        console.log('⚠️ Posture lost! Resetting timer...');
+        setContinuousStandingTime(0);
+      }
     }
     
-    // Reset auto-start trigger if posture is lost
-    if (!isReady && autoStartTriggered && countdown === null) {
-      console.log('⚠️ Posture lost, resetting auto-start trigger');
-      setAutoStartTriggered(false);
+    return () => {
+      if (standingTimerRef.current) {
+        clearInterval(standingTimerRef.current);
+        standingTimerRef.current = null;
+      }
+    };
+  }, [isReady, countdown]);
+
+  const startCountdown = () => {
+    // Clear standing timer
+    if (standingTimerRef.current) {
+      clearInterval(standingTimerRef.current);
+      standingTimerRef.current = null;
     }
-  }, [isReady, autoStartTriggered, countdown]);
+    
+    // Start countdown from 3
+    setCountdown(3);
+    
+    // Clear any existing interval
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    
+    // Create new countdown interval
+    let currentCount = 3;
+    countdownIntervalRef.current = window.setInterval(() => {
+      currentCount--;
+      console.log('⏱️ Countdown:', currentCount);
+      
+      if (currentCount <= 0) {
+        // Countdown finished
+        console.log('✅ Countdown complete! Proceeding to workout...');
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = null;
+        }
+        setCountdown(null);
+        cleanup();
+        onPostureConfirmed();
+      } else {
+        setCountdown(currentCount);
+      }
+    }, 1000);
+  };
 
   // Initialize camera on mount and when facing mode changes
   useEffect(() => {
@@ -98,7 +139,7 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
   const toggleCamera = () => {
     if (countdown !== null) return; // Don't allow switching during countdown
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
-    setAutoStartTriggered(false); // Reset auto-start when switching cameras
+    setContinuousStandingTime(0); // Reset timer when switching cameras
   };
 
   const initializeMediaPipe = async () => {
@@ -218,6 +259,12 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
       countdownIntervalRef.current = null;
     }
     
+    // Clear standing timer
+    if (standingTimerRef.current) {
+      clearInterval(standingTimerRef.current);
+      standingTimerRef.current = null;
+    }
+    
     // Stop camera stream
     if (stream) {
       stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
@@ -310,13 +357,30 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-white mb-1">
-                  {postureResult?.status === 'STANDING' ? 'Perfect! Starting...' : 'Position Yourself'}
+                  {postureResult?.status === 'STANDING' ? 'Hold Position...' : 'Position Yourself'}
                 </h3>
                 <p className="text-sm text-white/80">
-                  {postureResult?.message || 'Initializing camera...'}
+                  {postureResult?.status === 'STANDING' 
+                    ? `Keep standing for ${Math.max(0, 3 - continuousStandingTime).toFixed(1)}s` 
+                    : postureResult?.message || 'Initializing camera...'}
                 </p>
               </div>
             </div>
+
+            {/* Progress Bar for Continuous Standing */}
+            {isReady && continuousStandingTime < 3 && (
+              <div className="px-2">
+                <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-green-500 h-full transition-all duration-100 rounded-full"
+                    style={{ width: `${Math.min(100, (continuousStandingTime / 3) * 100)}%` }}
+                  />
+                </div>
+                <p className="text-center text-xs text-white/70 mt-2">
+                  Hold your position for 3 seconds
+                </p>
+              </div>
+            )}
 
             {/* Requirements Checklist */}
             <div className="flex items-center justify-center space-x-6 text-sm text-white">
