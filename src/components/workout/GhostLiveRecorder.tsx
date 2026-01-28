@@ -1,4 +1,4 @@
-import LiveRecorderNew from './LiveRecorderNew';
+import LiveRecorderClean from './LiveRecorderClean';
 
 interface GhostLiveRecorderProps {
   activityName: string;
@@ -11,7 +11,7 @@ const GhostLiveRecorder = ({ activityName, ghostGif, onBack, onComplete }: Ghost
   return (
     <div className="ghost-mode-page relative w-full h-full min-h-screen">
       {/* Clean Live Recorder - No landscape requirement */}
-      <LiveRecorderNew
+      <LiveRecorderClean
         activityName={activityName}
         onBack={onBack}
         onComplete={onComplete}
