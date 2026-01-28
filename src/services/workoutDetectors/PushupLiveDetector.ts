@@ -1,4 +1,4 @@
-// Push-up detector matching Python live analysis logic exactly
+// Push-up detector - EXACT translation of Python pushup_live.py
 export interface PushupRepData {
   rep: number;
   duration: number;
@@ -9,7 +9,7 @@ export interface PushupRepData {
 }
 
 export class PushupLiveDetector {
-  // Thresholds (matching Python exactly)
+  // Thresholds (EXACT from Python)
   private readonly DOWN_ANGLE = 75;
   private readonly UP_ANGLE = 110;
   private readonly PLANK_MIN_ANGLE = 165;
@@ -17,7 +17,7 @@ export class PushupLiveDetector {
   private readonly MIN_DIP_DURATION = 0.2;
   private readonly SMOOTH_N = 3;
 
-  // State
+  // State variables (EXACT from Python)
   private angleHistory: number[] = [];
   private state: 'up' | 'down' = 'up';
   private inDip = false;
@@ -25,12 +25,22 @@ export class PushupLiveDetector {
   private currentDipMinAngle = 180;
   private reps: PushupRepData[] = [];
 
-  // Current metrics for display
-  private currentElbowAngle = 0;
-  private currentElbowSmooth = 0;
-  private currentPlankAngle = 0;
-  private currentChestDepth = 0;
+  // Current frame metrics (for display)
+  private currentElbowAngle: number | null = null;
+  private currentElbowSmooth: number | null = null;
+  private currentPlankAngle: number | null = null;
+  private currentChestDepth: number | null = null;
 
+  // Canvas dimensions (set from video)
+  private width = 640;
+  private height = 480;
+
+  setDimensions(width: number, height: number) {
+    this.width = width;
+    this.height = height;
+  }
+
+  // EXACT angle calculation from Python
   calculateAngle(a: [number, number], b: [number, number], c: [number, number]): number {
     const ba = [a[0] - b[0], a[1] - b[1]];
     const bc = [c[0] - b[0], c[1] - b[1]];
@@ -43,110 +53,107 @@ export class PushupLiveDetector {
     return Math.acos(cosAngle) * (180 / Math.PI);
   }
 
+  // EXACT lm_xy from Python: returns (int(lm.x * w), int(lm.y * h))
+  lmXY(lm: any): [number, number] {
+    return [Math.floor(lm.x * this.width), Math.floor(lm.y * this.height)];
+  }
+
   process(landmarks: any[], currentTime: number): number {
-    if (!landmarks || landmarks.length < 33) {
-      if (Math.random() < 0.01) {
-        console.warn('⚠️ Invalid landmarks count:', landmarks?.length);
+    // Initialize as None (like Python)
+    let elbowAngle: number | null = null;
+    let plankAngle: number | null = null;
+    let chestDepth: number | null = null;
+
+    // EXACT: if results.pose_landmarks:
+    if (landmarks && landmarks.length >= 33) {
+      try {
+        // EXACT: lm = results.pose_landmarks.landmark
+        const lm = landmarks;
+
+        // Get pixel coordinates (EXACT like Python)
+        const ls = this.lmXY(lm[11]); // LEFT_SHOULDER
+        const le = this.lmXY(lm[13]); // LEFT_ELBOW
+        const lw = this.lmXY(lm[15]); // LEFT_WRIST
+
+        const rs = this.lmXY(lm[12]); // RIGHT_SHOULDER
+        const re = this.lmXY(lm[14]); // RIGHT_ELBOW
+        const rw = this.lmXY(lm[16]); // RIGHT_WRIST
+
+        const lh = this.lmXY(lm[23]); // LEFT_HIP
+        const la = this.lmXY(lm[27]); // LEFT_ANKLE
+
+        // Calculate angles (EXACT like Python)
+        const angL = this.calculateAngle(ls, le, lw);
+        const angR = this.calculateAngle(rs, re, rw);
+        elbowAngle = (angL + angR) / 2;
+
+        plankAngle = this.calculateAngle(ls, lh, la);
+        chestDepth = lw[1] - ls[1]; // EXACT: lw[1] - ls[1]
+
+        // Store for display
+        this.currentElbowAngle = elbowAngle;
+        this.currentPlankAngle = plankAngle;
+        this.currentChestDepth = chestDepth;
+      } catch (error) {
+        // EXACT: except: pass
+        console.error('Error calculating angles:', error);
       }
-      return this.reps.length;
     }
 
-    // Debug: Confirm we're processing
-    if (Math.random() < 0.01) {
-      console.log('🔄 Detector processing landmarks, time:', currentTime.toFixed(2));
-    }
-
-    try {
-      // Get landmark positions - need to convert to pixel coordinates like Python
-      // Python uses: lm_xy(lm, width, height) which returns (int(lm.x * w), int(lm.y * h))
-      // For consistency, we'll use a reference width/height
-      const refWidth = 640;
-      const refHeight = 480;
-      
-      const leftShoulder = [landmarks[11].x * refWidth, landmarks[11].y * refHeight] as [number, number];
-      const leftElbow = [landmarks[13].x * refWidth, landmarks[13].y * refHeight] as [number, number];
-      const leftWrist = [landmarks[15].x * refWidth, landmarks[15].y * refHeight] as [number, number];
-      
-      const rightShoulder = [landmarks[12].x * refWidth, landmarks[12].y * refHeight] as [number, number];
-      const rightElbow = [landmarks[14].x * refWidth, landmarks[14].y * refHeight] as [number, number];
-      const rightWrist = [landmarks[16].x * refWidth, landmarks[16].y * refHeight] as [number, number];
-      
-      const leftHip = [landmarks[23].x * refWidth, landmarks[23].y * refHeight] as [number, number];
-      const leftAnkle = [landmarks[27].x * refWidth, landmarks[27].y * refHeight] as [number, number];
-
-      // Calculate angles (exactly like Python)
-      const angLeft = this.calculateAngle(leftShoulder, leftElbow, leftWrist);
-      const angRight = this.calculateAngle(rightShoulder, rightElbow, rightWrist);
-      const elbowAngle = (angLeft + angRight) / 2;
-
-      const plankAngle = this.calculateAngle(leftShoulder, leftHip, leftAnkle);
-      
-      // Chest depth: Python uses lw[1] - ls[1] (wrist Y - shoulder Y, NOT abs!)
-      const chestDepth = leftWrist[1] - leftShoulder[1];
-
-      // Store current metrics
-      this.currentElbowAngle = elbowAngle;
-      this.currentPlankAngle = plankAngle;
-      this.currentChestDepth = chestDepth;
-
-      // Smooth elbow angle using deque behavior (exactly like Python)
+    // EXACT: if elbow_angle is not None:
+    if (elbowAngle !== null) {
+      // EXACT: angle_history.append(elbow_angle)
       this.angleHistory.push(elbowAngle);
+      
+      // EXACT: elbow_sm = sum(angle_history) / len(angle_history)
+      const elbowSm = this.angleHistory.reduce((a, b) => a + b, 0) / this.angleHistory.length;
+      this.currentElbowSmooth = elbowSm;
+
+      // Keep only last SMOOTH_N values (deque maxlen behavior)
       if (this.angleHistory.length > this.SMOOTH_N) {
         this.angleHistory.shift();
       }
-      const elbowSmooth = this.angleHistory.reduce((a, b) => a + b, 0) / this.angleHistory.length;
-      this.currentElbowSmooth = elbowSmooth;
 
-      // Log every ~30 frames
-      if (Math.random() < 0.033) {
-        console.log(`📊 Elbow: ${Math.round(elbowSmooth)}° | State: ${this.state} | Reps: ${this.reps.length} | Depth: ${Math.round(chestDepth)}`);
-      }
-
-      // Rep detection logic (EXACTLY matching Python)
-      if (this.state === 'up' && elbowSmooth <= this.DOWN_ANGLE) {
-        console.log('🔽 Going DOWN - Elbow:', Math.round(elbowSmooth), '<=', this.DOWN_ANGLE);
+      // EXACT: if state == "up" and elbow_sm <= DOWN_ANGLE:
+      if (this.state === 'up' && elbowSm <= this.DOWN_ANGLE) {
+        console.log('🔽 DOWN - Elbow:', Math.round(elbowSm));
         this.state = 'down';
         this.inDip = true;
         this.dipStartTime = currentTime;
-        this.currentDipMinAngle = elbowSmooth;
-      } else if (this.state === 'down' && elbowSmooth >= this.UP_ANGLE) {
-        console.log('🔼 Going UP - Elbow:', Math.round(elbowSmooth), '>=', this.UP_ANGLE);
+        this.currentDipMinAngle = elbowSm;
+      }
+      // EXACT: elif state == "down" and elbow_sm >= UP_ANGLE:
+      else if (this.state === 'down' && elbowSm >= this.UP_ANGLE) {
+        console.log('🔼 UP - Elbow:', Math.round(elbowSm));
         this.state = 'up';
         
+        // EXACT: if in_dip:
         if (this.inDip && this.dipStartTime !== null) {
           const dipDuration = currentTime - this.dipStartTime;
 
-          // Python checks: current_dip_min_angle <= DOWN_ANGLE and dip_duration >= MIN_DIP_DURATION 
-          // and plank_angle is not None and plank_angle >= PLANK_MIN_ANGLE 
-          // and chest_depth is not None and chest_depth >= CHEST_DEPTH_MIN
+          // EXACT Python condition
           const isCorrect = (
             this.currentDipMinAngle <= this.DOWN_ANGLE &&
             dipDuration >= this.MIN_DIP_DURATION &&
-            plankAngle >= this.PLANK_MIN_ANGLE &&
-            chestDepth >= this.CHEST_DEPTH_MIN
+            plankAngle !== null && plankAngle >= this.PLANK_MIN_ANGLE &&
+            chestDepth !== null && chestDepth >= this.CHEST_DEPTH_MIN
           );
 
-          console.log('✅ REP COMPLETED!', {
+          console.log('✅ REP!', {
             rep: this.reps.length + 1,
             minElbow: Math.round(this.currentDipMinAngle),
-            plankAngle: Math.round(plankAngle),
-            chestDepth: Math.round(chestDepth),
+            plank: plankAngle ? Math.round(plankAngle) : 0,
+            depth: chestDepth ? Math.round(chestDepth) : 0,
             duration: dipDuration.toFixed(2),
-            correct: isCorrect,
-            checks: {
-              elbowOk: this.currentDipMinAngle <= this.DOWN_ANGLE,
-              durationOk: dipDuration >= this.MIN_DIP_DURATION,
-              plankOk: plankAngle >= this.PLANK_MIN_ANGLE,
-              depthOk: chestDepth >= this.CHEST_DEPTH_MIN
-            }
+            correct: isCorrect
           });
 
           this.reps.push({
             rep: this.reps.length + 1,
-            duration: parseFloat(dipDuration.toFixed(3)),
-            min_elbow: parseFloat(this.currentDipMinAngle.toFixed(2)),
-            plank_angle: parseFloat(plankAngle.toFixed(2)),
-            chest_depth: parseFloat(chestDepth.toFixed(2)),
+            duration: Math.round(dipDuration * 1000) / 1000,
+            min_elbow: Math.round(this.currentDipMinAngle * 100) / 100,
+            plank_angle: plankAngle ? Math.round(plankAngle * 100) / 100 : 0,
+            chest_depth: chestDepth ? Math.round(chestDepth * 100) / 100 : 0,
             correct: isCorrect
           });
 
@@ -156,12 +163,10 @@ export class PushupLiveDetector {
         }
       }
 
+      // EXACT: if in_dip:
       if (this.inDip) {
-        this.currentDipMinAngle = Math.min(this.currentDipMinAngle, elbowSmooth);
+        this.currentDipMinAngle = Math.min(this.currentDipMinAngle, elbowSm);
       }
-
-    } catch (error) {
-      console.error('Push-up detection error:', error);
     }
 
     return this.reps.length;
@@ -171,19 +176,11 @@ export class PushupLiveDetector {
     return this.reps;
   }
 
-  getRepCount(): number {
-    return this.reps.length;
-  }
-
-  getState(): 'up' | 'down' {
-    return this.state;
-  }
-
   getCurrentMetrics() {
     return {
-      elbowAngle: Math.round(this.currentElbowSmooth),
-      plankAngle: Math.round(this.currentPlankAngle),
-      chestDepth: Math.round(this.currentChestDepth),
+      elbowAngle: this.currentElbowSmooth ? Math.round(this.currentElbowSmooth) : 0,
+      plankAngle: this.currentPlankAngle ? Math.round(this.currentPlankAngle) : 0,
+      chestDepth: this.currentChestDepth ? Math.round(this.currentChestDepth) : 0,
       state: this.state,
       repCount: this.reps.length
     };
@@ -196,9 +193,9 @@ export class PushupLiveDetector {
     this.dipStartTime = null;
     this.currentDipMinAngle = 180;
     this.reps = [];
-    this.currentElbowAngle = 0;
-    this.currentElbowSmooth = 0;
-    this.currentPlankAngle = 0;
-    this.currentChestDepth = 0;
+    this.currentElbowAngle = null;
+    this.currentElbowSmooth = null;
+    this.currentPlankAngle = null;
+    this.currentChestDepth = null;
   }
 }

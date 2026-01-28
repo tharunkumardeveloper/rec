@@ -122,13 +122,12 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
 
       // Process with detector during recording
       if (isRecording && detectorRef.current && results.poseLandmarks) {
-        const currentTime = (Date.now() - recordingStartTimeRef.current) / 1000;
-        
-        // Debug: Log that we're processing
-        if (Math.random() < 0.01) {
-          console.log('🎬 Processing frame with detector, time:', currentTime.toFixed(2), 'landmarks:', results.poseLandmarks.length);
+        // Set canvas dimensions for detector (like Python width/height)
+        if (detectorRef.current.setDimensions) {
+          detectorRef.current.setDimensions(canvas.width, canvas.height);
         }
         
+        const currentTime = (Date.now() - recordingStartTimeRef.current) / 1000;
         const repCount = detectorRef.current.process(results.poseLandmarks, currentTime);
         setRepCount(repCount);
         
@@ -150,16 +149,21 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         };
         
         drawText(`Reps: ${metrics.repCount}`, '#FFFF00');
-        drawText(`Elbow: ${metrics.elbowAngle}°`, metrics.elbowAngle <= 75 ? '#00FF00' : '#FF0000');
-        drawText(`Plank: ${metrics.plankAngle}°`, metrics.plankAngle >= 165 ? '#00FF00' : '#FF0000');
-        drawText(`Depth: ${metrics.chestDepth}`, metrics.chestDepth >= 40 ? '#00FF00' : '#FF0000');
+        if (metrics.elbowAngle > 0) {
+          drawText(`Elbow: ${metrics.elbowAngle}°`, metrics.elbowAngle <= 75 ? '#00FF00' : '#FF0000');
+        }
+        if (metrics.plankAngle > 0) {
+          drawText(`Plank: ${metrics.plankAngle}°`, metrics.plankAngle >= 165 ? '#00FF00' : '#FF0000');
+        }
+        if (metrics.chestDepth !== 0) {
+          drawText(`Depth: ${metrics.chestDepth}`, metrics.chestDepth >= 40 ? '#00FF00' : '#FF0000');
+        }
         drawText(`State: ${metrics.state}`, '#C8C8C8');
       } else if (isRecording && !detectorRef.current) {
         // Warning if detector not initialized
         ctx.font = 'bold 20px Arial';
         ctx.fillStyle = '#FF0000';
         ctx.fillText('⚠️ Detector not initialized!', 15, 40);
-        console.error('⚠️ Detector not initialized but recording!');
       } else if (isRecording && !results.poseLandmarks) {
         // Warning if no landmarks detected
         ctx.font = 'bold 20px Arial';
