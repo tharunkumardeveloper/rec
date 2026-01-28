@@ -3,7 +3,7 @@ import { toast } from '@/components/ui/sonner';
 import WorkoutUploadScreen from './WorkoutUploadScreen';
 import VideoProcessor from './VideoProcessor';
 import LiveCameraProcessor from './LiveCameraProcessor';
-import LiveRecorderRevamped from './LiveRecorderRevamped';
+import LiveRecorderNew from './LiveRecorderNew';
 import HowToPerformScreen from './HowToPerformScreen';
 import PostureCheckScreen from './PostureCheckScreen';
 import { BADGES, checkBadgeUnlock, updateUserStats } from '@/utils/badgeSystem';
@@ -228,7 +228,7 @@ const WorkoutInterface = ({ activity, mode, onBack }: WorkoutInterfaceProps) => 
 
   if (stage === 'liveRecording') {
     return (
-      <LiveRecorderRevamped
+      <LiveRecorderNew
         activityName={activity.name}
         onBack={onBack}
         onComplete={(results) => {
