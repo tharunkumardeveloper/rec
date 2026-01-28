@@ -1,4 +1,5 @@
 // TTS Coach Service - Provides motivational voice feedback during workouts
+import { groqTTS } from './groqTTS';
 
 interface TTSSettings {
   enabled: boolean;
@@ -221,53 +222,92 @@ class TTSCoach {
   ];
 
   onRepCompleted(rep: number, activityName: string, isCorrect: boolean) {
-    if (!isCorrect) {
-      // Give gentle form feedback occasionally, not every time
-      if (Math.random() > 0.6) {
-        const message = this.formCorrectionMessages[Math.floor(Math.random() * this.formCorrectionMessages.length)];
-        this.speak(message);
+    // Use AI-generated messages for more natural feedback
+    groqTTS.generateEncouragement({
+      workoutType: activityName,
+      repNumber: rep,
+      isCorrectForm: isCorrect
+    }).then(message => {
+      if (!isCorrect) {
+        // Give gentle form feedback occasionally
+        if (Math.random() > 0.6) {
+          this.speak(message);
+        }
+        return;
       }
-      return;
-    }
 
-    // Check if we should speak for this rep
-    const shouldSpeak = rep === 1 || 
-                       rep % 5 === 0 || 
-                       (rep % 2 === 0 && Math.random() > 0.7);
+      // Check if we should speak for this rep
+      const shouldSpeak = rep === 1 || 
+                         rep % 5 === 0 || 
+                         (rep % 2 === 0 && Math.random() > 0.7);
 
-    if (shouldSpeak && rep !== this.lastSpokenRep) {
-      const message = this.getRepMessage(rep, activityName);
-      if (message) {
+      if (shouldSpeak && rep !== this.lastSpokenRep) {
         this.speak(message);
         this.lastSpokenRep = rep;
       }
-    }
+    }).catch(error => {
+      console.error('AI message generation failed:', error);
+      // Fallback to default messages
+      if (!isCorrect) {
+        if (Math.random() > 0.6) {
+          const message = this.formCorrectionMessages[Math.floor(Math.random() * this.formCorrectionMessages.length)];
+          this.speak(message);
+        }
+        return;
+      }
+
+      const shouldSpeak = rep === 1 || 
+                         rep % 5 === 0 || 
+                         (rep % 2 === 0 && Math.random() > 0.7);
+
+      if (shouldSpeak && rep !== this.lastSpokenRep) {
+        const message = this.getRepMessage(rep, activityName);
+        if (message) {
+          this.speak(message);
+          this.lastSpokenRep = rep;
+        }
+      }
+    });
   }
 
   onWorkoutStart(activityName: string) {
-    const startMessages = [
-      `Alright! Let's do this. Time for some ${activityName}. You've got this!`,
-      `Ready? Let's crush these ${activityName} together!`,
-      `Here we go! ${activityName} time. I know you can do this!`,
-      `Let's make these ${activityName} count. You're going to do amazing!`
-    ];
-    const message = startMessages[Math.floor(Math.random() * startMessages.length)];
-    this.speak(message, true); // Priority message
+    // Use AI-generated start message
+    groqTTS.generateWorkoutStart(activityName).then(message => {
+      this.speak(message, true); // Priority message
+    }).catch(error => {
+      console.error('AI message generation failed:', error);
+      // Fallback to default
+      const startMessages = [
+        `Alright! Let's do this. Time for some ${activityName}. You've got this!`,
+        `Ready? Let's crush these ${activityName} together!`,
+        `Here we go! ${activityName} time. I know you can do this!`,
+        `Let's make these ${activityName} count. You're going to do amazing!`
+      ];
+      const message = startMessages[Math.floor(Math.random() * startMessages.length)];
+      this.speak(message, true);
+    });
   }
 
-  onWorkoutEnd(totalReps: number, correctReps: number) {
-    const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
-    
-    let message = '';
-    if (accuracy >= 80) {
-      message = `Wow! Amazing work! You completed ${totalReps} reps with ${accuracy}% accuracy. You're a true champion!`;
-    } else if (accuracy >= 60) {
-      message = `Great effort! You did ${totalReps} reps. That's fantastic! Let's keep working on that form together.`;
-    } else {
-      message = `Good job finishing! You completed ${totalReps} reps. I'm proud of you for pushing through. Let's focus on form next time, okay?`;
-    }
-    
-    this.speak(message, true); // Priority message
+  onWorkoutEnd(totalReps: number, correctReps: number, activityName: string = 'workout') {
+    // Use AI-generated end message
+    groqTTS.generateWorkoutEnd(totalReps, correctReps, activityName).then(message => {
+      this.speak(message, true); // Priority message
+    }).catch(error => {
+      console.error('AI message generation failed:', error);
+      // Fallback to default
+      const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
+      
+      let message = '';
+      if (accuracy >= 80) {
+        message = `Wow! Amazing work! You completed ${totalReps} reps with ${accuracy}% accuracy. You're a true champion!`;
+      } else if (accuracy >= 60) {
+        message = `Great effort! You did ${totalReps} reps. That's fantastic! Let's keep working on that form together.`;
+      } else {
+        message = `Good job finishing! You completed ${totalReps} reps. I'm proud of you for pushing through. Let's focus on form next time, okay?`;
+      }
+      
+      this.speak(message, true);
+    });
   }
 
   onHighScore(currentReps: number, previousBest: number) {
