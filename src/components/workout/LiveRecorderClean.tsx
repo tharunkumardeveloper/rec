@@ -3,7 +3,15 @@ import { Button } from '@/components/ui/button';
 import { StopCircle, SwitchCamera } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { PushupLiveDetector } from '@/services/workoutDetectors/PushupLiveDetector';
+import { PullupLiveDetector } from '@/services/workoutDetectors/PullupLiveDetector';
+import { SitupLiveDetector } from '@/services/workoutDetectors/SitupLiveDetector';
+import { SquatLiveDetector } from '@/services/workoutDetectors/SquatLiveDetector';
+import { VerticalJumpLiveDetector } from '@/services/workoutDetectors/VerticalJumpLiveDetector';
+import { ShuttleRunLiveDetector } from '@/services/workoutDetectors/ShuttleRunLiveDetector';
+import { SitReachLiveDetector } from '@/services/workoutDetectors/SitReachLiveDetector';
 import { ttsCoach } from '@/services/ttsCoach';
+
+type WorkoutDetector = PushupLiveDetector | PullupLiveDetector | SitupLiveDetector | SquatLiveDetector | VerticalJumpLiveDetector | ShuttleRunLiveDetector | SitReachLiveDetector;
 
 interface LiveRecorderCleanProps {
   activityName: string;
@@ -30,7 +38,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const detectorRef = useRef<PushupLiveDetector | null>(null);
+  const detectorRef = useRef<WorkoutDetector | null>(null);
   const recordingStartTimeRef = useRef<number>(0);
   const timerIntervalRef = useRef<number | null>(null);
   const isRecordingRef = useRef<boolean>(false);
@@ -136,9 +144,33 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
       poseInstance.onResults(onPoseResults);
       setPose(poseInstance);
 
-      // Initialize push-up detector
-      if (activityName === 'Push-ups') {
-        detectorRef.current = new PushupLiveDetector();
+      // Initialize workout detector based on activity type
+      switch (activityName) {
+        case 'Push-ups':
+          detectorRef.current = new PushupLiveDetector();
+          break;
+        case 'Pull-ups':
+          detectorRef.current = new PullupLiveDetector();
+          break;
+        case 'Sit-ups':
+          detectorRef.current = new SitupLiveDetector();
+          break;
+        case 'Squats':
+          detectorRef.current = new SquatLiveDetector();
+          break;
+        case 'Vertical Jump':
+          detectorRef.current = new VerticalJumpLiveDetector();
+          break;
+        case 'Shuttle Run':
+        case 'Modified Shuttle Run':
+          detectorRef.current = new ShuttleRunLiveDetector();
+          break;
+        case 'Sit Reach':
+          detectorRef.current = new SitReachLiveDetector();
+          break;
+        default:
+          console.warn(`No detector available for ${activityName}, using push-up detector as fallback`);
+          detectorRef.current = new PushupLiveDetector();
       }
 
       processFrame(poseInstance);
@@ -373,29 +405,35 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
           className="absolute inset-0 w-full h-full object-contain"
         />
 
-        {/* Instruction Overlay - Shows pushup image */}
-        {showInstructionOverlay && activityName === 'Push-ups' && (
+        {/* Instruction Overlay - Shows workout-specific image */}
+        {showInstructionOverlay && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-50">
             <div className="text-center space-y-6 px-6 max-w-2xl">
               <h2 className="text-4xl font-bold text-white mb-4">Get Into Position</h2>
               <div className="bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10">
                 <img 
-                  src="/pushup.gif"
-                  alt="Push-up form demonstration" 
+                  src={
+                    activityName === 'Push-ups' ? '/pushup.gif' :
+                    activityName === 'Squats' ? '/squat.webp' :
+                    activityName === 'Pull-ups' ? '/pullup.gif' :
+                    activityName === 'Sit-ups' ? '/situp.gif' :
+                    '/pushup.gif' // fallback
+                  }
+                  alt={`${activityName} form demonstration`}
                   className="w-full h-auto mx-auto rounded-2xl"
                   style={{ maxHeight: '400px', objectFit: 'contain' }}
                   onError={(e) => {
-                    console.error('Failed to load pushup image');
+                    console.error(`Failed to load ${activityName} image`);
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
                   }}
                 />
               </div>
               <p className="text-2xl text-white font-semibold">
-                Position yourself for push-ups
+                Position yourself for {activityName.toLowerCase()}
               </p>
               <p className="text-base text-white/80">
-                Get into plank position • Recording starts automatically
+                Get into position • Recording starts automatically
               </p>
             </div>
           </div>
