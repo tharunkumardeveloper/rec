@@ -25,6 +25,7 @@ const GhostWorkoutInterface = ({ activity, mode, ghostGif, onBack }: GhostWorkou
     );
     const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
     const [liveResults, setLiveResults] = useState<any>(null);
+    const [cameraFacingMode, setCameraFacingMode] = useState<'user' | 'environment'>('user');
 
     console.log('GhostWorkoutInterface - Stage:', stage, 'Mode:', mode, 'GhostGif:', ghostGif);
 
@@ -44,7 +45,8 @@ const GhostWorkoutInterface = ({ activity, mode, ghostGif, onBack }: GhostWorkou
         setStage('postureCheck');
     };
 
-    const handlePostureConfirmed = () => {
+    const handlePostureConfirmed = (facingMode: 'user' | 'environment') => {
+        setCameraFacingMode(facingMode);
         setStage('liveRecording');
     };
 
@@ -187,6 +189,7 @@ const GhostWorkoutInterface = ({ activity, mode, ghostGif, onBack }: GhostWorkou
                 activityName={activity.name}
                 ghostGif={ghostGif}
                 onBack={onBack}
+                initialFacingMode={cameraFacingMode}
                 onComplete={(results) => {
                     setLiveResults(results);
                     setStage('liveResults');

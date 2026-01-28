@@ -9,15 +9,16 @@ interface LiveRecorderCleanProps {
   activityName: string;
   onBack: () => void;
   onComplete: (results: any) => void;
+  initialFacingMode?: 'user' | 'environment';
 }
 
-const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCleanProps) => {
+const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode = 'user' }: LiveRecorderCleanProps) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [pose, setPose] = useState<any>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [repCount, setRepCount] = useState(0);
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>(initialFacingMode);
   const [isProcessing, setIsProcessing] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(3); // Start with countdown
   const [isInitialized, setIsInitialized] = useState(false);

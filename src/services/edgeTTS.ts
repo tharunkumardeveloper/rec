@@ -1,60 +1,83 @@
 // Microsoft Edge TTS Service - Natural humanized female voice
-// Uses Microsoft Azure Neural TTS for realistic speech
+// Uses browser's Speech Synthesis API with best available voice
 
 class EdgeTTSService {
   private isEnabled: boolean = true;
   private isSpeaking: boolean = false;
   private lastSpeakTime: number = 0;
   private readonly SPEAK_INTERVAL = 3000; // 3 seconds
-  private currentAudio: HTMLAudioElement | null = null;
+  private synth: SpeechSynthesis | null = null;
+  private selectedVoice: SpeechSynthesisVoice | null = null;
 
-  // Best natural US English female voice - Jenny Neural (most humanized)
-  private readonly VOICE_NAME = 'en-US-JennyNeural';
-  private readonly VOICE_STYLE = 'cheerful'; // Makes it more encouraging
-  
   constructor() {
-    console.log('🎤 Edge TTS initialized with Jenny Neural voice');
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      this.synth = window.speechSynthesis;
+      this.loadBestVoice();
+    }
   }
 
-  /**
-   * Generate audio using Microsoft Edge TTS API
-   */
-  private async generateAudio(text: string): Promise<Blob> {
-    // SSML with natural prosody and cheerful style
-    const ssml = `
-      <speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='https://www.w3.org/2001/mstts' xml:lang='en-US'>
-        <voice name='${this.VOICE_NAME}'>
-          <mstts:express-as style='${this.VOICE_STYLE}' styledegree='1.2'>
-            <prosody rate='+5%' pitch='+2%'>
-              ${text}
-            </prosody>
-          </mstts:express-as>
-        </voice>
-      </speak>
-    `.trim();
+  private loadBestVoice() {
+    if (!this.synth) return;
 
-    const response = await fetch('https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/ssml+xml',
-        'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
-      },
-      body: ssml
-    });
+    const loadVoices = () => {
+      const voices = this.synth!.getVoices();
+      
+      console.log('🎤 Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+      
+      // Priority order for natural female voices
+      this.selectedVoice = 
+        // 1. Microsoft Jenny Neural (most natural)
+        voices.find(v => v.name.includes('Jenny') && v.lang.startsWith('en-US')) ||
+        // 2. Microsoft Aria Neural
+        voices.find(v => v.name.includes('Aria') && v.lang.startsWith('en-US')) ||
+        // 3. Microsoft Zira
+        voices.find(v => v.name.includes('Zira') && v.lang.startsWith('en-US')) ||
+        // 4. Google US English Female
+        voices.find(v => v.name.includes('Google') && v.name.includes('Female') && v.lang.startsWith('en-US')) ||
+        // 5. Any Microsoft US English (not male)
+        voices.find(v => 
+          v.name.includes('Microsoft') && 
+          v.lang.startsWith('en-US') &&
+          !v.name.includes('David') &&
+          !v.name.includes('Mark') &&
+          !v.name.includes('Guy')
+        ) ||
+        // 6. Any US English female
+        voices.find(v => 
+          v.lang.startsWith('en-US') &&
+          (v.name.toLowerCase().includes('female') || 
+           v.name.toLowerCase().includes('woman') ||
+           !v.name.toLowerCase().includes('male'))
+        ) ||
+        // 7. First US English voice
+        voices.find(v => v.lang.startsWith('en-US')) ||
+        // 8. First English voice
+        voices.find(v => v.lang.startsWith('en')) ||
+        // 9. Any voice
+        voices[0];
 
-    if (!response.ok) {
-      throw new Error(`Edge TTS API error: ${response.status}`);
+      if (this.selectedVoice) {
+        console.log('✅ Selected Voice:', this.selectedVoice.name, '(' + this.selectedVoice.lang + ')');
+      } else {
+        console.warn('⚠️ No suitable voice found');
+      }
+    };
+
+    // Load voices immediately and on change
+    loadVoices();
+    if (this.synth.onvoiceschanged !== undefined) {
+      this.synth.onvoiceschanged = loadVoices;
     }
-
-    return await response.blob();
+    
+    // Fallback: try again after a delay
+    setTimeout(loadVoices, 100);
   }
 
   /**
    * Speak with natural voice - respects 3 second interval
    */
-  async speak(text: string, force: boolean = false): Promise<void> {
-    if (!this.isEnabled || this.isSpeaking) return;
+  speak(text: string, force: boolean = false): void {
+    if (!this.synth || !this.isEnabled || this.isSpeaking) return;
 
     const now = Date.now();
     
@@ -64,39 +87,40 @@ class EdgeTTSService {
     }
 
     try {
-      this.isSpeaking = true;
-      this.lastSpeakTime = Date.now();
+      // Cancel any ongoing speech
+      this.synth.cancel();
 
-      // Stop any current audio
-      if (this.currentAudio) {
-        this.currentAudio.pause();
-        this.currentAudio = null;
-      }
-
-      // Generate audio from Edge TTS
-      const audioBlob = await this.generateAudio(text);
-      const audioUrl = URL.createObjectURL(audioBlob);
-
-      // Play audio
-      this.currentAudio = new Audio(audioUrl);
+      const utterance = new SpeechSynthesisUtterance(text);
       
-      this.currentAudio.onended = () => {
-        this.isSpeaking = false;
-        URL.revokeObjectURL(audioUrl);
-        this.currentAudio = null;
+      // Use selected voice
+      if (this.selectedVoice) {
+        utterance.voice = this.selectedVoice;
+      }
+      
+      // Natural, encouraging settings
+      utterance.rate = 1.05; // Slightly faster for energy
+      utterance.pitch = 1.1; // Slightly higher for enthusiasm
+      utterance.volume = 1.0;
+
+      utterance.onstart = () => {
+        this.isSpeaking = true;
+        this.lastSpeakTime = Date.now();
+        console.log('🎤 Speaking:', text);
       };
 
-      this.currentAudio.onerror = () => {
+      utterance.onend = () => {
         this.isSpeaking = false;
-        URL.revokeObjectURL(audioUrl);
-        this.currentAudio = null;
-        console.error('Error playing Edge TTS audio');
       };
 
-      await this.currentAudio.play();
+      utterance.onerror = (error) => {
+        this.isSpeaking = false;
+        console.error('Speech error:', error);
+      };
+
+      this.synth.speak(utterance);
       
     } catch (error) {
-      console.error('Edge TTS error:', error);
+      console.error('TTS error:', error);
       this.isSpeaking = false;
     }
   }
@@ -155,8 +179,8 @@ class EdgeTTSService {
    */
   setEnabled(enabled: boolean): void {
     this.isEnabled = enabled;
-    if (!enabled) {
-      this.stop();
+    if (!enabled && this.synth) {
+      this.synth.cancel();
     }
   }
 
@@ -164,9 +188,8 @@ class EdgeTTSService {
    * Stop all speech
    */
   stop(): void {
-    if (this.currentAudio) {
-      this.currentAudio.pause();
-      this.currentAudio = null;
+    if (this.synth) {
+      this.synth.cancel();
     }
     this.isSpeaking = false;
   }

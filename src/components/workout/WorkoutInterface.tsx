@@ -26,6 +26,7 @@ const WorkoutInterface = ({ activity, mode, onBack }: WorkoutInterfaceProps) => 
   );
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [liveResults, setLiveResults] = useState<any>(null);
+  const [cameraFacingMode, setCameraFacingMode] = useState<'user' | 'environment'>('user');
 
   // Activities with available Python scripts
   const supportedActivities = [
@@ -76,7 +77,8 @@ const WorkoutInterface = ({ activity, mode, onBack }: WorkoutInterfaceProps) => 
     setStage('postureCheck');
   };
 
-  const handlePostureConfirmed = () => {
+  const handlePostureConfirmed = (facingMode: 'user' | 'environment') => {
+    setCameraFacingMode(facingMode); // Save camera orientation
     setStage('liveRecording');
   };
 
@@ -232,6 +234,7 @@ const WorkoutInterface = ({ activity, mode, onBack }: WorkoutInterfaceProps) => 
       <LiveRecorderClean
         activityName={activity.name}
         onBack={onBack}
+        initialFacingMode={cameraFacingMode}
         onComplete={(results) => {
           // Store live recording results
           setLiveResults(results);

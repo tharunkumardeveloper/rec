@@ -5,9 +5,10 @@ interface GhostLiveRecorderProps {
   ghostGif: string;
   onBack: () => void;
   onComplete: (results: any) => void;
+  initialFacingMode?: 'user' | 'environment';
 }
 
-const GhostLiveRecorder = ({ activityName, ghostGif, onBack, onComplete }: GhostLiveRecorderProps) => {
+const GhostLiveRecorder = ({ activityName, ghostGif, onBack, onComplete, initialFacingMode }: GhostLiveRecorderProps) => {
   return (
     <div className="ghost-mode-page relative w-full h-full min-h-screen">
       {/* Clean Live Recorder - No landscape requirement */}
@@ -15,6 +16,7 @@ const GhostLiveRecorder = ({ activityName, ghostGif, onBack, onComplete }: Ghost
         activityName={activityName}
         onBack={onBack}
         onComplete={onComplete}
+        initialFacingMode={initialFacingMode}
       />
     </div>
   );

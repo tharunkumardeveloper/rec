@@ -4,7 +4,7 @@ import { CheckCircle2, XCircle, AlertCircle, Camera, SwitchCamera } from 'lucide
 import { postureChecker, PostureCheckResult } from '@/services/postureChecker';
 
 interface PostureCheckScreenProps {
-  onPostureConfirmed: () => void;
+  onPostureConfirmed: (facingMode: 'user' | 'environment') => void;
   onBack: () => void;
   activityName: string;
 }
@@ -98,7 +98,7 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
         }
         setCountdown(null);
         cleanup();
-        onPostureConfirmed();
+        onPostureConfirmed(facingMode); // Pass camera orientation
       } else {
         setCountdown(currentCount);
       }
