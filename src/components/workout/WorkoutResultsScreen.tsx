@@ -9,6 +9,7 @@ interface WorkoutResultsScreenProps {
   incorrectReps: number;
   duration: number;
   repDetails?: PushupRepData[];
+  videoUrl?: string; // Annotated video URL from Python
   onHome: () => void;
 }
 
@@ -19,6 +20,7 @@ const WorkoutResultsScreen = ({
   incorrectReps,
   duration,
   repDetails = [],
+  videoUrl,
   onHome
 }: WorkoutResultsScreenProps) => {
   const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
@@ -41,6 +43,24 @@ const WorkoutResultsScreen = ({
           <h1 className="text-3xl font-bold">Workout Complete!</h1>
           <p className="text-purple-200">{activityName}</p>
         </div>
+
+        {/* Annotated Video */}
+        {videoUrl && (
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+            <h2 className="text-xl font-semibold mb-3">Your Performance</h2>
+            <video
+              src={videoUrl}
+              controls
+              className="w-full rounded-lg"
+              playsInline
+            >
+              Your browser does not support the video tag.
+            </video>
+            <p className="text-sm text-purple-200 mt-2">
+              Watch your workout with AI analysis and form feedback
+            </p>
+          </div>
+        )}
 
         {/* Main Stats */}
         <div className="grid grid-cols-2 gap-4">
