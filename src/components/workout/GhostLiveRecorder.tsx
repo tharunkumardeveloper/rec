@@ -1,4 +1,4 @@
-import LiveRecorderNew from './LiveRecorderNew';
+import LiveRecorderRevamped from './LiveRecorderRevamped';
 
 interface GhostLiveRecorderProps {
   activityName: string;
@@ -10,8 +10,8 @@ interface GhostLiveRecorderProps {
 const GhostLiveRecorder = ({ activityName, ghostGif, onBack, onComplete }: GhostLiveRecorderProps) => {
   return (
     <div className="ghost-mode-page relative w-full h-full min-h-screen">
-      {/* Original Live Recorder - No ghost overlay during recording */}
-      <LiveRecorderNew
+      {/* Revamped Live Recorder - No landscape requirement */}
+      <LiveRecorderRevamped
         activityName={activityName}
         onBack={onBack}
         onComplete={onComplete}
