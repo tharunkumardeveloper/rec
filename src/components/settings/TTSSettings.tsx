@@ -11,18 +11,12 @@ const TTSSettings = () => {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   useEffect(() => {
-    // Load available voices
-    const loadVoices = () => {
-      const availableVoices = ttsCoach.getAvailableVoices();
-      setVoices(availableVoices);
-    };
-
-    loadVoices();
-
-    // Voices might load asynchronously
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-    }
+    // Load Murf AI voices
+    const availableVoices = ttsCoach.getAvailableVoices();
+    setVoices(availableVoices.map(voiceId => ({
+      name: voiceId,
+      lang: 'en-US'
+    } as SpeechSynthesisVoice)));
   }, []);
 
   const handleToggle = () => {
@@ -59,33 +53,10 @@ const TTSSettings = () => {
     ];
     const message = testMessages[Math.floor(Math.random() * testMessages.length)];
     
-    // Temporarily enable TTS for testing
-    const wasEnabled = settings.enabled;
-    if (!wasEnabled) {
-      ttsCoach.updateSettings({ enabled: true });
-    }
-    
-    // Create test utterance
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(message);
-      if (settings.voice) {
-        const selectedVoice = voices.find(v => v.name === settings.voice);
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        }
-      }
-      utterance.pitch = settings.pitch;
-      utterance.rate = settings.rate;
-      utterance.volume = settings.volume;
-      window.speechSynthesis.speak(utterance);
-    }
-    
-    // Restore original setting
-    if (!wasEnabled) {
-      setTimeout(() => {
-        ttsCoach.updateSettings({ enabled: false });
-      }, 100);
-    }
+    // Use Murf AI directly for testing
+    import('@/services/murfTTS').then(({ murfTTS }) => {
+      murfTTS.speak(message, true);
+    });
   };
 
   return (

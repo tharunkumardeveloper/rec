@@ -11,56 +11,23 @@ interface TTSSettings {
 }
 
 class TTSCoach {
-  private synth: SpeechSynthesis | null = null;
-  private voices: SpeechSynthesisVoice[] = [];
   private settings: TTSSettings;
   private lastSpokenRep: number = 0;
-  private isSpeaking: boolean = false;
-  private speechQueue: string[] = [];
 
   constructor() {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      this.synth = window.speechSynthesis;
-      this.loadVoices();
-    }
-
     // Load settings from localStorage
     const savedSettings = localStorage.getItem('tts_settings');
     this.settings = savedSettings ? JSON.parse(savedSettings) : {
       enabled: true,
-      voice: 'Microsoft Zira - English (United States)', // Default to Microsoft female voice
+      voice: 'en-US-natalie', // Murf AI voice
       pitch: 1,
-      rate: 0.9, // Slightly slower for clarity
+      rate: 0.9,
       volume: 1
     };
   }
 
-  private loadVoices() {
-    if (!this.synth) return;
-    
-    this.voices = this.synth.getVoices();
-    
-    // If voices aren't loaded yet, wait for them
-    if (this.voices.length === 0) {
-      this.synth.onvoiceschanged = () => {
-        this.voices = this.synth!.getVoices();
-        // Auto-select Microsoft female voice if available
-        if (!this.settings.voice) {
-          const microsoftVoice = this.voices.find(v => 
-            v.name.includes('Microsoft') && 
-            (v.name.includes('Zira') || v.name.includes('Female'))
-          );
-          if (microsoftVoice) {
-            this.settings.voice = microsoftVoice.name;
-            localStorage.setItem('tts_settings', JSON.stringify(this.settings));
-          }
-        }
-      };
-    }
-  }
-
-  getAvailableVoices(): SpeechSynthesisVoice[] {
-    return this.voices;
+  getAvailableVoices(): string[] {
+    return murfTTS.getAvailableVoices();
   }
 
   updateSettings(settings: Partial<TTSSettings>) {
@@ -73,75 +40,20 @@ class TTSCoach {
   }
 
   private speak(text: string, priority: boolean = false) {
-    if (!this.synth || !this.settings.enabled) return;
+    if (!this.settings.enabled) return;
 
-    // Use Murf AI if available, otherwise fallback to browser TTS
+    // Use ONLY Murf AI for professional voice quality
     if (murfTTS.isAvailable()) {
       murfTTS.speak(text, priority).catch(error => {
-        console.error('Murf TTS failed, using browser TTS:', error);
-        this.speakBrowserTTS(text, priority);
+        console.error('Murf TTS failed:', error);
+        // Show error toast instead of fallback
+        if (typeof window !== 'undefined') {
+          console.warn('Voice coach unavailable. Please check API configuration.');
+        }
       });
     } else {
-      this.speakBrowserTTS(text, priority);
+      console.warn('Murf AI not configured. Add VITE_MURF_API_KEY to environment variables.');
     }
-  }
-
-  private speakBrowserTTS(text: string, priority: boolean = false) {
-    if (!this.synth) return;
-
-    // Add to queue if not priority
-    if (!priority && this.isSpeaking) {
-      this.speechQueue.push(text);
-      return;
-    }
-
-    // Cancel current speech if priority
-    if (priority && this.isSpeaking) {
-      this.synth.cancel();
-      this.isSpeaking = false;
-    }
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Try to use Microsoft Edge voice first
-    const microsoftVoice = this.voices.find(v => 
-      v.name === this.settings.voice || 
-      (v.name.includes('Microsoft') && v.name.includes('Zira'))
-    );
-    
-    if (microsoftVoice) {
-      utterance.voice = microsoftVoice;
-    } else if (this.settings.voice) {
-      const selectedVoice = this.voices.find(v => v.name === this.settings.voice);
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
-      }
-    }
-    
-    utterance.pitch = this.settings.pitch;
-    utterance.rate = this.settings.rate;
-    utterance.volume = this.settings.volume;
-
-    utterance.onstart = () => {
-      this.isSpeaking = true;
-    };
-
-    utterance.onend = () => {
-      this.isSpeaking = false;
-      // Process queue
-      if (this.speechQueue.length > 0) {
-        const nextText = this.speechQueue.shift();
-        if (nextText) {
-          setTimeout(() => this.speak(nextText), 300); // Small pause between messages
-        }
-      }
-    };
-
-    utterance.onerror = () => {
-      this.isSpeaking = false;
-    };
-
-    this.synth.speak(utterance);
   }
 
   // More humanized workout-specific encouragements with natural pauses
@@ -296,20 +208,11 @@ class TTSCoach {
 
   reset() {
     this.lastSpokenRep = 0;
-    this.speechQueue = [];
-    if (this.synth) {
-      this.synth.cancel();
-    }
-    this.isSpeaking = false;
+    murfTTS.stop();
   }
 
   stop() {
-    this.speechQueue = [];
-    if (this.synth) {
-      this.synth.cancel();
-    }
-    murfTTS.stop(); // Stop Murf audio too
-    this.isSpeaking = false;
+    murfTTS.stop();
   }
 }
 
