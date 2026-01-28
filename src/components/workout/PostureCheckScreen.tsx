@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { CheckCircle2, XCircle, AlertCircle, Camera } from 'lucide-react';
 import { postureChecker, PostureCheckResult } from '@/services/postureChecker';
 
@@ -16,6 +15,7 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
   const [postureResult, setPostureResult] = useState<PostureCheckResult | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [autoStartTriggered, setAutoStartTriggered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -105,19 +105,6 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
       // Draw video frame
       ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
-      // Draw pose landmarks
-      if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {
-        window.drawConnectors(ctx, results.poseLandmarks, window.POSE_CONNECTIONS, {
-          color: '#00FF00',
-          lineWidth: 4
-        });
-        window.drawLandmarks(ctx, results.poseLandmarks, {
-          color: '#FF0000',
-          lineWidth: 2,
-          radius: 6
-        });
-      }
-
       // Check posture
       const landmarks = results.poseLandmarks?.map((lm: any) => ({
         x: lm.x,
@@ -128,25 +115,50 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
 
       const result = postureChecker.checkPosture(landmarks);
       setPostureResult(result);
-      setIsReady(result.status === 'STANDING');
+      const ready = result.status === 'STANDING';
+      setIsReady(ready);
 
-      // Draw status text
-      ctx.font = 'bold 32px Arial';
-      ctx.fillStyle = result.color;
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 3;
-      ctx.strokeText(result.message, 20, 50);
-      ctx.fillText(result.message, 20, 50);
+      // Auto-start countdown when posture is perfect
+      if (ready && !autoStartTriggered && countdown === null) {
+        setAutoStartTriggered(true);
+        handleContinue();
+      }
 
-      // Draw knee angles if available
-      if (result.leftKneeAngle && result.rightKneeAngle) {
-        ctx.font = '20px Arial';
-        ctx.fillStyle = '#FFFFFF';
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 2;
-        const angleText = `L: ${result.leftKneeAngle.toFixed(0)}° | R: ${result.rightKneeAngle.toFixed(0)}°`;
-        ctx.strokeText(angleText, 20, 90);
-        ctx.fillText(angleText, 20, 90);
+      // Reset auto-start trigger if posture is lost
+      if (!ready && autoStartTriggered && countdown === null) {
+        setAutoStartTriggered(false);
+      }
+
+      // Draw pose skeleton with themed colors (NO TEXT)
+      if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {
+        // Determine color based on posture status
+        let connectionColor = '#8B5CF6'; // Primary purple
+        let landmarkColor = '#A78BFA'; // Lighter purple
+        
+        if (result.status === 'STANDING') {
+          connectionColor = '#10B981'; // Green when ready
+          landmarkColor = '#34D399'; // Lighter green
+        } else if (result.status === 'FULL_BODY_NOT_VISIBLE') {
+          connectionColor = '#F59E0B'; // Orange warning
+          landmarkColor = '#FBBF24'; // Lighter orange
+        } else if (result.status === 'NOT_STANDING') {
+          connectionColor = '#EF4444'; // Red
+          landmarkColor = '#F87171'; // Lighter red
+        }
+
+        // Draw connections (skeleton lines)
+        window.drawConnectors(ctx, results.poseLandmarks, window.POSE_CONNECTIONS, {
+          color: connectionColor,
+          lineWidth: 5
+        });
+        
+        // Draw landmarks (joint points)
+        window.drawLandmarks(ctx, results.poseLandmarks, {
+          color: landmarkColor,
+          lineWidth: 3,
+          radius: 8,
+          fillColor: landmarkColor
+        });
       }
     }
   };
@@ -157,7 +169,7 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
     // Start countdown
     setCountdown(3);
     const countdownInterval = setInterval(() => {
-      setCountdown((prev) => {
+      setCountdown((prev: number | null) => {
         if (prev === 1) {
           clearInterval(countdownInterval);
           cleanup();
@@ -171,7 +183,7 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
 
   const cleanup = () => {
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
     }
     if (pose) {
       pose.close();
@@ -247,7 +259,7 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-white mb-1">
-                  {postureResult?.status === 'STANDING' ? 'Ready to Start!' : 'Position Yourself'}
+                  {postureResult?.status === 'STANDING' ? 'Perfect! Starting...' : 'Position Yourself'}
                 </h3>
                 <p className="text-sm text-white/80">
                   {postureResult?.message || 'Initializing camera...'}
@@ -258,25 +270,14 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
             {/* Requirements Checklist */}
             <div className="flex items-center justify-center space-x-6 text-sm text-white">
               <div className="flex items-center space-x-2">
-                <div className={`w-3 h-3 rounded-full ${postureResult?.isFullBodyVisible ? 'bg-green-500' : 'bg-gray-500'}`} />
-                <span>Full Body</span>
+                <div className={`w-3 h-3 rounded-full transition-colors ${postureResult?.isFullBodyVisible ? 'bg-green-500' : 'bg-gray-500'}`} />
+                <span>Full Body Visible</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className={`w-3 h-3 rounded-full ${postureResult?.isStanding ? 'bg-green-500' : 'bg-gray-500'}`} />
-                <span>Standing</span>
+                <div className={`w-3 h-3 rounded-full transition-colors ${postureResult?.isStanding ? 'bg-green-500' : 'bg-gray-500'}`} />
+                <span>Standing Straight</span>
               </div>
             </div>
-
-            {/* Action Button */}
-            <Button
-              size="lg"
-              onClick={handleContinue}
-              disabled={!isReady || countdown !== null}
-              className="w-full"
-              style={{ backgroundColor: isReady ? '#10B981' : undefined }}
-            >
-              {countdown !== null ? 'Starting...' : isReady ? 'Continue to Workout' : 'Adjust Your Position'}
-            </Button>
           </div>
         </div>
       </div>
