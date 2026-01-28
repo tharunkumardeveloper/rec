@@ -14,12 +14,12 @@ export interface PushupRepData {
 }
 
 export class PushupLiveDetector {
-  // Thresholds from Python
-  private readonly DOWN_ANGLE = 75;
-  private readonly UP_ANGLE = 110;
-  private readonly PLANK_MIN_ANGLE = 165;
-  private readonly CHEST_DEPTH_MIN = 40;
-  private readonly MIN_DIP_DURATION = 0.2;
+  // Thresholds - Made more liberal for better rep counting
+  private readonly DOWN_ANGLE = 90;  // Increased from 75 to 90 (more liberal)
+  private readonly UP_ANGLE = 120;   // Increased from 110 to 120 (more liberal)
+  private readonly PLANK_MIN_ANGLE = 155; // Decreased from 165 to 155 (more liberal)
+  private readonly CHEST_DEPTH_MIN = 30;  // Decreased from 40 to 30 (more liberal)
+  private readonly MIN_DIP_DURATION = 0.15; // Decreased from 0.2 to 0.15 (more liberal)
   private readonly SMOOTH_N = 3;
 
   // State variables

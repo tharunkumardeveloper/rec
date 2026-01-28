@@ -14,6 +14,7 @@ class TTSCoach {
   private settings: TTSSettings;
   private lastSpokenRep: number = 0;
   private isSpeaking: boolean = false;
+  private speechQueue: string[] = [];
 
   constructor() {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -25,9 +26,9 @@ class TTSCoach {
     const savedSettings = localStorage.getItem('tts_settings');
     this.settings = savedSettings ? JSON.parse(savedSettings) : {
       enabled: true,
-      voice: '',
+      voice: 'Microsoft Zira - English (United States)', // Default to Microsoft female voice
       pitch: 1,
-      rate: 1,
+      rate: 0.9, // Slightly slower for clarity
       volume: 1
     };
   }
@@ -41,6 +42,17 @@ class TTSCoach {
     if (this.voices.length === 0) {
       this.synth.onvoiceschanged = () => {
         this.voices = this.synth!.getVoices();
+        // Auto-select Microsoft female voice if available
+        if (!this.settings.voice) {
+          const microsoftVoice = this.voices.find(v => 
+            v.name.includes('Microsoft') && 
+            (v.name.includes('Zira') || v.name.includes('Female'))
+          );
+          if (microsoftVoice) {
+            this.settings.voice = microsoftVoice.name;
+            localStorage.setItem('tts_settings', JSON.stringify(this.settings));
+          }
+        }
       };
     }
   }
@@ -58,16 +70,32 @@ class TTSCoach {
     return { ...this.settings };
   }
 
-  private speak(text: string) {
-    if (!this.synth || !this.settings.enabled || this.isSpeaking) return;
+  private speak(text: string, priority: boolean = false) {
+    if (!this.synth || !this.settings.enabled) return;
 
-    // Cancel any ongoing speech
-    this.synth.cancel();
+    // Add to queue if not priority
+    if (!priority && this.isSpeaking) {
+      this.speechQueue.push(text);
+      return;
+    }
+
+    // Cancel current speech if priority
+    if (priority && this.isSpeaking) {
+      this.synth.cancel();
+      this.isSpeaking = false;
+    }
 
     const utterance = new SpeechSynthesisUtterance(text);
     
-    // Apply settings
-    if (this.settings.voice) {
+    // Try to use Microsoft Edge voice first
+    const microsoftVoice = this.voices.find(v => 
+      v.name === this.settings.voice || 
+      (v.name.includes('Microsoft') && v.name.includes('Zira'))
+    );
+    
+    if (microsoftVoice) {
+      utterance.voice = microsoftVoice;
+    } else if (this.settings.voice) {
       const selectedVoice = this.voices.find(v => v.name === this.settings.voice);
       if (selectedVoice) {
         utterance.voice = selectedVoice;
@@ -84,6 +112,13 @@ class TTSCoach {
 
     utterance.onend = () => {
       this.isSpeaking = false;
+      // Process queue
+      if (this.speechQueue.length > 0) {
+        const nextText = this.speechQueue.shift();
+        if (nextText) {
+          setTimeout(() => this.speak(nextText), 300); // Small pause between messages
+        }
+      }
     };
 
     utterance.onerror = () => {
@@ -93,44 +128,44 @@ class TTSCoach {
     this.synth.speak(utterance);
   }
 
-  // Workout-specific encouragements
+  // More humanized workout-specific encouragements with natural pauses
   private pushupEncouragements = [
-    "Keep those arms strong!",
-    "You're crushing it!",
-    "Feel the burn, that's progress!",
-    "Your form is looking great!",
-    "Beast mode activated!",
-    "You're stronger than you think!",
-    "Every rep counts!",
-    "Push through, you got this!",
-    "That's what I'm talking about!",
-    "Absolutely killing it!"
+    "Great job! Keep those arms strong.",
+    "You're doing amazing! I can see the effort.",
+    "Wow! Your form is looking really good.",
+    "That's it! Feel the strength building.",
+    "Excellent work! You're getting stronger with each rep.",
+    "Beautiful! Keep that steady pace going.",
+    "Yes! You're absolutely crushing this.",
+    "Perfect! Your dedication is really showing.",
+    "Fantastic! Every rep is making you stronger.",
+    "Outstanding! You should be proud of yourself."
   ];
 
   private pullupEncouragements = [
-    "Pull yourself to greatness!",
-    "You're a pull-up machine!",
-    "Grip it and rip it!",
-    "Your back is getting stronger!",
-    "Chin over that bar!",
-    "You're unstoppable!",
-    "Feel that power!",
-    "Every pull makes you stronger!",
-    "You're flying now!",
-    "Incredible strength!"
+    "Incredible! Your upper body strength is impressive.",
+    "Amazing! Pull yourself higher.",
+    "Yes! You're making this look easy.",
+    "Wonderful! Your back is getting so strong.",
+    "Excellent! Keep that chin over the bar.",
+    "Great form! You're a natural at this.",
+    "Impressive! Your grip strength is solid.",
+    "Beautiful! Every pull makes you stronger.",
+    "Outstanding! You're flying through these.",
+    "Fantastic! Your power is really showing."
   ];
 
   private situpEncouragements = [
-    "Core of steel!",
-    "Your abs are on fire!",
-    "Engage that core!",
-    "You're building an iron core!",
-    "Keep that rhythm going!",
-    "Your core strength is amazing!",
-    "Abs are made here!",
-    "You're a sit-up champion!",
-    "Feel that core burn!",
-    "Unstoppable core power!"
+    "Perfect! Your core is on fire.",
+    "Excellent! Feel that ab engagement.",
+    "Great work! Your core strength is building.",
+    "Amazing! Keep that steady rhythm.",
+    "Wonderful! Your abs are working hard.",
+    "Yes! You're building an iron core.",
+    "Beautiful! Maintain that control.",
+    "Outstanding! Your core power is impressive.",
+    "Fantastic! Feel that burn, that's progress.",
+    "Incredible! You're a core strength champion."
   ];
 
   private getWorkoutEncouragements(activityName: string): string[] {
@@ -141,55 +176,54 @@ class TTSCoach {
     } else if (activityName.toLowerCase().includes('sit')) {
       return this.situpEncouragements;
     }
-    return this.pushupEncouragements; // Default
+    return this.pushupEncouragements;
   }
 
-  // Rep milestone messages
+  // More humanized rep milestone messages
   private getRepMessage(rep: number, activityName: string): string {
     const encouragements = this.getWorkoutEncouragements(activityName);
     const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
 
     if (rep === 1) {
-      return "Here we go! First one down!";
+      return "Alright! Here we go. First one down, you're doing great.";
     } else if (rep === 5) {
-      return `Nice! ${rep} reps! ${randomEncouragement}`;
+      return `Nice! That's ${rep} reps already. ${randomEncouragement}`;
     } else if (rep === 10) {
-      return `Double digits! ${rep} and counting! You're on fire!`;
+      return `Wow! Double digits! ${rep} reps and counting. You're on fire!`;
     } else if (rep === 15) {
-      return `Wow, ${rep} reps! ${randomEncouragement}`;
+      return `Amazing! ${rep} reps! ${randomEncouragement}`;
     } else if (rep === 20) {
-      return `Twenty! You're a machine! ${randomEncouragement}`;
+      return `Twenty reps! You're a machine! ${randomEncouragement}`;
     } else if (rep === 25) {
-      return `Quarter century! ${rep} reps! Incredible!`;
+      return `Incredible! Twenty five reps! You're unstoppable!`;
     } else if (rep === 30) {
-      return `Thirty reps! You're unstoppable!`;
+      return `Thirty reps! Wow! Your endurance is phenomenal!`;
     } else if (rep % 10 === 0) {
       return `${rep} reps! ${randomEncouragement}`;
     } else if (rep % 5 === 0) {
-      return `${rep} and counting! Keep it up!`;
+      return `${rep} and counting! You're doing so well!`;
     } else if (rep % 2 === 0 && Math.random() > 0.7) {
-      // Random encouragement every 2 reps (30% chance)
       return randomEncouragement;
     }
     
     return '';
   }
 
-  // Form correction messages
+  // More gentle and encouraging form correction messages
   private formCorrectionMessages = [
-    "Check your form, you got this!",
-    "Let's fix that posture, nice and steady",
-    "Adjust your form, you're doing great!",
-    "Form first, speed second!",
-    "Take your time, perfect that form!",
-    "Quality over quantity, adjust that posture!",
-    "Let's get that form right, you're almost there!"
+    "Hey, let's adjust that form a little. You're doing great, just need a small tweak.",
+    "Almost perfect! Just check your posture and you'll nail it.",
+    "Good effort! Let's focus on form for the next one.",
+    "You're so close! Just adjust your position slightly.",
+    "Nice try! Remember, quality over speed. You've got this.",
+    "That's okay! Let's get that form right. Take your time.",
+    "Good attempt! Focus on your alignment for the next rep."
   ];
 
   onRepCompleted(rep: number, activityName: string, isCorrect: boolean) {
     if (!isCorrect) {
-      // Give form feedback occasionally
-      if (Math.random() > 0.5) {
+      // Give gentle form feedback occasionally, not every time
+      if (Math.random() > 0.6) {
         const message = this.formCorrectionMessages[Math.floor(Math.random() * this.formCorrectionMessages.length)];
         this.speak(message);
       }
@@ -212,13 +246,13 @@ class TTSCoach {
 
   onWorkoutStart(activityName: string) {
     const startMessages = [
-      `Let's do this! Time for some ${activityName}!`,
-      `Ready to crush these ${activityName}? Let's go!`,
-      `${activityName} time! You've got this!`,
-      `Alright, let's make these ${activityName} count!`
+      `Alright! Let's do this. Time for some ${activityName}. You've got this!`,
+      `Ready? Let's crush these ${activityName} together!`,
+      `Here we go! ${activityName} time. I know you can do this!`,
+      `Let's make these ${activityName} count. You're going to do amazing!`
     ];
     const message = startMessages[Math.floor(Math.random() * startMessages.length)];
-    this.speak(message);
+    this.speak(message, true); // Priority message
   }
 
   onWorkoutEnd(totalReps: number, correctReps: number) {
@@ -226,26 +260,27 @@ class TTSCoach {
     
     let message = '';
     if (accuracy >= 80) {
-      message = `Amazing work! ${totalReps} reps with ${accuracy}% accuracy! You're a champion!`;
+      message = `Wow! Amazing work! You completed ${totalReps} reps with ${accuracy}% accuracy. You're a true champion!`;
     } else if (accuracy >= 60) {
-      message = `Great effort! ${totalReps} reps completed! Keep working on that form!`;
+      message = `Great effort! You did ${totalReps} reps. That's fantastic! Let's keep working on that form together.`;
     } else {
-      message = `Good job finishing! ${totalReps} reps done! Let's focus on form next time!`;
+      message = `Good job finishing! You completed ${totalReps} reps. I'm proud of you for pushing through. Let's focus on form next time, okay?`;
     }
     
-    this.speak(message);
+    this.speak(message, true); // Priority message
   }
 
   onHighScore(currentReps: number, previousBest: number) {
     if (currentReps > previousBest) {
-      this.speak(`New personal record! You just beat your best of ${previousBest}! Keep going!`);
+      this.speak(`Oh my gosh! New personal record! You just beat your best of ${previousBest}! Keep going, you're amazing!`, true);
     } else if (currentReps === previousBest - 2) {
-      this.speak(`You're so close to your record of ${previousBest}! Push through!`);
+      this.speak(`You're so close to your record of ${previousBest}! Just two more! You can do this!`, true);
     }
   }
 
   reset() {
     this.lastSpokenRep = 0;
+    this.speechQueue = [];
     if (this.synth) {
       this.synth.cancel();
     }
@@ -253,6 +288,7 @@ class TTSCoach {
   }
 
   stop() {
+    this.speechQueue = [];
     if (this.synth) {
       this.synth.cancel();
     }
