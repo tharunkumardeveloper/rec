@@ -167,6 +167,16 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         
         // Python: cv2.putText(frame, f"State: {state}", ...)
         drawText(`State: ${metrics.state}`, '#C8C8C8');
+      } else if (isRecording && !detectorRef.current) {
+        // Detector not initialized
+        ctx.font = 'bold 20px Arial';
+        ctx.fillStyle = '#FF0000';
+        ctx.fillText('⚠️ Detector not initialized', 15, 40);
+      } else if (isRecording && !results.poseLandmarks) {
+        // No pose detected
+        ctx.font = 'bold 20px Arial';
+        ctx.fillStyle = '#FFA500';
+        ctx.fillText('⚠️ No pose detected', 15, 40);
       }
 
       if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {
