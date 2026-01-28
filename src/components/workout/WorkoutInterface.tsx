@@ -252,6 +252,7 @@ const WorkoutInterface = ({ activity, mode, onBack }: WorkoutInterfaceProps) => 
           incorrectReps={(liveResults.reps || 0) - (liveResults.correctReps || 0)}
           duration={liveResults.duration || 0}
           repDetails={liveResults.repDetails}
+          videoBlob={liveResults.videoBlob}
           onHome={async () => {
             // Process and save workout before going home
             await handleWorkoutComplete(liveResults);

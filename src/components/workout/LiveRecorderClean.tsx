@@ -90,6 +90,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       // Initialize push-up detector
       if (activityName === 'Push-ups') {
         detectorRef.current = new PushupLiveDetector();
+        console.log('✅ Push-up detector initialized');
       }
 
       processFrame(poseInstance);
@@ -124,6 +125,29 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         const currentTime = (Date.now() - recordingStartTimeRef.current) / 1000;
         const repCount = detectorRef.current.process(results.poseLandmarks, currentTime);
         setRepCount(repCount);
+        
+        // Get current metrics for display
+        const metrics = detectorRef.current.getCurrentMetrics();
+        
+        // Draw metrics on canvas (matching Python HUD)
+        ctx.font = 'bold 24px Arial';
+        ctx.fillStyle = '#FFFF00'; // Yellow
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        
+        let y = 40;
+        const drawText = (text: string, color: string = '#00FF00') => {
+          ctx.fillStyle = color;
+          ctx.strokeText(text, 15, y);
+          ctx.fillText(text, 15, y);
+          y += 35;
+        };
+        
+        drawText(`Reps: ${metrics.repCount}`, '#FFFF00');
+        drawText(`Elbow: ${metrics.elbowAngle}°`, metrics.elbowAngle <= 75 ? '#00FF00' : '#FF0000');
+        drawText(`Plank: ${metrics.plankAngle}°`, metrics.plankAngle >= 165 ? '#00FF00' : '#FF0000');
+        drawText(`Depth: ${metrics.chestDepth}`, metrics.chestDepth >= 40 ? '#00FF00' : '#FF0000');
+        drawText(`State: ${metrics.state}`, '#C8C8C8');
       }
 
       if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {

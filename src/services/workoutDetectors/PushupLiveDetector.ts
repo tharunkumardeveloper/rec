@@ -44,7 +44,10 @@ export class PushupLiveDetector {
   }
 
   process(landmarks: any[], currentTime: number): number {
-    if (!landmarks || landmarks.length < 33) return this.reps.length;
+    if (!landmarks || landmarks.length < 33) {
+      console.log('⚠️ Invalid landmarks:', landmarks?.length);
+      return this.reps.length;
+    }
 
     try {
       // Get landmark positions (normalized 0-1)
@@ -84,11 +87,13 @@ export class PushupLiveDetector {
 
       // Rep detection logic (exactly matching Python)
       if (this.state === 'up' && elbowSmooth <= this.DOWN_ANGLE) {
+        console.log('🔽 Going DOWN - Elbow:', elbowSmooth);
         this.state = 'down';
         this.inDip = true;
         this.dipStartTime = currentTime;
         this.currentDipMinAngle = elbowSmooth;
       } else if (this.state === 'down' && elbowSmooth >= this.UP_ANGLE) {
+        console.log('🔼 Going UP - Elbow:', elbowSmooth);
         this.state = 'up';
         
         if (this.inDip && this.dipStartTime !== null) {
@@ -100,6 +105,15 @@ export class PushupLiveDetector {
             plankAngle >= this.PLANK_MIN_ANGLE &&
             chestDepth >= this.CHEST_DEPTH_MIN
           );
+
+          console.log('✅ REP COMPLETED!', {
+            rep: this.reps.length + 1,
+            minElbow: this.currentDipMinAngle,
+            plankAngle,
+            chestDepth,
+            duration: dipDuration,
+            correct: isCorrect
+          });
 
           this.reps.push({
             rep: this.reps.length + 1,

@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle, Clock, TrendingUp, Home } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, TrendingUp, Home, Play } from 'lucide-react';
 import { PushupRepData } from '@/services/workoutDetectors/PushupLiveDetector';
+import { useState, useRef, useEffect } from 'react';
 
 interface WorkoutResultsScreenProps {
   activityName: string;
@@ -9,7 +10,7 @@ interface WorkoutResultsScreenProps {
   incorrectReps: number;
   duration: number;
   repDetails?: PushupRepData[];
-  videoUrl?: string; // Annotated video URL from Python
+  videoBlob?: Blob;
   onHome: () => void;
 }
 
@@ -20,9 +21,20 @@ const WorkoutResultsScreen = ({
   incorrectReps,
   duration,
   repDetails = [],
-  videoUrl,
+  videoBlob,
   onHome
 }: WorkoutResultsScreenProps) => {
+  const [videoUrl, setVideoUrl] = useState<string>('');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  useEffect(() => {
+    if (videoBlob) {
+      const url = URL.createObjectURL(videoBlob);
+      setVideoUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [videoBlob]);
+
   const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
   const formScore = accuracy >= 80 ? 'Excellent' : accuracy >= 60 ? 'Good' : 'Needs Work';
 
@@ -33,8 +45,8 @@ const WorkoutResultsScreen = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 text-white p-6">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 text-white overflow-y-auto">
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-green-500 rounded-full mb-4">
@@ -44,15 +56,47 @@ const WorkoutResultsScreen = ({
           <p className="text-purple-200">{activityName}</p>
         </div>
 
-        {/* Main Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
-            <div className="text-5xl font-bold mb-2">{totalReps}</div>
-            <div className="text-purple-200">Total Reps</div>
+        {/* Annotated Video */}
+        {videoUrl && (
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xl font-semibold">Your Performance</h2>
+              <Play className="w-5 h-5 text-purple-300" />
+            </div>
+            <div className="relative rounded-lg overflow-hidden bg-black">
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                controls
+                className="w-full"
+                playsInline
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            <p className="text-sm text-purple-200 mt-3">
+              📹 Watch your workout with real-time metrics and form analysis
+            </p>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
-            <div className="text-5xl font-bold mb-2">{formatTime(duration)}</div>
-            <div className="text-purple-200">Duration</div>
+        )}
+
+        {/* Main Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+            <div className="text-4xl font-bold mb-2">{totalReps}</div>
+            <div className="text-purple-200 text-sm">Total Reps</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+            <div className="text-4xl font-bold mb-2 text-green-400">{correctReps}</div>
+            <div className="text-purple-200 text-sm">Correct</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+            <div className="text-4xl font-bold mb-2 text-red-400">{incorrectReps}</div>
+            <div className="text-purple-200 text-sm">Incorrect</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+            <div className="text-4xl font-bold mb-2">{formatTime(duration)}</div>
+            <div className="text-purple-200 text-sm">Duration</div>
           </div>
         </div>
 
