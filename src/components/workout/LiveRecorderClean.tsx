@@ -26,6 +26,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
   const detectorRef = useRef<PushupLiveDetector | null>(null);
   const recordingStartTimeRef = useRef<number>(0);
   const timerIntervalRef = useRef<number | null>(null);
+  const isRecordingRef = useRef<boolean>(false); // Add ref for recording state
 
   useEffect(() => {
     initializeCamera();
@@ -128,7 +129,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         ctx.lineWidth = 2;
         
         const statusY = canvas.height - 100;
-        const statusText = isRecording ? '🔴 RECORDING' : '⚪ PREVIEW';
+        const statusText = isRecordingRef.current ? '🔴 RECORDING' : '⚪ PREVIEW';
         ctx.strokeText(statusText, 15, statusY);
         ctx.fillText(statusText, 15, statusY);
         
@@ -137,8 +138,8 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         ctx.fillText(detectorText, 15, statusY + 25);
       }
 
-      // Process with detector during recording
-      if (isRecording && detectorRef.current && results.poseLandmarks) {
+      // Process with detector during recording - USE REF NOT STATE
+      if (isRecordingRef.current && detectorRef.current && results.poseLandmarks) {
         // Set canvas dimensions for detector
         detectorRef.current.setDimensions(canvas.width, canvas.height);
         
@@ -185,7 +186,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         
         // Python: cv2.putText(frame, f"State: {state}", ...)
         drawText(`State: ${metrics.state}`, '#C8C8C8');
-      } else if (isRecording && !detectorRef.current) {
+      } else if (isRecordingRef.current && !detectorRef.current) {
         // Detector not initialized
         ctx.font = 'bold 20px Arial';
         ctx.fillStyle = '#FF0000';
@@ -193,7 +194,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         ctx.lineWidth = 2;
         ctx.strokeText('⚠️ Detector not initialized', 15, 40);
         ctx.fillText('⚠️ Detector not initialized', 15, 40);
-      } else if (isRecording && !results.poseLandmarks) {
+      } else if (isRecordingRef.current && !results.poseLandmarks) {
         // No pose detected
         ctx.font = 'bold 20px Arial';
         ctx.fillStyle = '#FFA500';
@@ -204,8 +205,9 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       }
 
       if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {
-        const connectionColor = isRecording ? '#10B981' : '#8B5CF6';
-        const landmarkColor = isRecording ? '#34D399' : '#A78BFA';
+        // Change color based on recording state - USE REF
+        const connectionColor = isRecordingRef.current ? '#10B981' : '#8B5CF6';
+        const landmarkColor = isRecordingRef.current ? '#34D399' : '#A78BFA';
 
         window.drawConnectors(ctx, results.poseLandmarks, window.POSE_CONNECTIONS, {
           color: connectionColor,
@@ -241,6 +243,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
 
       mediaRecorderRef.current.start();
       setIsRecording(true);
+      isRecordingRef.current = true; // Update ref
       recordingStartTimeRef.current = Date.now();
       
       timerIntervalRef.current = window.setInterval(() => {
@@ -302,6 +305,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
 
     mediaRecorderRef.current.stop();
     setIsRecording(false);
+    isRecordingRef.current = false; // Update ref
   };
 
   const toggleCamera = () => {
