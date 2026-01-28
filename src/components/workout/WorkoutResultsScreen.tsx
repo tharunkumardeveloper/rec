@@ -44,24 +44,6 @@ const WorkoutResultsScreen = ({
           <p className="text-purple-200">{activityName}</p>
         </div>
 
-        {/* Annotated Video */}
-        {videoUrl && (
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-            <h2 className="text-xl font-semibold mb-3">Your Performance</h2>
-            <video
-              src={videoUrl}
-              controls
-              className="w-full rounded-lg"
-              playsInline
-            >
-              Your browser does not support the video tag.
-            </video>
-            <p className="text-sm text-purple-200 mt-2">
-              Watch your workout with AI analysis and form feedback
-            </p>
-          </div>
-        )}
-
         {/* Main Stats */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
@@ -133,8 +115,8 @@ const WorkoutResultsScreen = ({
                     <span className="font-semibold">Rep {rep.rep}</span>
                   </div>
                   <div className="text-sm text-right">
-                    <div>Elbow: {rep.minElbow}°</div>
-                    <div>Plank: {rep.plankAngle}°</div>
+                    <div>Elbow: {rep.min_elbow}°</div>
+                    <div>Plank: {rep.plank_angle}°</div>
                   </div>
                 </div>
               ))}
@@ -160,10 +142,10 @@ const WorkoutResultsScreen = ({
             )}
             {activityName === 'Push-ups' && repDetails.length > 0 && (
               <>
-                {repDetails.some(r => !r.correct && r.minElbow > 75) && (
+                {repDetails.some(r => !r.correct && r.min_elbow > 75) && (
                   <p>• Try to lower your chest closer to the ground (elbow angle below 75°)</p>
                 )}
-                {repDetails.some(r => !r.correct && r.plankAngle < 165) && (
+                {repDetails.some(r => !r.correct && r.plank_angle < 165) && (
                   <p>• Keep your body straight - avoid sagging hips or pike position</p>
                 )}
               </>

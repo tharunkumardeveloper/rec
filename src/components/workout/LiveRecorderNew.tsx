@@ -3,13 +3,13 @@ import { Button } from '@/components/ui/button';
 import { StopCircle, SwitchCamera, Play } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
-interface LiveRecorderRevampedProps {
+interface LiveRecorderProps {
   activityName: string;
   onBack: () => void;
   onComplete: (results: any) => void;
 }
 
-const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorderRevampedProps) => {
+const LiveRecorderNew = ({ activityName, onBack, onComplete }: LiveRecorderProps) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [pose, setPose] = useState<any>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -35,7 +35,6 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
 
   const initializeCamera = async () => {
     try {
-      // Stop existing stream
       if (stream) {
         stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
       }
@@ -50,7 +49,6 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
         videoRef.current.srcObject = mediaStream;
       }
 
-      // Initialize MediaPipe
       await initializeMediaPipe();
     } catch (error) {
       console.error('Camera access error:', error);
@@ -88,11 +86,9 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
       poseInstance.onResults(onPoseResults);
       setPose(poseInstance);
 
-      // Initialize workout detector
       const { getVideoDetectorForActivity } = await import('@/services/videoDetectors');
       detectorRef.current = getVideoDetectorForActivity(activityName);
 
-      // Start processing
       processFrame(poseInstance);
     } catch (error) {
       console.error('MediaPipe initialization error:', error);
@@ -118,19 +114,16 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
 
-      // Draw video frame
       ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
-      // Process with detector if recording
       if (isRecording && detectorRef.current && results.poseLandmarks) {
         const currentTime = (Date.now() - recordingStartTimeRef.current) / 1000;
         const reps = detectorRef.current.process(results.poseLandmarks, currentTime);
         setRepCount(reps.length);
       }
 
-      // Draw skeleton overlay (themed colors)
       if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {
-        const connectionColor = isRecording ? '#10B981' : '#8B5CF6'; // Green when recording, purple otherwise
+        const connectionColor = isRecording ? '#10B981' : '#8B5CF6';
         const landmarkColor = isRecording ? '#34D399' : '#A78BFA';
 
         window.drawConnectors(ctx, results.poseLandmarks, window.POSE_CONNECTIONS, {
@@ -152,7 +145,6 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
     if (!stream || !canvasRef.current) return;
 
     try {
-      // Start MediaRecorder with canvas stream
       const canvasStream = canvasRef.current.captureStream(30);
       mediaRecorderRef.current = new MediaRecorder(canvasStream, {
         mimeType: 'video/webm;codecs=vp8',
@@ -170,12 +162,10 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
       setIsRecording(true);
       recordingStartTimeRef.current = Date.now();
       
-      // Start timer
       timerIntervalRef.current = window.setInterval(() => {
         setRecordingTime(Math.floor((Date.now() - recordingStartTimeRef.current) / 1000));
       }, 1000);
 
-      // Reset detector
       if (detectorRef.current && detectorRef.current.reset) {
         detectorRef.current.reset();
       }
@@ -196,13 +186,11 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
     mediaRecorderRef.current.onstop = async () => {
       const videoBlob = new Blob(chunksRef.current, { type: 'video/webm' });
       
-      // Clear timer
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
         timerIntervalRef.current = null;
       }
 
-      // Get final results from detector
       const reps = detectorRef.current ? detectorRef.current.getReps() : [];
       const correctReps = reps.filter((r: any) => r.correct === true || r.correct === 'True').length;
       
@@ -232,7 +220,7 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
 
   const toggleCamera = () => {
     if (isRecording) return;
-    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+    setFacingMode((prev: string) => prev === 'user' ? 'environment' : 'user');
   };
 
   const cleanup = () => {
@@ -255,7 +243,6 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col">
-      {/* Video - Full Screen */}
       <div className="relative flex-1">
         <video
           ref={videoRef}
@@ -269,7 +256,6 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
           className="absolute inset-0 w-full h-full object-cover"
         />
 
-        {/* Header Overlay */}
         <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/80 to-transparent safe-top">
           <div className="px-4 py-4">
             <div className="flex items-center justify-between">
@@ -304,10 +290,8 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
           </div>
         </div>
 
-        {/* Bottom Overlay - Stats & Controls */}
         <div className="absolute bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-black/90 via-black/70 to-transparent safe-bottom">
           <div className="px-4 py-6 space-y-4">
-            {/* Stats */}
             <div className="flex items-center justify-center space-x-8 text-white">
               <div className="text-center">
                 <div className="text-4xl font-bold">{repCount}</div>
@@ -321,7 +305,6 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
               )}
             </div>
 
-            {/* Recording Controls */}
             <div className="flex items-center justify-center">
               {!isRecording ? (
                 <Button
@@ -347,7 +330,6 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
           </div>
         </div>
 
-        {/* Recording Indicator */}
         {isRecording && (
           <div className="absolute top-20 left-4 z-40 flex items-center space-x-2 bg-red-600 px-3 py-2 rounded-full">
             <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
@@ -355,7 +337,6 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
           </div>
         )}
 
-        {/* Processing Overlay */}
         {isProcessing && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-50">
             <div className="text-white text-center">
@@ -369,4 +350,4 @@ const LiveRecorderRevamped = ({ activityName, onBack, onComplete }: LiveRecorder
   );
 };
 
-export default LiveRecorderRevamped;
+export default LiveRecorderNew;

@@ -1,16 +1,15 @@
-// Push-up detector matching Python live analysis logic
+// Push-up detector matching Python live analysis logic exactly
 export interface PushupRepData {
   rep: number;
   duration: number;
-  minElbow: number;
-  plankAngle: number;
-  chestDepth: number;
+  min_elbow: number;
+  plank_angle: number;
+  chest_depth: number;
   correct: boolean;
-  timestamp: number;
 }
 
 export class PushupLiveDetector {
-  // Thresholds (matching Python)
+  // Thresholds (matching Python exactly)
   private readonly DOWN_ANGLE = 75;
   private readonly UP_ANGLE = 110;
   private readonly PLANK_MIN_ANGLE = 165;
@@ -28,6 +27,7 @@ export class PushupLiveDetector {
 
   // Current metrics for display
   private currentElbowAngle = 0;
+  private currentElbowSmooth = 0;
   private currentPlankAngle = 0;
   private currentChestDepth = 0;
 
@@ -43,11 +43,11 @@ export class PushupLiveDetector {
     return Math.acos(cosAngle) * (180 / Math.PI);
   }
 
-  process(landmarks: any[], currentTime: number): PushupRepData[] {
-    if (!landmarks || landmarks.length < 33) return this.reps;
+  process(landmarks: any[], currentTime: number): number {
+    if (!landmarks || landmarks.length < 33) return this.reps.length;
 
     try {
-      // Get landmark positions
+      // Get landmark positions (normalized 0-1)
       const leftShoulder = [landmarks[11].x, landmarks[11].y] as [number, number];
       const leftElbow = [landmarks[13].x, landmarks[13].y] as [number, number];
       const leftWrist = [landmarks[15].x, landmarks[15].y] as [number, number];
@@ -65,6 +65,8 @@ export class PushupLiveDetector {
       const elbowAngle = (angLeft + angRight) / 2;
 
       const plankAngle = this.calculateAngle(leftShoulder, leftHip, leftAnkle);
+      
+      // Chest depth: difference in Y coordinate (wrist - shoulder)
       const chestDepth = Math.abs(leftWrist[1] - leftShoulder[1]) * 1000; // Scale for visibility
 
       // Store current metrics
@@ -72,14 +74,15 @@ export class PushupLiveDetector {
       this.currentPlankAngle = plankAngle;
       this.currentChestDepth = chestDepth;
 
-      // Smooth elbow angle
+      // Smooth elbow angle (matching Python deque behavior)
       this.angleHistory.push(elbowAngle);
       if (this.angleHistory.length > this.SMOOTH_N) {
         this.angleHistory.shift();
       }
       const elbowSmooth = this.angleHistory.reduce((a, b) => a + b, 0) / this.angleHistory.length;
+      this.currentElbowSmooth = elbowSmooth;
 
-      // Rep detection logic
+      // Rep detection logic (exactly matching Python)
       if (this.state === 'up' && elbowSmooth <= this.DOWN_ANGLE) {
         this.state = 'down';
         this.inDip = true;
@@ -101,11 +104,10 @@ export class PushupLiveDetector {
           this.reps.push({
             rep: this.reps.length + 1,
             duration: parseFloat(dipDuration.toFixed(3)),
-            minElbow: parseFloat(this.currentDipMinAngle.toFixed(2)),
-            plankAngle: parseFloat(plankAngle.toFixed(2)),
-            chestDepth: parseFloat(chestDepth.toFixed(2)),
-            correct: isCorrect,
-            timestamp: currentTime
+            min_elbow: parseFloat(this.currentDipMinAngle.toFixed(2)),
+            plank_angle: parseFloat(plankAngle.toFixed(2)),
+            chest_depth: parseFloat(chestDepth.toFixed(2)),
+            correct: isCorrect
           });
 
           this.inDip = false;
@@ -122,11 +124,15 @@ export class PushupLiveDetector {
       console.error('Push-up detection error:', error);
     }
 
-    return this.reps;
+    return this.reps.length;
   }
 
   getReps(): PushupRepData[] {
     return this.reps;
+  }
+
+  getRepCount(): number {
+    return this.reps.length;
   }
 
   getState(): 'up' | 'down' {
@@ -135,13 +141,11 @@ export class PushupLiveDetector {
 
   getCurrentMetrics() {
     return {
-      elbowAngle: Math.round(this.currentElbowAngle),
+      elbowAngle: Math.round(this.currentElbowSmooth),
       plankAngle: Math.round(this.currentPlankAngle),
       chestDepth: Math.round(this.currentChestDepth),
       state: this.state,
-      elbowOk: this.currentElbowAngle <= this.DOWN_ANGLE,
-      plankOk: this.currentPlankAngle >= this.PLANK_MIN_ANGLE,
-      chestOk: this.currentChestDepth >= this.CHEST_DEPTH_MIN
+      repCount: this.reps.length
     };
   }
 
@@ -153,6 +157,7 @@ export class PushupLiveDetector {
     this.currentDipMinAngle = 180;
     this.reps = [];
     this.currentElbowAngle = 0;
+    this.currentElbowSmooth = 0;
     this.currentPlankAngle = 0;
     this.currentChestDepth = 0;
   }

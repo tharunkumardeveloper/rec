@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { StopCircle, SwitchCamera, Play } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
+import { PushupLiveDetector } from '@/services/workoutDetectors/PushupLiveDetector';
 
 interface LiveRecorderCleanProps {
   activityName: string;
@@ -22,6 +23,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const detectorRef = useRef<PushupLiveDetector | null>(null);
   const recordingStartTimeRef = useRef<number>(0);
   const timerIntervalRef = useRef<number | null>(null);
 
@@ -85,6 +87,11 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       poseInstance.onResults(onPoseResults);
       setPose(poseInstance);
 
+      // Initialize push-up detector
+      if (activityName === 'Push-ups') {
+        detectorRef.current = new PushupLiveDetector();
+      }
+
       processFrame(poseInstance);
     } catch (error) {
       console.error('MediaPipe initialization error:', error);
@@ -111,6 +118,13 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       canvas.height = videoRef.current.videoHeight;
 
       ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+
+      // Process with detector during recording
+      if (isRecording && detectorRef.current && results.poseLandmarks) {
+        const currentTime = (Date.now() - recordingStartTimeRef.current) / 1000;
+        const repCount = detectorRef.current.process(results.poseLandmarks, currentTime);
+        setRepCount(repCount);
+      }
 
       if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {
         const connectionColor = isRecording ? '#10B981' : '#8B5CF6';
@@ -156,6 +170,10 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         setRecordingTime(Math.floor((Date.now() - recordingStartTimeRef.current) / 1000));
       }, 1000);
 
+      // Reset detector
+      if (detectorRef.current) {
+        detectorRef.current.reset();
+      }
       setRepCount(0);
 
       toast.success('Recording started');
@@ -178,91 +196,31 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         timerIntervalRef.current = null;
       }
 
-      // Send video to backend for Python analysis
-      try {
-        toast.info('Processing video with AI...');
-        
-        // Convert blob to file
-        const videoFile = new File([videoBlob], `${activityName}_${Date.now()}.webm`, { type: 'video/webm' });
-        
-        // Call backend API
-        const formData = new FormData();
-        formData.append('video', videoFile);
-        formData.append('activityName', activityName);
-        formData.append('mode', 'live');
-
-        const response = await fetch('http://localhost:3001/api/process-video', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to process video');
-        }
-
-        const result = await response.json();
-        
-        // Get full results
-        const resultsResponse = await fetch(`http://localhost:3001/api/results/${result.outputId}`);
-        const fullResults = await resultsResponse.json();
-
-        // Prepare results with video URL
-        const videoUrl = fullResults.videoFile 
-          ? `http://localhost:3001/api/video/${result.outputId}/${fullResults.videoFile}`
-          : null;
-
-        const csvData = fullResults.csvData || [];
-        const correctReps = csvData.filter((r: any) => r.correct === 'True' || r.correct === true).length;
-        
-        const results = {
-          videoBlob,
-          videoUrl,
-          outputId: result.outputId,
-          reps: csvData.length,
-          setsCompleted: csvData.length,
+      // Get results from detector
+      const reps = detectorRef.current ? detectorRef.current.getReps() : [];
+      const correctReps = reps.filter((r: any) => r.correct === true).length;
+      
+      const results = {
+        videoBlob,
+        reps: reps.length,
+        setsCompleted: reps.length,
+        correctReps,
+        badSets: reps.length - correctReps,
+        duration: recordingTime,
+        posture: correctReps >= reps.length * 0.7 ? 'Good' : 'Bad',
+        stats: {
+          totalReps: reps.length,
           correctReps,
-          badSets: csvData.length - correctReps,
-          duration: recordingTime,
-          posture: correctReps >= csvData.length * 0.7 ? 'Good' : 'Bad',
-          stats: {
-            totalReps: csvData.length,
-            correctReps,
-            incorrectReps: csvData.length - correctReps
-          },
-          repDetails: csvData,
-          activityName,
-          csvData
-        };
+          incorrectReps: reps.length - correctReps
+        },
+        repDetails: reps,
+        activityName
+      };
 
-        console.log('Recording complete:', results);
-        cleanup();
-        setIsProcessing(false);
-        onComplete(results);
-      } catch (error) {
-        console.error('Error processing video:', error);
-        toast.error('Failed to process video. Using basic analysis.');
-        
-        // Fallback to basic results
-        const results = {
-          videoBlob,
-          reps: repCount,
-          setsCompleted: repCount,
-          correctReps: repCount,
-          badSets: 0,
-          duration: recordingTime,
-          posture: 'Good',
-          stats: {
-            totalReps: repCount,
-            correctReps: repCount,
-            incorrectReps: 0
-          },
-          activityName
-        };
-
-        cleanup();
-        setIsProcessing(false);
-        onComplete(results);
-      }
+      console.log('Recording complete:', results);
+      cleanup();
+      setIsProcessing(false);
+      onComplete(results);
     };
 
     mediaRecorderRef.current.stop();
@@ -344,6 +302,10 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         <div className="absolute bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-black/90 via-black/70 to-transparent safe-bottom">
           <div className="px-4 py-6 space-y-4">
             <div className="flex items-center justify-center space-x-8 text-white">
+              <div className="text-center">
+                <div className="text-4xl font-bold">{repCount}</div>
+                <div className="text-sm text-white/80">Reps</div>
+              </div>
               {isRecording && (
                 <div className="text-center">
                   <div className="text-4xl font-bold">{formatTime(recordingTime)}</div>
