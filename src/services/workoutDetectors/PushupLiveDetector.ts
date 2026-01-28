@@ -49,34 +49,39 @@ export class PushupLiveDetector {
     }
 
     try {
-      // Get landmark positions (normalized 0-1)
-      const leftShoulder = [landmarks[11].x, landmarks[11].y] as [number, number];
-      const leftElbow = [landmarks[13].x, landmarks[13].y] as [number, number];
-      const leftWrist = [landmarks[15].x, landmarks[15].y] as [number, number];
+      // Get landmark positions - need to convert to pixel coordinates like Python
+      // Python uses: lm_xy(lm, width, height) which returns (int(lm.x * w), int(lm.y * h))
+      // For consistency, we'll use a reference width/height
+      const refWidth = 640;
+      const refHeight = 480;
       
-      const rightShoulder = [landmarks[12].x, landmarks[12].y] as [number, number];
-      const rightElbow = [landmarks[14].x, landmarks[14].y] as [number, number];
-      const rightWrist = [landmarks[16].x, landmarks[16].y] as [number, number];
+      const leftShoulder = [landmarks[11].x * refWidth, landmarks[11].y * refHeight] as [number, number];
+      const leftElbow = [landmarks[13].x * refWidth, landmarks[13].y * refHeight] as [number, number];
+      const leftWrist = [landmarks[15].x * refWidth, landmarks[15].y * refHeight] as [number, number];
       
-      const leftHip = [landmarks[23].x, landmarks[23].y] as [number, number];
-      const leftAnkle = [landmarks[27].x, landmarks[27].y] as [number, number];
+      const rightShoulder = [landmarks[12].x * refWidth, landmarks[12].y * refHeight] as [number, number];
+      const rightElbow = [landmarks[14].x * refWidth, landmarks[14].y * refHeight] as [number, number];
+      const rightWrist = [landmarks[16].x * refWidth, landmarks[16].y * refHeight] as [number, number];
+      
+      const leftHip = [landmarks[23].x * refWidth, landmarks[23].y * refHeight] as [number, number];
+      const leftAnkle = [landmarks[27].x * refWidth, landmarks[27].y * refHeight] as [number, number];
 
-      // Calculate angles
+      // Calculate angles (exactly like Python)
       const angLeft = this.calculateAngle(leftShoulder, leftElbow, leftWrist);
       const angRight = this.calculateAngle(rightShoulder, rightElbow, rightWrist);
       const elbowAngle = (angLeft + angRight) / 2;
 
       const plankAngle = this.calculateAngle(leftShoulder, leftHip, leftAnkle);
       
-      // Chest depth: difference in Y coordinate (wrist - shoulder)
-      const chestDepth = Math.abs(leftWrist[1] - leftShoulder[1]) * 1000; // Scale for visibility
+      // Chest depth: Python uses lw[1] - ls[1] (wrist Y - shoulder Y, NOT abs!)
+      const chestDepth = leftWrist[1] - leftShoulder[1];
 
       // Store current metrics
       this.currentElbowAngle = elbowAngle;
       this.currentPlankAngle = plankAngle;
       this.currentChestDepth = chestDepth;
 
-      // Smooth elbow angle (matching Python deque behavior)
+      // Smooth elbow angle using deque behavior (exactly like Python)
       this.angleHistory.push(elbowAngle);
       if (this.angleHistory.length > this.SMOOTH_N) {
         this.angleHistory.shift();
@@ -84,12 +89,12 @@ export class PushupLiveDetector {
       const elbowSmooth = this.angleHistory.reduce((a, b) => a + b, 0) / this.angleHistory.length;
       this.currentElbowSmooth = elbowSmooth;
 
-      // Log every 30 frames (about once per second at 30fps)
+      // Log every ~30 frames
       if (Math.random() < 0.033) {
-        console.log(`📊 Elbow: ${Math.round(elbowSmooth)}° | State: ${this.state} | Reps: ${this.reps.length} | Down<=${this.DOWN_ANGLE} | Up>=${this.UP_ANGLE}`);
+        console.log(`📊 Elbow: ${Math.round(elbowSmooth)}° | State: ${this.state} | Reps: ${this.reps.length} | Depth: ${Math.round(chestDepth)}`);
       }
 
-      // Rep detection logic (exactly matching Python)
+      // Rep detection logic (EXACTLY matching Python)
       if (this.state === 'up' && elbowSmooth <= this.DOWN_ANGLE) {
         console.log('🔽 Going DOWN - Elbow:', Math.round(elbowSmooth), '<=', this.DOWN_ANGLE);
         this.state = 'down';
@@ -103,6 +108,9 @@ export class PushupLiveDetector {
         if (this.inDip && this.dipStartTime !== null) {
           const dipDuration = currentTime - this.dipStartTime;
 
+          // Python checks: current_dip_min_angle <= DOWN_ANGLE and dip_duration >= MIN_DIP_DURATION 
+          // and plank_angle is not None and plank_angle >= PLANK_MIN_ANGLE 
+          // and chest_depth is not None and chest_depth >= CHEST_DEPTH_MIN
           const isCorrect = (
             this.currentDipMinAngle <= this.DOWN_ANGLE &&
             dipDuration >= this.MIN_DIP_DURATION &&
