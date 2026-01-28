@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import TTSSettings from './TTSSettings';
 import { 
   ArrowLeft, 
   Bell, 
@@ -178,6 +179,9 @@ const SettingsPage = ({ onBack, userName = 'User', userRole = 'athlete' }: Setti
 
         {/* Right Column */}
         <div className="space-y-6">
+          {/* Voice Coach Settings */}
+          <TTSSettings />
+          
           {/* Support */}
         <Card className="card-elevated">
           <CardHeader>

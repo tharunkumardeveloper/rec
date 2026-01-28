@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { StopCircle, SwitchCamera } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { PushupLiveDetector } from '@/services/workoutDetectors/PushupLiveDetector';
+import { ttsCoach } from '@/services/ttsCoach';
 
 interface LiveRecorderCleanProps {
   activityName: string;
@@ -177,8 +178,12 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         const currentTime = (Date.now() - recordingStartTimeRef.current) / 1000;
         const newRepCount = detectorRef.current.process(results.poseLandmarks, currentTime);
         
-        // Update rep count
+        // Update rep count and trigger TTS
         if (newRepCount > previousRepCount) {
+          const reps = detectorRef.current.getReps();
+          const lastRep = reps[reps.length - 1];
+          const isCorrect = lastRep?.correct === true;
+          ttsCoach.onRepCompleted(newRepCount, activityName, isCorrect);
           setPreviousRepCount(newRepCount);
         }
         
@@ -263,6 +268,11 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       setRepCount(0);
       setPreviousRepCount(0);
 
+      // Announce workout start
+      setTimeout(() => {
+        ttsCoach.onWorkoutStart(activityName);
+      }, 500);
+
       toast.success('Recording started');
     } catch (error) {
       console.error('Recording start error:', error);
@@ -286,6 +296,9 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       // Get results from detector
       const reps = detectorRef.current ? detectorRef.current.getReps() : [];
       const correctReps = reps.filter((r: any) => r.correct === true).length;
+      
+      // Announce workout completion
+      ttsCoach.onWorkoutEnd(reps.length, correctReps);
       
       const results = {
         videoBlob,
@@ -334,6 +347,8 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
     }
+    // Stop TTS
+    ttsCoach.stop();
   };
 
   const formatTime = (seconds: number) => {
