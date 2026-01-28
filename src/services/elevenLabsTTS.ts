@@ -247,17 +247,19 @@ class ElevenLabsTTSService {
   }
 
   /**
-   * Ultra-realistic, emotionally intelligent encouragement
-   * Dynamically varies based on context, performance, and timing
+   * Generate natural, encouraging feedback with optional personalization
    */
   getEncouragement(repCount: number, isCorrect: boolean): string {
     this.context.totalReps = repCount;
     this.context.lastRepTime = Date.now(); // Update activity time
     
+    // Get user name for personalization
+    const userName = this.getUserName();
+    
     if (!isCorrect) {
       this.context.consecutiveIncorrect++;
       this.context.consecutiveCorrect = 0;
-      return this.getFormCorrection();
+      return this.getFormCorrection(userName);
     }
     
     this.context.consecutiveCorrect++;
@@ -268,7 +270,7 @@ class ElevenLabsTTSService {
       this.context.personalBest = repCount;
       if (repCount % 5 === 0 && repCount > 10) {
         this.context.lastMessageType = 'personal_best';
-        return this.getPersonalBestMessage(repCount);
+        return this.getPersonalBestMessage(repCount, userName);
       }
     }
     
@@ -282,11 +284,16 @@ class ElevenLabsTTSService {
     // Use workout-specific messages
     if (this.context.currentWorkout && selectedType !== 'milestone') {
       try {
-        return getWorkoutMessage(
+        let message = getWorkoutMessage(
           this.context.currentWorkout,
           selectedType as 'repCount' | 'encouragement' | 'posture' | 'energy',
           repCount
         );
+        // Add name occasionally for personalization
+        if (userName && Math.random() < 0.3) {
+          message = this.personalize(message, userName);
+        }
+        return message;
       } catch (e) {
         // Fallback to generic if workout not found
       }
@@ -295,18 +302,36 @@ class ElevenLabsTTSService {
     // Fallback to generic messages
     switch (selectedType) {
       case 'repCount':
-        return this.getRepCountMessage(repCount);
+        return this.getRepCountMessage(repCount, userName);
       case 'encouragement':
-        return this.getEncouragementMessage(repCount);
+        return this.getEncouragementMessage(repCount, userName);
       case 'posture':
-        return this.getPosturePraise(repCount);
+        return this.getPosturePraise(repCount, userName);
       case 'energy':
-        return this.getEnergyBoost(repCount);
+        return this.getEnergyBoost(repCount, userName);
       case 'milestone':
-        return this.getMilestoneMessage(repCount);
+        return this.getMilestoneMessage(repCount, userName);
       default:
-        return this.getRepCountMessage(repCount);
+        return this.getRepCountMessage(repCount, userName);
     }
+  }
+  
+  private getUserName(): string {
+    const saved = localStorage.getItem('user_name');
+    return saved || '';
+  }
+  
+  private personalize(message: string, userName: string): string {
+    if (!userName) return message;
+    
+    const personalizations = [
+      `${userName}, ${message}`,
+      `${message} ${userName}!`,
+      `Great work ${userName}! ${message}`,
+      `${userName}! ${message}`
+    ];
+    
+    return personalizations[Math.floor(Math.random() * personalizations.length)];
   }
 
   private getMessageWeights(repCount: number): number[] {
@@ -334,8 +359,13 @@ class ElevenLabsTTSService {
     return items[0];
   }
 
-  private getRepCountMessage(count: number): string {
-    const messages = [
+  private getRepCountMessage(count: number, userName?: string): string {
+    const messages = userName ? [
+      `${count}! Nice work ${userName}!`,
+      `${count} down ${userName}!`,
+      `That's ${count} ${userName}!`,
+      `${count} reps! Great job ${userName}!`
+    ] : [
       `${count}! Nice!`,
       `${count} down!`,
       `That's ${count}!`,
@@ -347,8 +377,15 @@ class ElevenLabsTTSService {
     return messages[Math.floor(Math.random() * messages.length)];
   }
 
-  private getEncouragementMessage(count: number): string {
-    const messages = [
+  private getEncouragementMessage(count: number, userName?: string): string {
+    const messages = userName ? [
+      `You're crushing it ${userName}!`,
+      `Looking strong ${userName}!`,
+      `${userName}, you got this!`,
+      `Amazing work ${userName}!`,
+      `${userName}, you're on fire!`,
+      `Keep pushing ${userName}!`
+    ] : [
       "You're crushing it!",
       "Looking strong!",
       "You got this!",
@@ -365,8 +402,14 @@ class ElevenLabsTTSService {
     return messages[Math.floor(Math.random() * messages.length)];
   }
 
-  private getPosturePraise(count: number): string {
-    const messages = [
+  private getPosturePraise(count: number, userName?: string): string {
+    const messages = userName ? [
+      `Perfect form ${userName}!`,
+      `Great posture ${userName}!`,
+      `${userName}, form is on point!`,
+      `Textbook form ${userName}!`,
+      `${userName}, that's how it's done!`
+    ] : [
       "Perfect form!",
       "Great posture!",
       "Form is on point!",
@@ -381,8 +424,15 @@ class ElevenLabsTTSService {
     return messages[Math.floor(Math.random() * messages.length)];
   }
 
-  private getEnergyBoost(count: number): string {
-    const messages = [
+  private getEnergyBoost(count: number, userName?: string): string {
+    const messages = userName ? [
+      `Let's go ${userName}!`,
+      `You're a beast ${userName}!`,
+      `${userName}, you're unstoppable!`,
+      `Pure power ${userName}!`,
+      `${userName}, you're amazing!`,
+      `Killing it ${userName}!`
+    ] : [
       "Let's go!",
       "You're a beast!",
       "Unstoppable!",
@@ -399,17 +449,22 @@ class ElevenLabsTTSService {
     return messages[Math.floor(Math.random() * messages.length)];
   }
 
-  private getMilestoneMessage(count: number): string {
+  private getMilestoneMessage(count: number, userName?: string): string {
     if (count % 10 === 0) {
-      return `${count} reps! Milestone reached!`;
+      return userName ? `${count} reps ${userName}! Milestone reached!` : `${count} reps! Milestone reached!`;
     } else if (count % 5 === 0) {
-      return `${count}! Halfway to the next milestone!`;
+      return userName ? `${count} ${userName}! Halfway to the next milestone!` : `${count}! Halfway to the next milestone!`;
     }
-    return `${count}! Keep the momentum!`;
+    return userName ? `${count} ${userName}! Keep the momentum!` : `${count}! Keep the momentum!`;
   }
 
-  private getPersonalBestMessage(count: number): string {
-    const messages = [
+  private getPersonalBestMessage(count: number, userName?: string): string {
+    const messages = userName ? [
+      `New record ${userName}! ${count} reps!`,
+      `Personal best ${userName}! ${count}!`,
+      `${userName}, you just beat your record! ${count}!`,
+      `That's a new high ${userName}! ${count} reps!`
+    ] : [
       `New record! ${count} reps!`,
       `Personal best! ${count}!`,
       `You just beat your record! ${count}!`,
@@ -419,10 +474,45 @@ class ElevenLabsTTSService {
     return messages[Math.floor(Math.random() * messages.length)];
   }
 
-  private getFormCorrection(): string {
+  private getFormCorrection(userName?: string): string {
     if (this.context.consecutiveIncorrect === 1) {
-      const gentle = [
+      const gentle = userName ? [
+        `Watch your form ${userName}!`,
+        `Check your posture ${userName}!`,
+        `${userName}, adjust your form!`
+      ] : [
         "Watch your form!",
+        "Check your posture!",
+        "Adjust your form!",
+        "Focus on technique!"
+      ];
+      return gentle[Math.floor(Math.random() * gentle.length)];
+    } else if (this.context.consecutiveIncorrect === 2) {
+      const firm = userName ? [
+        `${userName}, keep your body straight!`,
+        `Go lower ${userName}!`,
+        `Full range of motion ${userName}!`
+      ] : [
+        "Keep your body straight!",
+        "Go lower!",
+        "Full range of motion!",
+        "Control the movement!"
+      ];
+      return firm[Math.floor(Math.random() * firm.length)];
+    } else {
+      const encouraging = userName ? [
+        `You got this ${userName}! Focus on form!`,
+        `${userName}, take your time, perfect the form!`,
+        `Quality over quantity ${userName}!`
+      ] : [
+        "You got this! Focus on form!",
+        "Take your time, perfect the form!",
+        "Quality over quantity!",
+        "Slow down, nail the technique!"
+      ];
+      return encouraging[Math.floor(Math.random() * encouraging.length)];
+    }
+  }
         "Check your posture!",
         "Adjust your form!",
         "Focus on technique!"

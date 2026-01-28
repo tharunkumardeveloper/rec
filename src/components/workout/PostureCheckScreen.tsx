@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, AlertCircle, Camera, SwitchCamera } from 'lucide-react';
 import { postureChecker, PostureCheckResult } from '@/services/postureChecker';
+import { elevenLabsTTS } from '@/services/elevenLabsTTS';
 
 interface PostureCheckScreenProps {
   onPostureConfirmed: (facingMode: 'user' | 'environment') => void;
@@ -212,6 +213,26 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
       })) || null;
 
       const result = postureChecker.checkPosture(landmarks);
+      
+      // Provide TTS feedback on posture status changes
+      if (postureResult && result.status !== postureResult.status) {
+        const userName = localStorage.getItem('user_name') || '';
+        switch (result.status) {
+          case 'STANDING':
+            elevenLabsTTS.speak(userName ? `Perfect ${userName}! Hold this position!` : "Perfect! Hold this position!", true);
+            break;
+          case 'FULL_BODY_NOT_VISIBLE':
+            elevenLabsTTS.speak(userName ? `${userName}, step back so I can see your full body!` : "Step back so I can see your full body!", true);
+            break;
+          case 'NOT_STANDING':
+            elevenLabsTTS.speak(userName ? `${userName}, please stand up straight!` : "Please stand up straight!", true);
+            break;
+          case 'NO_PERSON':
+            elevenLabsTTS.speak("Step into the frame!", true);
+            break;
+        }
+      }
+      
       setPostureResult(result);
       const ready = result.status === 'STANDING';
       setIsReady(ready);

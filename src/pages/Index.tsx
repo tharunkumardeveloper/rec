@@ -6,6 +6,7 @@ import { toast } from '@/components/ui/sonner';
 import LoadingScreen from '@/components/LoadingScreen';
 import AuthFlow from '@/components/auth/AuthFlow';
 import SetupFlow from '@/components/setup/SetupFlow';
+import WelcomeDialog from '@/components/onboarding/WelcomeDialog';
 import HomeScreen from '@/components/home/HomeScreen';
 import CoachDashboard from '@/components/home/CoachDashboard';
 import SAIAdminDashboard from '@/components/home/SAIAdminDashboard';
@@ -570,6 +571,9 @@ const Index = () => {
               </div>
             )}
           </div>
+          
+          {/* Welcome Dialog - Shows on first launch */}
+          <WelcomeDialog />
         </div>
       );
 
