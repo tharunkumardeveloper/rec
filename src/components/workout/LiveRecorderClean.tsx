@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { StopCircle, SwitchCamera, Play } from 'lucide-react';
+import { StopCircle, SwitchCamera } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { PushupLiveDetector } from '@/services/workoutDetectors/PushupLiveDetector';
 
@@ -20,6 +20,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
   const [isProcessing, setIsProcessing] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(3); // Start with countdown
   const [isInitialized, setIsInitialized] = useState(false);
+  const [showInstructionOverlay, setShowInstructionOverlay] = useState(true); // Show instruction first
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -39,9 +40,9 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
     };
   }, [facingMode]);
 
-  // Auto-start countdown after initialization
+  // Auto-start countdown after initialization and instruction display
   useEffect(() => {
-    if (isInitialized && !autoStartTriggeredRef.current && countdown !== null && !isRecording) {
+    if (isInitialized && !autoStartTriggeredRef.current && !showInstructionOverlay && countdown !== null && !isRecording) {
       autoStartTriggeredRef.current = true;
       
       let currentCount = 3;
@@ -65,7 +66,18 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         }
       }, 1000);
     }
-  }, [isInitialized]);
+  }, [isInitialized, showInstructionOverlay]);
+
+  // Auto-hide instruction overlay after 3 seconds
+  useEffect(() => {
+    if (isInitialized && showInstructionOverlay) {
+      const timer = setTimeout(() => {
+        setShowInstructionOverlay(false);
+      }, 3000); // Show instruction for 3 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isInitialized, showInstructionOverlay]);
 
   const initializeCamera = async () => {
     try {
@@ -321,8 +333,30 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
           className="absolute inset-0 w-full h-full object-cover"
         />
 
+        {/* Instruction Overlay - Shows pushup image */}
+        {showInstructionOverlay && activityName === 'Push-ups' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-50">
+            <div className="text-center space-y-6 px-6">
+              <h2 className="text-3xl font-bold text-white mb-4">Get Into Position</h2>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border-2 border-white/20">
+                <img 
+                  src="/pushup.gif" 
+                  alt="Push-up form" 
+                  className="w-full max-w-md mx-auto rounded-xl"
+                />
+              </div>
+              <p className="text-xl text-white/90 font-semibold">
+                Position yourself for push-ups
+              </p>
+              <p className="text-sm text-white/70">
+                Recording will start automatically in a moment...
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Countdown Overlay */}
-        {countdown !== null && (
+        {!showInstructionOverlay && countdown !== null && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-50">
             <div className="text-white text-9xl font-bold animate-pulse">
               {countdown}
@@ -345,7 +379,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
                   size="sm" 
                   onClick={toggleCamera} 
                   className="text-white hover:bg-white/20"
-                  disabled={isRecording || countdown !== null}
+                  disabled={isRecording || countdown !== null || showInstructionOverlay}
                   title="Switch Camera"
                 >
                   <SwitchCamera className="w-5 h-5" />
@@ -355,7 +389,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
                   size="sm" 
                   onClick={onBack} 
                   className="text-white hover:bg-white/20"
-                  disabled={isRecording || countdown !== null}
+                  disabled={isRecording || countdown !== null || showInstructionOverlay}
                 >
                   Cancel
                 </Button>
