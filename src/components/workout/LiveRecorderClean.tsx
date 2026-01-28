@@ -90,12 +90,6 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
       // Initialize push-up detector
       if (activityName === 'Push-ups') {
         detectorRef.current = new PushupLiveDetector();
-        console.log('✅ Push-up detector initialized');
-        
-        // TEST: Log first landmark to verify structure
-        setTimeout(() => {
-          console.log('🧪 Waiting for first pose detection...');
-        }, 2000);
       }
 
       processFrame(poseInstance);
@@ -127,18 +121,8 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
 
       // Process with detector during recording
       if (isRecording && detectorRef.current && results.poseLandmarks) {
-        // Set canvas dimensions for detector (like Python width/height)
-        if (detectorRef.current.setDimensions) {
-          detectorRef.current.setDimensions(canvas.width, canvas.height);
-        }
-        
-        // TEST: Log landmark structure on first frame
-        if (repCount === 0 && Math.random() < 0.1) {
-          console.log('🧪 Landmark sample:', {
-            landmark11: results.poseLandmarks[11],
-            canvasSize: { width: canvas.width, height: canvas.height }
-          });
-        }
+        // Set canvas dimensions for detector
+        detectorRef.current.setDimensions(canvas.width, canvas.height);
         
         const currentTime = (Date.now() - recordingStartTimeRef.current) / 1000;
         const newRepCount = detectorRef.current.process(results.poseLandmarks, currentTime);
@@ -147,47 +131,42 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         // Get current metrics for display
         const metrics = detectorRef.current.getCurrentMetrics();
         
-        // Log metrics occasionally
-        if (Math.random() < 0.05) {
-          console.log('📊 Metrics:', metrics);
-        }
-        
-        // Draw metrics on canvas (matching Python HUD)
+        // Draw metrics on canvas (Python HUD style)
         ctx.font = 'bold 24px Arial';
-        ctx.fillStyle = '#FFFF00'; // Yellow
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 3;
         
         let y = 40;
-        const drawText = (text: string, color: string = '#00FF00') => {
+        const drawText = (text: string, color: string) => {
           ctx.fillStyle = color;
           ctx.strokeText(text, 15, y);
           ctx.fillText(text, 15, y);
           y += 35;
         };
         
+        // Python: cv2.putText(frame, f"Reps: {len(reps)}", (10, draw_y), ...)
         drawText(`Reps: ${metrics.repCount}`, '#FFFF00');
+        
+        // Python: if elbow_angle: cv2.putText(frame, f"Elbow: {int(elbow_sm)}", ...)
         if (metrics.elbowAngle > 0) {
-          drawText(`Elbow: ${metrics.elbowAngle}°`, metrics.elbowAngle <= 75 ? '#00FF00' : '#FF0000');
+          const elbowColor = metrics.elbowAngle <= 75 ? '#00FF00' : '#FF0000';
+          drawText(`Elbow: ${metrics.elbowAngle}°`, elbowColor);
         }
+        
+        // Python: if plank_angle: cv2.putText(frame, f"Plank: {int(plank_angle)}", ...)
         if (metrics.plankAngle > 0) {
-          drawText(`Plank: ${metrics.plankAngle}°`, metrics.plankAngle >= 165 ? '#00FF00' : '#FF0000');
+          const plankColor = metrics.plankAngle >= 165 ? '#00FF00' : '#FF0000';
+          drawText(`Plank: ${metrics.plankAngle}°`, plankColor);
         }
+        
+        // Python: if chest_depth: cv2.putText(frame, f"Depth: {int(chest_depth)}", ...)
         if (metrics.chestDepth !== 0) {
-          drawText(`Depth: ${metrics.chestDepth}`, metrics.chestDepth >= 40 ? '#00FF00' : '#FF0000');
+          const depthColor = metrics.chestDepth >= 40 ? '#00FF00' : '#FF0000';
+          drawText(`Depth: ${metrics.chestDepth}`, depthColor);
         }
+        
+        // Python: cv2.putText(frame, f"State: {state}", ...)
         drawText(`State: ${metrics.state}`, '#C8C8C8');
-      } else if (isRecording && !detectorRef.current) {
-        // Warning if detector not initialized
-        ctx.font = 'bold 20px Arial';
-        ctx.fillStyle = '#FF0000';
-        ctx.fillText('⚠️ Detector not initialized!', 15, 40);
-        console.error('⚠️ Detector not initialized!');
-      } else if (isRecording && !results.poseLandmarks) {
-        // Warning if no landmarks detected
-        ctx.font = 'bold 20px Arial';
-        ctx.fillStyle = '#FFA500';
-        ctx.fillText('⚠️ No pose detected!', 15, 40);
       }
 
       if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {
