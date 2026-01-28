@@ -458,29 +458,25 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
 
         {/* Depth Indicator - Right side center */}
         {isRecording && (
-          <div className="absolute right-8 top-1/2 -translate-y-1/2 z-40">
-            <div className="relative w-16 h-48 bg-black/40 backdrop-blur-sm rounded-full border-2 border-white/30 p-2">
-              {/* Top reference line */}
-              <div className="absolute left-2 right-2 top-8 h-1 bg-white/50 rounded-full" />
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 z-40">
+            <div className="relative w-1 h-64 bg-white/20 rounded-full">
+              {/* Top marker */}
+              <div className="absolute -left-2 top-0 w-5 h-0.5 bg-white/60" />
               
-              {/* Middle reference line (target) */}
-              <div className="absolute left-2 right-2 top-1/2 -translate-y-1/2 h-1.5 bg-green-400 rounded-full" />
+              {/* Middle target line */}
+              <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-7 h-1 bg-green-400 rounded-full shadow-lg shadow-green-400/50" />
               
-              {/* Bottom reference line */}
-              <div className="absolute left-2 right-2 bottom-8 h-1 bg-white/50 rounded-full" />
+              {/* Bottom marker */}
+              <div className="absolute -left-2 bottom-0 w-5 h-0.5 bg-white/60" />
               
-              {/* Moving indicator (user's position) */}
+              {/* Moving position indicator */}
               <div 
-                className="absolute left-1/2 -translate-x-1/2 w-10 h-3 bg-yellow-400 rounded-full transition-all duration-100 shadow-lg"
+                className="absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-400 rounded-full shadow-lg transition-all duration-100 border-2 border-white"
                 style={{
                   top: `${bodyDepthPercent}%`,
                   transform: 'translate(-50%, -50%)'
                 }}
               />
-              
-              {/* Labels */}
-              <div className="absolute -left-12 top-6 text-xs text-white/70 font-semibold">UP</div>
-              <div className="absolute -left-16 bottom-6 text-xs text-white/70 font-semibold">DOWN</div>
             </div>
           </div>
         )}
