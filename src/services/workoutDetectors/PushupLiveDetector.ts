@@ -100,6 +100,17 @@ export class PushupLiveDetector {
   process(landmarks: any[], currentTime: number): number {
     this.frameCount++;
     
+    // DEBUG: Print landmark structure once
+    if (this.frameCount === 1) {
+      console.log('🔍 Landmark structure:', {
+        isArray: Array.isArray(landmarks),
+        length: landmarks?.length,
+        sample: landmarks?.[11],
+        hasX: landmarks?.[11]?.x !== undefined,
+        hasY: landmarks?.[11]?.y !== undefined
+      });
+    }
+    
     // Python: elbow_angle = None, plank_angle = None, chest_depth = None
     let elbowAngle: number | null = null;
     let plankAngle: number | null = null;
@@ -124,6 +135,11 @@ export class PushupLiveDetector {
         const lh = this.lmXY(lm[23]); // LEFT_HIP = 23
         const la = this.lmXY(lm[27]); // LEFT_ANKLE = 27
 
+        // DEBUG: Print coordinates once
+        if (this.frameCount === 1) {
+          console.log('🔍 Pixel coordinates:', { ls, le, lw, rs, re, rw, lh, la });
+        }
+
         // Python: ang_l = angle(ls, le, lw)
         const angL = this.angle(ls, le, lw);
         const angR = this.angle(rs, re, rw);
@@ -136,6 +152,17 @@ export class PushupLiveDetector {
         // Python: chest_depth = lw[1] - ls[1]
         chestDepth = lw[1] - ls[1];
 
+        // DEBUG: Print angles once
+        if (this.frameCount === 1) {
+          console.log('🔍 Calculated angles:', {
+            angL: Math.round(angL),
+            angR: Math.round(angR),
+            elbowAngle: Math.round(elbowAngle),
+            plankAngle: Math.round(plankAngle),
+            chestDepth: Math.round(chestDepth)
+          });
+        }
+
         // Store for display
         this.lastElbowAngle = elbowAngle;
         this.lastPlankAngle = plankAngle;
@@ -143,7 +170,7 @@ export class PushupLiveDetector {
 
       } catch (error) {
         // Python: except: pass
-        console.error('Error in angle calculation:', error);
+        console.error('❌ Error in angle calculation:', error);
       }
     }
 
@@ -159,6 +186,11 @@ export class PushupLiveDetector {
       // Maintain deque maxlen behavior
       if (this.angleHistory.length > this.SMOOTH_N) {
         this.angleHistory.shift();
+      }
+
+      // DEBUG: Print smoothed angle occasionally
+      if (this.frameCount % 30 === 0) {
+        console.log(`📊 Elbow: ${Math.round(elbowSm)}° | State: ${this.state} | Reps: ${this.reps.length}`);
       }
 
       // Python: if state == "up" and elbow_sm <= DOWN_ANGLE:
@@ -232,6 +264,11 @@ export class PushupLiveDetector {
       if (this.inDip) {
         // Python: current_dip_min_angle = min(current_dip_min_angle, elbow_sm)
         this.currentDipMinAngle = Math.min(this.currentDipMinAngle, elbowSm);
+      }
+    } else {
+      // DEBUG: Log when elbow angle is null
+      if (this.frameCount % 30 === 0) {
+        console.warn('⚠️ Elbow angle is NULL - landmarks not processed');
       }
     }
 
