@@ -3,6 +3,7 @@ import { toast } from '@/components/ui/sonner';
 import GhostWorkoutUploadScreen from '@/components/workout/GhostWorkoutUploadScreen';
 import GhostVideoProcessor from '@/components/workout/GhostVideoProcessor';
 import GhostLiveRecorder from '@/components/workout/GhostLiveRecorder';
+import HowToPerformScreen from './HowToPerformScreen';
 import PostureCheckScreen from './PostureCheckScreen';
 import { BADGES, checkBadgeUnlock, updateUserStats } from '@/utils/badgeSystem';
 import { getUserStats, saveUserStats, getUnlockedBadges, unlockBadge } from '@/utils/workoutStorage';
@@ -19,8 +20,8 @@ interface GhostWorkoutInterfaceProps {
 }
 
 const GhostWorkoutInterface = ({ activity, mode, ghostGif, onBack }: GhostWorkoutInterfaceProps) => {
-    const [stage, setStage] = useState<'upload' | 'processing' | 'postureCheck' | 'liveRecording' | 'liveResults'>(
-        mode === 'live' ? 'postureCheck' : 'upload'
+    const [stage, setStage] = useState<'upload' | 'processing' | 'howToPerform' | 'postureCheck' | 'liveRecording' | 'liveResults'>(
+        mode === 'live' ? 'howToPerform' : 'upload'
     );
     const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
     const [liveResults, setLiveResults] = useState<any>(null);
@@ -37,6 +38,10 @@ const GhostWorkoutInterface = ({ activity, mode, ghostGif, onBack }: GhostWorkou
         console.log('Retrying upload');
         setSelectedVideo(null);
         setStage('upload');
+    };
+
+    const handleHowToPerformContinue = () => {
+        setStage('postureCheck');
     };
 
     const handlePostureConfirmed = () => {
@@ -144,6 +149,16 @@ const GhostWorkoutInterface = ({ activity, mode, ghostGif, onBack }: GhostWorkou
 
         onBack();
     };
+
+    if (stage === 'howToPerform') {
+        return (
+            <HowToPerformScreen
+                activityName={activity.name}
+                onContinue={handleHowToPerformContinue}
+                onBack={onBack}
+            />
+        );
+    }
 
     if (stage === 'postureCheck') {
         return (
