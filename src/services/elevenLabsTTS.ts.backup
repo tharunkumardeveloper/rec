@@ -1,8 +1,6 @@
 // ElevenLabs TTS Service - Ultra-realistic AI voice with emotional intelligence
 // Dynamic, varied, and humanized coaching experience
 
-import { getWorkoutMessage } from './workoutMessages';
-
 interface VoiceSettings {
   stability: number;
   similarity_boost: number;
@@ -252,7 +250,6 @@ class ElevenLabsTTSService {
    */
   getEncouragement(repCount: number, isCorrect: boolean): string {
     this.context.totalReps = repCount;
-    this.context.lastRepTime = Date.now(); // Update activity time
     
     if (!isCorrect) {
       this.context.consecutiveIncorrect++;
@@ -273,34 +270,20 @@ class ElevenLabsTTSService {
     }
     
     // Vary message types dynamically
-    const messageTypes = ['repCount', 'encouragement', 'posture', 'energy', 'milestone'];
+    const messageTypes = ['rep_count', 'encouragement', 'posture_praise', 'energy_boost', 'milestone'];
     const weights = this.getMessageWeights(repCount);
     const selectedType = this.weightedRandom(messageTypes, weights);
     
     this.context.lastMessageType = selectedType;
     
-    // Use workout-specific messages
-    if (this.context.currentWorkout && selectedType !== 'milestone') {
-      try {
-        return getWorkoutMessage(
-          this.context.currentWorkout,
-          selectedType as 'repCount' | 'encouragement' | 'posture' | 'energy',
-          repCount
-        );
-      } catch (e) {
-        // Fallback to generic if workout not found
-      }
-    }
-    
-    // Fallback to generic messages
     switch (selectedType) {
-      case 'repCount':
+      case 'rep_count':
         return this.getRepCountMessage(repCount);
       case 'encouragement':
         return this.getEncouragementMessage(repCount);
-      case 'posture':
+      case 'posture_praise':
         return this.getPosturePraise(repCount);
-      case 'energy':
+      case 'energy_boost':
         return this.getEnergyBoost(repCount);
       case 'milestone':
         return this.getMilestoneMessage(repCount);
@@ -448,10 +431,6 @@ class ElevenLabsTTSService {
   }
 
   announceStart(activityName: string): void {
-    // Set current workout
-    this.context.currentWorkout = activityName;
-    this.context.lastRepTime = Date.now();
-    
     const messages = [
       `Let's do this! ${activityName} time!`,
       `Ready? Let's crush these ${activityName}!`,
@@ -463,42 +442,6 @@ class ElevenLabsTTSService {
     this.context.sessionStartTime = Date.now();
     this.context.consecutiveCorrect = 0;
     this.context.consecutiveIncorrect = 0;
-    
-    // Start idle detection
-    this.startIdleDetection();
-  }
-  
-  /**
-   * Start monitoring for idle periods
-   */
-  private startIdleDetection() {
-    // Clear any existing interval
-    if (this.idleCheckInterval) {
-      clearInterval(this.idleCheckInterval);
-    }
-    
-    // Check every 5 seconds if user is idle
-    this.idleCheckInterval = window.setInterval(() => {
-      const timeSinceLastRep = Date.now() - this.context.lastRepTime;
-      
-      // If idle for more than 8 seconds, give motivational push
-      if (timeSinceLastRep > 8000 && !this.isSpeaking) {
-        const idleMessage = getWorkoutMessage(this.context.currentWorkout, 'idle');
-        this.speak(idleMessage, true);
-        // Reset timer to avoid spam
-        this.context.lastRepTime = Date.now();
-      }
-    }, 5000);
-  }
-  
-  /**
-   * Stop idle detection
-   */
-  private stopIdleDetection() {
-    if (this.idleCheckInterval) {
-      clearInterval(this.idleCheckInterval);
-      this.idleCheckInterval = null;
-    }
   }
 
   announceEnd(totalReps: number, accuracy: number): void {
@@ -552,7 +495,6 @@ class ElevenLabsTTSService {
   }
 
   stop(): void {
-    this.stopIdleDetection();
     if (this.currentAudio) {
       this.currentAudio.pause();
       this.currentAudio = null;
@@ -565,16 +507,13 @@ class ElevenLabsTTSService {
 
   reset(): void {
     this.lastSpeakTime = 0;
-    this.stopIdleDetection();
     this.context = {
       lastMessageType: '',
       consecutiveCorrect: 0,
       consecutiveIncorrect: 0,
       personalBest: this.context.personalBest, // Keep personal best
       totalReps: 0,
-      sessionStartTime: Date.now(),
-      lastRepTime: Date.now(),
-      currentWorkout: ''
+      sessionStartTime: Date.now()
     };
     this.stop();
   }

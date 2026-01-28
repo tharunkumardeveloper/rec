@@ -49,7 +49,7 @@ const TTSSettings = () => {
             <div>
               <Label htmlFor="tts-enabled">Enable Voice Coach</Label>
               <p className="text-sm text-muted-foreground">
-                Get dynamic, emotionally intelligent feedback every 3 seconds
+                Get dynamic, emotionally intelligent feedback every 2 seconds
               </p>
             </div>
             <Switch
