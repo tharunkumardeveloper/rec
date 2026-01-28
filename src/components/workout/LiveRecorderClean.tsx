@@ -120,24 +120,6 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
 
       ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
-      // Always show debug info on screen (not just when recording)
-      if (results.poseLandmarks) {
-        // Show detector status
-        ctx.font = 'bold 16px Arial';
-        ctx.fillStyle = '#FFFFFF';
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 2;
-        
-        const statusY = canvas.height - 100;
-        const statusText = isRecordingRef.current ? '🔴 RECORDING' : '⚪ PREVIEW';
-        ctx.strokeText(statusText, 15, statusY);
-        ctx.fillText(statusText, 15, statusY);
-        
-        const detectorText = detectorRef.current ? '✅ Detector Ready' : '❌ No Detector';
-        ctx.strokeText(detectorText, 15, statusY + 25);
-        ctx.fillText(detectorText, 15, statusY + 25);
-      }
-
       // Process with detector during recording - USE REF NOT STATE
       if (isRecordingRef.current && detectorRef.current && results.poseLandmarks) {
         // Set canvas dimensions for detector
@@ -186,22 +168,6 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         
         // Python: cv2.putText(frame, f"State: {state}", ...)
         drawText(`State: ${metrics.state}`, '#C8C8C8');
-      } else if (isRecordingRef.current && !detectorRef.current) {
-        // Detector not initialized
-        ctx.font = 'bold 20px Arial';
-        ctx.fillStyle = '#FF0000';
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 2;
-        ctx.strokeText('⚠️ Detector not initialized', 15, 40);
-        ctx.fillText('⚠️ Detector not initialized', 15, 40);
-      } else if (isRecordingRef.current && !results.poseLandmarks) {
-        // No pose detected
-        ctx.font = 'bold 20px Arial';
-        ctx.fillStyle = '#FFA500';
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 2;
-        ctx.strokeText('⚠️ No pose detected', 15, 40);
-        ctx.fillText('⚠️ No pose detected', 15, 40);
       }
 
       if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {
