@@ -19,6 +19,7 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const countdownIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     initializeCamera();
@@ -132,12 +133,14 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
 
       // Auto-start countdown when posture is perfect
       if (ready && !autoStartTriggered && countdown === null) {
+        console.log('✅ Perfect posture detected! Auto-starting countdown...');
         setAutoStartTriggered(true);
         handleContinue();
       }
 
       // Reset auto-start trigger if posture is lost
       if (!ready && autoStartTriggered && countdown === null) {
+        console.log('⚠️ Posture lost, resetting auto-start trigger');
         setAutoStartTriggered(false);
       }
 
@@ -176,27 +179,63 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
   };
 
   const handleContinue = () => {
-    if (!isReady) return;
+    if (!isReady || countdown !== null) return;
 
-    // Start countdown
+    console.log('🎯 Starting countdown...');
+    
+    // Start countdown from 3
     setCountdown(3);
-    const countdownInterval = setInterval(() => {
+    
+    // Clear any existing interval
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    
+    // Create new countdown interval
+    countdownIntervalRef.current = setInterval(() => {
       setCountdown((prev: number | null) => {
+        console.log('⏱️ Countdown:', prev);
+        
+        if (prev === null) {
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+          return null;
+        }
+        
         if (prev === 1) {
-          clearInterval(countdownInterval);
+          // Countdown finished
+          console.log('✅ Countdown complete! Proceeding to workout...');
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
           cleanup();
           onPostureConfirmed();
           return null;
         }
-        return prev! - 1;
+        
+        return prev - 1;
       });
     }, 1000);
   };
 
   const cleanup = () => {
+    console.log('🧹 Cleaning up...');
+    
+    // Clear countdown interval
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    
+    // Stop camera stream
     if (stream) {
       stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
     }
+    
+    // Close MediaPipe
     if (pose) {
       pose.close();
     }
