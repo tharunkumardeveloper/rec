@@ -356,9 +356,9 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
               <h2 className="text-3xl font-bold text-white mb-4">Get Into Position</h2>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border-2 border-white/20">
                 <img 
-                  src="/overlay/pushup.png" 
+                  src="/overlay/pushup.png"
                   alt="Push-up form" 
-                  className="w-full max-w-md mx-auto rounded-xl"
+                  className="w-full max-w-md mx-auto rounded-xl shadow-2xl"
                 />
               </div>
               <p className="text-xl text-white/90 font-semibold">
