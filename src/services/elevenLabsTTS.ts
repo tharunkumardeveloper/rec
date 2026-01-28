@@ -1,5 +1,21 @@
-// ElevenLabs TTS Service - Ultra-realistic AI voice
-// Most natural and human-like voice available
+// ElevenLabs TTS Service - Ultra-realistic AI voice with emotional intelligence
+// Dynamic, varied, and humanized coaching experience
+
+interface VoiceSettings {
+  stability: number;
+  similarity_boost: number;
+  style: number;
+  use_speaker_boost: boolean;
+}
+
+interface CoachingContext {
+  lastMessageType: string;
+  consecutiveCorrect: number;
+  consecutiveIncorrect: number;
+  personalBest: number;
+  totalReps: number;
+  sessionStartTime: number;
+}
 
 class ElevenLabsTTSService {
   private isEnabled: boolean = true;
@@ -8,18 +24,30 @@ class ElevenLabsTTSService {
   private readonly SPEAK_INTERVAL = 3000; // 3 seconds
   private currentAudio: HTMLAudioElement | null = null;
   
+  // Coaching context for intelligent responses
+  private context: CoachingContext = {
+    lastMessageType: '',
+    consecutiveCorrect: 0,
+    consecutiveIncorrect: 0,
+    personalBest: 0,
+    totalReps: 0,
+    sessionStartTime: Date.now()
+  };
+  
   // ElevenLabs API configuration
   private readonly API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || '';
   private readonly API_URL = 'https://api.elevenlabs.io/v1/text-to-speech';
   
-  // Best voices for workout coaching (female, energetic)
-  // Rachel - Natural, warm, encouraging
-  private readonly VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel (default)
+  // Rachel - Natural, warm, encouraging (default)
+  private voiceId: string = '21m00Tcm4TlvDq8ikWAM';
   
-  // Alternative voices you can use:
-  // Bella: 'EXAVITQu4vr4xnSDxMaL' - Young, energetic
-  // Elli: 'MF3mGyEYCl7XYWbV9V6O' - Friendly, clear
-  // Nicole: 'piTKgcLEGmPE4e6mEKli' - Professional, warm
+  // Voice settings (can be customized)
+  private voiceSettings: VoiceSettings = {
+    stability: 0.5,
+    similarity_boost: 0.75,
+    style: 0.5,
+    use_speaker_boost: true
+  };
   
   // Fallback to browser TTS
   private synth: SpeechSynthesis | null = null;
@@ -31,12 +59,20 @@ class ElevenLabsTTSService {
         this.synth = window.speechSynthesis;
         this.initBrowserVoice();
       }
+      
+      // Load saved settings
+      const saved = localStorage.getItem('elevenlabs_voice_settings');
+      if (saved) {
+        const settings = JSON.parse(saved);
+        this.voiceSettings = settings.voiceSettings || this.voiceSettings;
+        this.voiceId = settings.voiceId || this.voiceId;
+      }
     }
     
     if (!this.API_KEY) {
       console.warn('⚠️ ElevenLabs API key not found. Using browser TTS fallback.');
     } else {
-      console.log('✅ ElevenLabs TTS initialized');
+      console.log('✅ ElevenLabs TTS initialized with emotional intelligence');
     }
   }
 
@@ -61,6 +97,33 @@ class ElevenLabsTTSService {
   }
 
   /**
+   * Update voice settings
+   */
+  updateVoiceSettings(settings: Partial<VoiceSettings>) {
+    this.voiceSettings = { ...this.voiceSettings, ...settings };
+    this.saveSettings();
+  }
+
+  /**
+   * Change voice
+   */
+  setVoice(voiceId: string) {
+    this.voiceId = voiceId;
+    this.saveSettings();
+  }
+
+  private saveSettings() {
+    localStorage.setItem('elevenlabs_voice_settings', JSON.stringify({
+      voiceSettings: this.voiceSettings,
+      voiceId: this.voiceId
+    }));
+  }
+
+  getVoiceSettings() {
+    return { ...this.voiceSettings };
+  }
+
+  /**
    * Generate audio using ElevenLabs API
    */
   private async generateElevenLabsAudio(text: string): Promise<Blob> {
@@ -68,7 +131,7 @@ class ElevenLabsTTSService {
       throw new Error('ElevenLabs API key not configured');
     }
 
-    const response = await fetch(`${this.API_URL}/${this.VOICE_ID}`, {
+    const response = await fetch(`${this.API_URL}/${this.voiceId}`, {
       method: 'POST',
       headers: {
         'Accept': 'audio/mpeg',
@@ -77,13 +140,8 @@ class ElevenLabsTTSService {
       },
       body: JSON.stringify({
         text: text,
-        model_id: 'eleven_turbo_v2', // Fastest model, great quality
-        voice_settings: {
-          stability: 0.5, // More expressive
-          similarity_boost: 0.75, // Natural voice
-          style: 0.5, // Balanced style
-          use_speaker_boost: true // Enhanced clarity
-        }
+        model_id: 'eleven_turbo_v2',
+        voice_settings: this.voiceSettings
       })
     });
 
@@ -110,16 +168,13 @@ class ElevenLabsTTSService {
       this.isSpeaking = true;
       this.lastSpeakTime = Date.now();
 
-      // Stop any current audio
       if (this.currentAudio) {
         this.currentAudio.pause();
         this.currentAudio = null;
       }
 
-      // Try ElevenLabs first
       if (this.API_KEY) {
         try {
-          console.log('🎙️ Generating ElevenLabs audio...');
           const audioBlob = await this.generateElevenLabsAudio(text);
           const audioUrl = URL.createObjectURL(audioBlob);
 
@@ -129,25 +184,21 @@ class ElevenLabsTTSService {
             this.isSpeaking = false;
             URL.revokeObjectURL(audioUrl);
             this.currentAudio = null;
-            console.log('✅ ElevenLabs TTS completed');
           };
 
           this.currentAudio.onerror = () => {
             this.isSpeaking = false;
             URL.revokeObjectURL(audioUrl);
             this.currentAudio = null;
-            console.error('❌ ElevenLabs playback error');
           };
 
           await this.currentAudio.play();
-          console.log('🎙️ Playing ElevenLabs audio:', text);
           
         } catch (elevenLabsError) {
-          console.warn('☁️ ElevenLabs unavailable, using browser fallback:', elevenLabsError);
+          console.warn('☁️ ElevenLabs unavailable, using browser fallback');
           this.speakWithBrowser(text);
         }
       } else {
-        // No API key, use browser TTS
         this.speakWithBrowser(text);
       }
       
@@ -157,9 +208,6 @@ class ElevenLabsTTSService {
     }
   }
 
-  /**
-   * Fallback to browser speech synthesis
-   */
   private speakWithBrowser(text: string): void {
     if (!this.synth) {
       this.isSpeaking = false;
@@ -167,7 +215,6 @@ class ElevenLabsTTSService {
     }
 
     this.synth.cancel();
-
     const utterance = new SpeechSynthesisUtterance(text);
     
     if (this.browserVoice) {
@@ -179,62 +226,250 @@ class ElevenLabsTTSService {
     utterance.volume = 1.0;
     utterance.lang = 'en-US';
 
-    utterance.onstart = () => {
-      console.log('🎤 Browser TTS:', text);
-    };
-
     utterance.onend = () => {
       this.isSpeaking = false;
-      console.log('✅ Browser TTS completed');
     };
 
     utterance.onerror = () => {
       this.isSpeaking = false;
-      console.error('❌ Browser TTS error');
     };
 
     this.synth.speak(utterance);
   }
 
   /**
-   * Generate natural, encouraging feedback
+   * Ultra-realistic, emotionally intelligent encouragement
+   * Dynamically varies based on context, performance, and timing
    */
   getEncouragement(repCount: number, isCorrect: boolean): string {
+    this.context.totalReps = repCount;
+    
     if (!isCorrect) {
-      const corrections = [
+      this.context.consecutiveIncorrect++;
+      this.context.consecutiveCorrect = 0;
+      return this.getFormCorrection();
+    }
+    
+    this.context.consecutiveCorrect++;
+    this.context.consecutiveIncorrect = 0;
+    
+    // Check for personal best
+    if (repCount > this.context.personalBest) {
+      this.context.personalBest = repCount;
+      if (repCount % 5 === 0 && repCount > 10) {
+        this.context.lastMessageType = 'personal_best';
+        return this.getPersonalBestMessage(repCount);
+      }
+    }
+    
+    // Vary message types dynamically
+    const messageTypes = ['rep_count', 'encouragement', 'posture_praise', 'energy_boost', 'milestone'];
+    const weights = this.getMessageWeights(repCount);
+    const selectedType = this.weightedRandom(messageTypes, weights);
+    
+    this.context.lastMessageType = selectedType;
+    
+    switch (selectedType) {
+      case 'rep_count':
+        return this.getRepCountMessage(repCount);
+      case 'encouragement':
+        return this.getEncouragementMessage(repCount);
+      case 'posture_praise':
+        return this.getPosturePraise(repCount);
+      case 'energy_boost':
+        return this.getEnergyBoost(repCount);
+      case 'milestone':
+        return this.getMilestoneMessage(repCount);
+      default:
+        return this.getRepCountMessage(repCount);
+    }
+  }
+
+  private getMessageWeights(repCount: number): number[] {
+    // [rep_count, encouragement, posture_praise, energy_boost, milestone]
+    if (repCount <= 5) {
+      return [0.4, 0.3, 0.2, 0.1, 0.0]; // Focus on form early
+    } else if (repCount <= 15) {
+      return [0.3, 0.3, 0.2, 0.2, 0.0]; // Balanced
+    } else if (repCount <= 30) {
+      return [0.2, 0.3, 0.1, 0.3, 0.1]; // More energy boosts
+    } else {
+      return [0.2, 0.2, 0.1, 0.4, 0.1]; // Heavy energy focus
+    }
+  }
+
+  private weightedRandom(items: string[], weights: number[]): string {
+    const total = weights.reduce((a, b) => a + b, 0);
+    let random = Math.random() * total;
+    
+    for (let i = 0; i < items.length; i++) {
+      random -= weights[i];
+      if (random <= 0) return items[i];
+    }
+    
+    return items[0];
+  }
+
+  private getRepCountMessage(count: number): string {
+    const messages = [
+      `${count}! Nice!`,
+      `${count} down!`,
+      `That's ${count}!`,
+      `${count} reps!`,
+      `${count}! Keep going!`,
+      `${count}! Solid!`,
+      `${count}! Yes!`
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  }
+
+  private getEncouragementMessage(count: number): string {
+    const messages = [
+      "You're crushing it!",
+      "Looking strong!",
+      "You got this!",
+      "Amazing work!",
+      "Don't stop now!",
+      "You're on fire!",
+      "Keep pushing!",
+      "Feeling good!",
+      "That's the spirit!",
+      "You're unstoppable!",
+      "Love the energy!",
+      "Perfect rhythm!"
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  }
+
+  private getPosturePraise(count: number): string {
+    const messages = [
+      "Perfect form!",
+      "Great posture!",
+      "Form is on point!",
+      "Body alignment perfect!",
+      "Textbook form!",
+      "That's how it's done!",
+      "Beautiful technique!",
+      "Form looking clean!",
+      "Nailing the form!",
+      "Posture is perfect!"
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  }
+
+  private getEnergyBoost(count: number): string {
+    const messages = [
+      "Let's go!",
+      "You're a beast!",
+      "Unstoppable!",
+      "No quit in you!",
+      "Pure power!",
+      "You're flying!",
+      "Incredible!",
+      "You're amazing!",
+      "So strong!",
+      "Killing it!",
+      "On another level!",
+      "You're the best!"
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  }
+
+  private getMilestoneMessage(count: number): string {
+    if (count % 10 === 0) {
+      return `${count} reps! Milestone reached!`;
+    } else if (count % 5 === 0) {
+      return `${count}! Halfway to the next milestone!`;
+    }
+    return `${count}! Keep the momentum!`;
+  }
+
+  private getPersonalBestMessage(count: number): string {
+    const messages = [
+      `New record! ${count} reps!`,
+      `Personal best! ${count}!`,
+      `You just beat your record! ${count}!`,
+      `That's a new high! ${count} reps!`,
+      `Record breaker! ${count}!`
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  }
+
+  private getFormCorrection(): string {
+    if (this.context.consecutiveIncorrect === 1) {
+      const gentle = [
         "Watch your form!",
+        "Check your posture!",
+        "Adjust your form!",
+        "Focus on technique!"
+      ];
+      return gentle[Math.floor(Math.random() * gentle.length)];
+    } else if (this.context.consecutiveIncorrect === 2) {
+      const firm = [
         "Keep your body straight!",
         "Go lower!",
-        "Adjust your posture!"
+        "Full range of motion!",
+        "Control the movement!"
       ];
-      return corrections[Math.floor(Math.random() * corrections.length)];
+      return firm[Math.floor(Math.random() * firm.length)];
+    } else {
+      const encouraging = [
+        "You got this! Focus on form!",
+        "Take your time, perfect the form!",
+        "Quality over quantity!",
+        "Slow down, nail the technique!"
+      ];
+      return encouraging[Math.floor(Math.random() * encouraging.length)];
     }
-
-    const templates = [
-      `${repCount} reps! You're crushing it!`,
-      `${repCount} down! Keep that energy!`,
-      `${repCount}! Looking strong!`,
-      `${repCount} reps! You got this!`,
-      `${repCount}! Amazing work!`,
-      `${repCount} reps! Don't stop now!`,
-      `${repCount}! You're on fire!`,
-      `${repCount} reps! Keep pushing!`
-    ];
-
-    return templates[Math.floor(Math.random() * templates.length)];
   }
 
   announceStart(activityName: string): void {
-    this.speak(`Let's do this! ${activityName} time!`, true);
+    const messages = [
+      `Let's do this! ${activityName} time!`,
+      `Ready? Let's crush these ${activityName}!`,
+      `Time to shine! ${activityName} starting now!`,
+      `Here we go! ${activityName}!`,
+      `Let's get it! ${activityName} time!`
+    ];
+    this.speak(messages[Math.floor(Math.random() * messages.length)], true);
+    this.context.sessionStartTime = Date.now();
+    this.context.consecutiveCorrect = 0;
+    this.context.consecutiveIncorrect = 0;
   }
 
   announceEnd(totalReps: number, accuracy: number): void {
-    if (accuracy >= 80) {
-      this.speak(`Awesome! ${totalReps} reps with ${accuracy}% accuracy! Great job!`, true);
+    const duration = Math.floor((Date.now() - this.context.sessionStartTime) / 1000);
+    
+    if (accuracy >= 90) {
+      const excellent = [
+        `Outstanding! ${totalReps} reps with ${accuracy}% accuracy!`,
+        `Incredible work! ${totalReps} perfect reps!`,
+        `You absolutely crushed it! ${totalReps} reps!`,
+        `Flawless! ${totalReps} reps at ${accuracy}%!`
+      ];
+      this.speak(excellent[Math.floor(Math.random() * excellent.length)], true);
+    } else if (accuracy >= 75) {
+      const great = [
+        `Great job! ${totalReps} reps, ${accuracy}% accuracy!`,
+        `Solid work! ${totalReps} reps done!`,
+        `Nice! ${totalReps} reps with good form!`,
+        `Well done! ${totalReps} quality reps!`
+      ];
+      this.speak(great[Math.floor(Math.random() * great.length)], true);
     } else if (accuracy >= 60) {
-      this.speak(`Nice work! ${totalReps} reps, ${accuracy}% accuracy. Keep improving!`, true);
+      const good = [
+        `Good effort! ${totalReps} reps. Let's work on that form!`,
+        `${totalReps} reps done! Focus on technique next time!`,
+        `Nice work! ${totalReps} reps. Form will improve!`
+      ];
+      this.speak(good[Math.floor(Math.random() * good.length)], true);
     } else {
-      this.speak(`${totalReps} reps completed. Focus on form next time!`, true);
+      const encouraging = [
+        `${totalReps} reps completed! Quality over quantity next time!`,
+        `Good start! ${totalReps} reps. Let's perfect that form!`,
+        `${totalReps} reps! Focus on technique and you'll crush it!`
+      ];
+      this.speak(encouraging[Math.floor(Math.random() * encouraging.length)], true);
     }
   }
 
@@ -265,6 +500,14 @@ class ElevenLabsTTSService {
 
   reset(): void {
     this.lastSpeakTime = 0;
+    this.context = {
+      lastMessageType: '',
+      consecutiveCorrect: 0,
+      consecutiveIncorrect: 0,
+      personalBest: this.context.personalBest, // Keep personal best
+      totalReps: 0,
+      sessionStartTime: Date.now()
+    };
     this.stop();
   }
 }
