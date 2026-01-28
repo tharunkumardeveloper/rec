@@ -22,13 +22,24 @@ class EdgeTTSService {
     const loadVoices = () => {
       const voices = this.synth!.getVoices();
       
-      // Find Microsoft Edge female voice (Zira or similar)
+      // ONLY use Microsoft Edge female voices - Zira or Aria
       this.edgeVoice = voices.find(v => 
         v.name.includes('Microsoft') && 
-        (v.name.includes('Zira') || v.name.includes('Female') || v.name.includes('Aria'))
-      ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+        v.name.includes('Zira')
+      ) || voices.find(v => 
+        v.name.includes('Microsoft') && 
+        v.name.includes('Aria')
+      ) || voices.find(v => 
+        v.name.includes('Microsoft') && 
+        v.lang.startsWith('en-US')
+      );
 
-      console.log('Edge TTS Voice:', this.edgeVoice?.name);
+      if (this.edgeVoice) {
+        console.log('✅ Edge TTS Voice:', this.edgeVoice.name);
+      } else {
+        console.warn('⚠️ Microsoft Edge voice not found. Voice coach disabled.');
+        this.isEnabled = false;
+      }
     };
 
     loadVoices();
@@ -40,6 +51,12 @@ class EdgeTTSService {
    */
   speak(text: string, force: boolean = false): void {
     if (!this.synth || !this.isEnabled || this.isSpeaking) return;
+
+    // MUST have Microsoft Edge voice, otherwise don't speak
+    if (!this.edgeVoice || !this.edgeVoice.name.includes('Microsoft')) {
+      console.warn('Microsoft Edge voice not available');
+      return;
+    }
 
     const now = Date.now();
     
@@ -53,10 +70,8 @@ class EdgeTTSService {
 
     const utterance = new SpeechSynthesisUtterance(text);
     
-    if (this.edgeVoice) {
-      utterance.voice = this.edgeVoice;
-    }
-    
+    // Use ONLY Microsoft Edge voice
+    utterance.voice = this.edgeVoice;
     utterance.rate = 1.1; // Slightly faster for quick feedback
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
