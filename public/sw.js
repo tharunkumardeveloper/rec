@@ -1,5 +1,5 @@
 // Service Worker for offline image caching
-const CACHE_NAME = 'talenttrack-v1';
+const CACHE_NAME = 'talenttrack-v2'; // Updated version to force cache refresh
 const ASSETS_TO_CACHE = [
   // Challenge images
   '/challenges/pushup-power.webp',
