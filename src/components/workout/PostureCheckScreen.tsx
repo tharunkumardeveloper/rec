@@ -21,12 +21,56 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const countdownIntervalRef = useRef<number | null>(null);
 
+  // Auto-start countdown when posture becomes ready
+  useEffect(() => {
+    if (isReady && !autoStartTriggered && countdown === null) {
+      console.log('✅ Perfect posture detected! Auto-starting countdown...');
+      setAutoStartTriggered(true);
+      
+      // Start countdown from 3
+      setCountdown(3);
+      
+      // Clear any existing interval
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+      
+      // Create new countdown interval
+      let currentCount = 3;
+      countdownIntervalRef.current = window.setInterval(() => {
+        currentCount--;
+        console.log('⏱️ Countdown:', currentCount);
+        
+        if (currentCount <= 0) {
+          // Countdown finished
+          console.log('✅ Countdown complete! Proceeding to workout...');
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+          setCountdown(null);
+          cleanup();
+          onPostureConfirmed();
+        } else {
+          setCountdown(currentCount);
+        }
+      }, 1000);
+    }
+    
+    // Reset auto-start trigger if posture is lost
+    if (!isReady && autoStartTriggered && countdown === null) {
+      console.log('⚠️ Posture lost, resetting auto-start trigger');
+      setAutoStartTriggered(false);
+    }
+  }, [isReady, autoStartTriggered, countdown]);
+
+  // Initialize camera on mount and when facing mode changes
   useEffect(() => {
     initializeCamera();
     return () => {
       cleanup();
     };
-  }, [facingMode]); // Re-initialize when camera changes
+  }, [facingMode]);
 
   const initializeCamera = async () => {
     try {
@@ -131,19 +175,6 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
       const ready = result.status === 'STANDING';
       setIsReady(ready);
 
-      // Auto-start countdown when posture is perfect
-      if (ready && !autoStartTriggered && countdown === null) {
-        console.log('✅ Perfect posture detected! Auto-starting countdown...');
-        setAutoStartTriggered(true);
-        handleContinue();
-      }
-
-      // Reset auto-start trigger if posture is lost
-      if (!ready && autoStartTriggered && countdown === null) {
-        console.log('⚠️ Posture lost, resetting auto-start trigger');
-        setAutoStartTriggered(false);
-      }
-
       // Draw pose skeleton with themed colors (NO TEXT)
       if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {
         // Determine color based on posture status
@@ -176,49 +207,6 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
         });
       }
     }
-  };
-
-  const handleContinue = () => {
-    if (!isReady || countdown !== null) return;
-
-    console.log('🎯 Starting countdown...');
-    
-    // Start countdown from 3
-    setCountdown(3);
-    
-    // Clear any existing interval
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-    }
-    
-    // Create new countdown interval
-    countdownIntervalRef.current = setInterval(() => {
-      setCountdown((prev: number | null) => {
-        console.log('⏱️ Countdown:', prev);
-        
-        if (prev === null) {
-          if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-            countdownIntervalRef.current = null;
-          }
-          return null;
-        }
-        
-        if (prev === 1) {
-          // Countdown finished
-          console.log('✅ Countdown complete! Proceeding to workout...');
-          if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-            countdownIntervalRef.current = null;
-          }
-          cleanup();
-          onPostureConfirmed();
-          return null;
-        }
-        
-        return prev - 1;
-      });
-    }, 1000);
   };
 
   const cleanup = () => {
