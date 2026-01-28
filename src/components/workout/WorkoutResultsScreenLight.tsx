@@ -42,6 +42,10 @@ const WorkoutResultsScreenLight = ({
   const formScore = accuracy >= 80 ? 'Excellent' : accuracy >= 60 ? 'Good' : 'Needs Work';
 
   const formatTime = (seconds: number) => {
+    // Handle invalid or infinite values
+    if (!isFinite(seconds) || isNaN(seconds)) {
+      return '0:00';
+    }
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -65,7 +69,7 @@ const WorkoutResultsScreenLight = ({
   };
 
   const handleLoadedMetadata = () => {
-    if (videoRef.current) {
+    if (videoRef.current && isFinite(videoRef.current.duration)) {
       setVideoDuration(videoRef.current.duration);
     }
   };
@@ -115,7 +119,7 @@ const WorkoutResultsScreenLight = ({
                   className="flex items-center space-x-2"
                 >
                   <Download className="w-4 h-4" />
-                  <span>Download</span>
+                  <span>Save Video</span>
                 </Button>
               </div>
               
