@@ -129,45 +129,15 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete }: LiveRecorderCle
         const newRepCount = detectorRef.current.process(results.poseLandmarks, currentTime);
         setRepCount(newRepCount);
         
-        // Get current metrics for display
+        // Only show rep count on canvas - removed distracting metrics
         const metrics = detectorRef.current.getCurrentMetrics();
         
-        // Draw metrics on canvas (Python HUD style)
-        ctx.font = 'bold 24px Arial';
+        ctx.font = 'bold 32px Arial';
         ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 3;
-        
-        let y = 40;
-        const drawText = (text: string, color: string) => {
-          ctx.fillStyle = color;
-          ctx.strokeText(text, 15, y);
-          ctx.fillText(text, 15, y);
-          y += 35;
-        };
-        
-        // Python: cv2.putText(frame, f"Reps: {len(reps)}", (10, draw_y), ...)
-        drawText(`Reps: ${metrics.repCount}`, '#FFFF00');
-        
-        // Python: if elbow_angle: cv2.putText(frame, f"Elbow: {int(elbow_sm)}", ...)
-        if (metrics.elbowAngle > 0) {
-          const elbowColor = metrics.elbowAngle <= 75 ? '#00FF00' : '#FF0000';
-          drawText(`Elbow: ${metrics.elbowAngle}°`, elbowColor);
-        }
-        
-        // Python: if plank_angle: cv2.putText(frame, f"Plank: {int(plank_angle)}", ...)
-        if (metrics.plankAngle > 0) {
-          const plankColor = metrics.plankAngle >= 165 ? '#00FF00' : '#FF0000';
-          drawText(`Plank: ${metrics.plankAngle}°`, plankColor);
-        }
-        
-        // Python: if chest_depth: cv2.putText(frame, f"Depth: {int(chest_depth)}", ...)
-        if (metrics.chestDepth !== 0) {
-          const depthColor = metrics.chestDepth >= 40 ? '#00FF00' : '#FF0000';
-          drawText(`Depth: ${metrics.chestDepth}`, depthColor);
-        }
-        
-        // Python: cv2.putText(frame, f"State: {state}", ...)
-        drawText(`State: ${metrics.state}`, '#C8C8C8');
+        ctx.lineWidth = 4;
+        ctx.fillStyle = '#FFFF00';
+        ctx.strokeText(`Reps: ${metrics.repCount}`, 20, 50);
+        ctx.fillText(`Reps: ${metrics.repCount}`, 20, 50);
       }
 
       if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {
