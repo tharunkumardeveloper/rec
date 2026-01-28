@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle, AlertCircle, Camera } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Camera, SwitchCamera } from 'lucide-react';
 import { postureChecker, PostureCheckResult } from '@/services/postureChecker';
 
 interface PostureCheckScreenProps {
@@ -16,6 +16,7 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
   const [isReady, setIsReady] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [autoStartTriggered, setAutoStartTriggered] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -24,12 +25,17 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
     return () => {
       cleanup();
     };
-  }, []);
+  }, [facingMode]); // Re-initialize when camera changes
 
   const initializeCamera = async () => {
     try {
+      // Stop existing stream if any
+      if (stream) {
+        stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+      }
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, facingMode: 'user' }
+        video: { width: 640, height: 480, facingMode: facingMode }
       });
       setStream(mediaStream);
 
@@ -42,6 +48,12 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
     } catch (error) {
       console.error('Camera access error:', error);
     }
+  };
+
+  const toggleCamera = () => {
+    if (countdown !== null) return; // Don't allow switching during countdown
+    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+    setAutoStartTriggered(false); // Reset auto-start when switching cameras
   };
 
   const initializeMediaPipe = async () => {
@@ -236,15 +248,27 @@ const PostureCheckScreen = ({ onPostureConfirmed, onBack, activityName }: Postur
                 <h1 className="text-lg font-semibold text-white">Posture Check</h1>
                 <p className="text-sm text-white/80">{activityName}</p>
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={onBack} 
-                className="text-white hover:bg-white/20"
-                disabled={countdown !== null}
-              >
-                Cancel
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={toggleCamera} 
+                  className="text-white hover:bg-white/20"
+                  disabled={countdown !== null}
+                  title="Switch Camera"
+                >
+                  <SwitchCamera className="w-5 h-5" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={onBack} 
+                  className="text-white hover:bg-white/20"
+                  disabled={countdown !== null}
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           </div>
         </div>
