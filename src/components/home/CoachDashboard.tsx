@@ -543,6 +543,24 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
                 <Activity className="w-4 h-4 mr-2" />
                 Refresh Data
               </Button>
+              <Button 
+                onClick={() => {
+                  const data = localStorage.getItem('athlete_workouts');
+                  if (data) {
+                    const workouts = JSON.parse(data);
+                    alert(`✅ Found ${workouts.length} workouts in storage!\n\nAthletes: ${workouts.map((w: any) => w.athleteName).join(', ')}`);
+                    console.log('📦 localStorage data:', workouts);
+                  } else {
+                    alert('❌ No data in localStorage!\n\nKey "athlete_workouts" is empty.');
+                  }
+                }}
+                variant="outline"
+                size="sm"
+                className="mx-auto"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Check Storage
+              </Button>
               <div className="mt-4 p-4 bg-blue-50 rounded-lg text-left text-xs">
                 <p className="font-semibold text-blue-900 mb-2">📝 How to see workouts:</p>
                 <ol className="text-blue-800 space-y-1 list-decimal list-inside">
