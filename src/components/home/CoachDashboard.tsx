@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import workoutStorageService, { StoredWorkout } from '@/services/workoutStorageService';
-import PDFViewer from '@/components/coach/PDFViewer';
+import AthleteWorkoutDetail from '@/components/coach/AthleteWorkoutDetail';
 import { 
   Search, 
   Settings, 
@@ -42,7 +42,6 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
   const [athleteWorkouts, setAthleteWorkouts] = useState<Array<{ name: string; workoutCount: number; lastWorkout: string; workouts: StoredWorkout[] }>>([]);
   const [selectedAthlete, setSelectedAthlete] = useState<string | null>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<StoredWorkout | null>(null);
-  const [showPDFViewer, setShowPDFViewer] = useState(false);
   const navigate = useNavigate();
 
   // Load athlete workout data
@@ -115,30 +114,6 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
   const handleBackToList = () => {
     setSelectedAthlete(null);
     setSelectedWorkout(null);
-  };
-
-  const handleDownloadPDF = (workout: StoredWorkout) => {
-    const pdfUrl = workout.pdfUrl || workout.pdfDataUrl;
-    if (!pdfUrl) return;
-    
-    // Show PDF viewer instead of downloading
-    setShowPDFViewer(true);
-  };
-
-  const handleDownloadVideo = (workout: StoredWorkout) => {
-    const videoUrl = workout.videoUrl || workout.videoDataUrl;
-    if (!videoUrl) return;
-    
-    if (workout.videoUrl) {
-      // Open Cloudinary URL in new tab
-      window.open(videoUrl, '_blank');
-    } else {
-      // Download base64 video
-      const link = document.createElement('a');
-      link.href = videoUrl;
-      link.download = `${workout.athleteName}_${workout.activityName}_Video.webm`;
-      link.click();
-    }
   };
 
   const formatDate = (timestamp: string) => {
@@ -315,169 +290,14 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
       if (!athleteData) return null;
 
       return (
-        <div className="space-y-6">
-          {/* Back Button */}
-          <Button
-            variant="outline"
-            onClick={handleBackToList}
-            className="mb-4"
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            Back to Athletes
-          </Button>
-
-          {/* Athlete Header */}
-          <Card className="card-elevated border-l-4 border-l-primary">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold">
-                    {selectedAthlete ? selectedAthlete.split(' ').map(n => n[0]).join('') : '?'}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold">{selectedAthlete}</h2>
-                    <p className="text-sm text-muted-foreground">Latest Workout</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Workout List */}
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle>Latest Workout</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {athleteData.workouts.map((workout) => (
-                  <div
-                    key={workout.id}
-                    onClick={() => setSelectedWorkout(workout)}
-                    className={`p-3 rounded-lg cursor-pointer transition-all ${
-                      selectedWorkout.id === workout.id
-                        ? 'bg-primary/10 border-2 border-primary'
-                        : 'bg-secondary/30 hover:bg-secondary/50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold">{workout.activityName}</p>
-                        <p className="text-xs text-muted-foreground">{formatDate(workout.timestamp)}</p>
-                      </div>
-                      <Badge className={workout.accuracy >= 80 ? 'bg-green-500' : 'bg-yellow-500'}>
-                        {workout.accuracy}%
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Selected Workout Details */}
-          <Card className="card-elevated">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Workout Details</CardTitle>
-                <div className="flex space-x-2">
-                  {(selectedWorkout.pdfUrl || selectedWorkout.pdfDataUrl) && (
-                    <Button size="sm" variant="outline" onClick={() => handleDownloadPDF(selectedWorkout)}>
-                      <FileText className="w-4 h-4 mr-1" />
-                      View Report
-                    </Button>
-                  )}
-                  {selectedWorkout.videoDataUrl && (
-                    <Button size="sm" variant="outline" onClick={() => handleDownloadVideo(selectedWorkout)}>
-                      <Download className="w-4 h-4 mr-1" />
-                      Video
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Performance Metrics */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg bg-blue-50 text-center">
-                  <div className="text-2xl font-bold text-blue-600">{selectedWorkout.totalReps}</div>
-                  <div className="text-xs text-blue-600/70">Total Reps</div>
-                </div>
-                <div className="p-3 rounded-lg bg-green-50 text-center">
-                  <div className="text-2xl font-bold text-green-600">{selectedWorkout.correctReps}</div>
-                  <div className="text-xs text-green-600/70">Correct</div>
-                </div>
-                <div className="p-3 rounded-lg bg-red-50 text-center">
-                  <div className="text-2xl font-bold text-red-600">{selectedWorkout.incorrectReps}</div>
-                  <div className="text-xs text-red-600/70">Incorrect</div>
-                </div>
-                <div className="p-3 rounded-lg bg-purple-50 text-center">
-                  <div className="text-2xl font-bold text-purple-600">{formatDuration(selectedWorkout.duration)}</div>
-                  <div className="text-xs text-purple-600/70">Duration</div>
-                </div>
-              </div>
-
-              {/* Accuracy Bar */}
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="font-semibold">Form Accuracy</span>
-                  <span className="font-bold">{selectedWorkout.accuracy}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className={`h-full rounded-full ${
-                      selectedWorkout.accuracy >= 80 ? 'bg-green-500' : 
-                      selectedWorkout.accuracy >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}
-                    style={{ width: `${selectedWorkout.accuracy}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Form Score: {selectedWorkout.formScore}
-                </p>
-              </div>
-
-              {/* Video Player */}
-              {(selectedWorkout.videoUrl || selectedWorkout.videoDataUrl) && (
-                <div>
-                  <h4 className="font-semibold mb-2 flex items-center">
-                    <Play className="w-4 h-4 mr-2" />
-                    Workout Video
-                  </h4>
-                  <div className="relative rounded-lg overflow-hidden bg-black">
-                    <video
-                      src={selectedWorkout.videoUrl || selectedWorkout.videoDataUrl}
-                      controls
-                      className="w-full"
-                      playsInline
-                      crossOrigin="anonymous"
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                </div>
-              )}
-
-              {/* Screenshots */}
-              {selectedWorkout.screenshots && selectedWorkout.screenshots.length > 0 && (
-                <div>
-                  <h4 className="font-semibold mb-2">Workout Screenshots</h4>
-                  <div className="grid grid-cols-3 gap-2">
-                    {selectedWorkout.screenshots.slice(0, 6).map((screenshot, index) => (
-                      <div key={index} className="relative rounded-lg overflow-hidden bg-black">
-                        <img
-                          src={screenshot}
-                          alt={`Screenshot ${index + 1}`}
-                          className="w-full h-auto"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <AthleteWorkoutDetail
+          athleteName={selectedAthlete}
+          workouts={athleteData.workouts}
+          selectedWorkout={selectedWorkout}
+          onBack={handleBackToList}
+          onWorkoutSelect={setSelectedWorkout}
+          isSAIAdmin={false}
+        />
       );
     }
 
@@ -922,16 +742,6 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
           </div>
         </div>
       </div>
-
-      {/* PDF Viewer Modal */}
-      {showPDFViewer && selectedWorkout && (selectedWorkout.pdfUrl || selectedWorkout.pdfDataUrl) && (
-        <PDFViewer
-          pdfUrl={selectedWorkout.pdfUrl || selectedWorkout.pdfDataUrl!}
-          athleteName={selectedWorkout.athleteName}
-          activityName={selectedWorkout.activityName}
-          onClose={() => setShowPDFViewer(false)}
-        />
-      )}
     </>
   );
 };
