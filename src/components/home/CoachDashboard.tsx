@@ -454,6 +454,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
                       controls
                       className="w-full"
                       playsInline
+                      crossOrigin="anonymous"
                     >
                       Your browser does not support the video tag.
                     </video>
