@@ -1,5 +1,5 @@
 // Service Worker for offline image caching
-const CACHE_NAME = 'talenttrack-v3-clean'; // Updated version - NO LANDSCAPE CODE
+const CACHE_NAME = 'talenttrack-v4-cloudinary-fix'; // Updated version - Skip Cloudinary URLs
 const ASSETS_TO_CACHE = [
   // Challenge images
   '/challenges/pushup-power.webp',
@@ -60,7 +60,12 @@ self.addEventListener('fetch', (event) => {
   
   const url = new URL(event.request.url);
   
-  // Only cache images and GIFs
+  // Skip Cloudinary URLs - let them load directly
+  if (url.hostname.includes('cloudinary.com')) {
+    return;
+  }
+  
+  // Only cache local images and GIFs
   if (
     url.pathname.startsWith('/challenges/') ||
     url.pathname.endsWith('.gif') ||
