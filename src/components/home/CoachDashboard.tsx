@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import workoutStorageService, { StoredWorkout } from '@/services/workoutStorageService';
 import { 
   Search, 
   Settings, 
@@ -20,7 +21,9 @@ import {
   Filter,
   Download,
   Eye,
-  Send
+  Send,
+  Play,
+  FileText
 } from 'lucide-react';
 
 interface CoachDashboardProps {
@@ -34,6 +37,79 @@ interface CoachDashboardProps {
 const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSettingsOpen }: CoachDashboardProps) => {
   const [searchFocus, setSearchFocus] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [athleteWorkouts, setAthleteWorkouts] = useState<Array<{ name: string; workoutCount: number; lastWorkout: string; workouts: StoredWorkout[] }>>([]);
+  const [selectedAthlete, setSelectedAthlete] = useState<string | null>(null);
+  const [selectedWorkout, setSelectedWorkout] = useState<StoredWorkout | null>(null);
+
+  // Load athlete workout data
+  useEffect(() => {
+    loadAthleteData();
+  }, []);
+
+  const loadAthleteData = () => {
+    const athletes = workoutStorageService.getAllAthletes();
+    const athleteData = athletes.map(athlete => ({
+      name: athlete.name,
+      workoutCount: athlete.workoutCount,
+      lastWorkout: athlete.lastWorkout,
+      workouts: workoutStorageService.getWorkoutsByAthlete(athlete.name)
+    }));
+    setAthleteWorkouts(athleteData);
+  };
+
+  const handleViewWorkouts = (athleteName: string) => {
+    setSelectedAthlete(athleteName);
+    const workouts = workoutStorageService.getWorkoutsByAthlete(athleteName);
+    if (workouts.length > 0) {
+      setSelectedWorkout(workouts[0]); // Select most recent workout
+    }
+  };
+
+  const handleBackToList = () => {
+    setSelectedAthlete(null);
+    setSelectedWorkout(null);
+  };
+
+  const handleDownloadPDF = (workout: StoredWorkout) => {
+    if (!workout.pdfDataUrl) return;
+    const link = document.createElement('a');
+    link.href = workout.pdfDataUrl;
+    link.download = `${workout.athleteName}_${workout.activityName}_Report.pdf`;
+    link.click();
+  };
+
+  const handleDownloadVideo = (workout: StoredWorkout) => {
+    if (!workout.videoDataUrl) return;
+    const link = document.createElement('a');
+    link.href = workout.videoDataUrl;
+    link.download = `${workout.athleteName}_${workout.activityName}_Video.webm`;
+    link.click();
+  };
+
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // Mock coach data
   const overviewStats = {
@@ -177,80 +253,256 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
     </div>
   );
 
-  const renderAthletesContent = () => (
-    <div className="space-y-6">
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        {filterTags.map((tag) => (
-          <Button
-            key={tag}
-            variant={selectedFilter === tag ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedFilter(selectedFilter === tag ? null : tag)}
-            className={`rounded-full h-9 text-xs font-medium transition-all duration-300 ${
-              selectedFilter === tag 
-                ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-md hover:shadow-lg scale-105' 
-                : 'bg-white text-foreground border-2 border-primary/20 hover:border-primary hover:bg-primary/5'
-            }`}
-          >
-            {tag}
-          </Button>
-        ))}
-      </div>
+  const renderAthletesContent = () => {
+    // If viewing specific athlete's workouts
+    if (selectedAthlete && selectedWorkout) {
+      const athleteData = athleteWorkouts.find(a => a.name === selectedAthlete);
+      if (!athleteData) return null;
 
-      {/* Athletes List */}
-      <div className="space-y-3">
-        {athletes.map((athlete) => (
-          <Card key={athlete.id} className="card-elevated hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary">
+      return (
+        <div className="space-y-6">
+          {/* Back Button */}
+          <Button
+            variant="outline"
+            onClick={handleBackToList}
+            className="mb-4"
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            Back to Athletes
+          </Button>
+
+          {/* Athlete Header */}
+          <Card className="card-elevated border-l-4 border-l-primary">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold text-sm">
-                    {athlete.name.split(' ').map(n => n[0]).join('')}
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold">
+                    {selectedAthlete.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div>
-                    <h3 className="font-semibold">{athlete.name}</h3>
-                    <p className="text-sm text-muted-foreground">{athlete.email}</p>
+                    <h2 className="text-xl font-bold">{selectedAthlete}</h2>
+                    <p className="text-sm text-muted-foreground">{athleteData.workoutCount} total workouts</p>
                   </div>
                 </div>
-                <Badge className="bg-gradient-to-r from-primary to-primary/80 text-white shadow-sm">Level {athlete.level}</Badge>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4 mb-3 text-center">
-                <div className="p-2 rounded-lg bg-blue-50">
-                  <div className="text-sm font-bold text-blue-600">{athlete.challenges}</div>
-                  <div className="text-xs text-blue-600/70">Challenges</div>
-                </div>
-                <div className="p-2 rounded-lg bg-yellow-50">
-                  <div className="text-sm font-bold text-yellow-600">{athlete.badges}</div>
-                  <div className="text-xs text-yellow-600/70">Badges</div>
-                </div>
-                <div className="p-2 rounded-lg bg-green-50">
-                  <div className="text-sm font-bold text-green-600">{athlete.lastActivity}</div>
-                  <div className="text-xs text-green-600/70">Last Active</div>
-                </div>
-              </div>
-
-              <div className="flex space-x-2">
-                <Button size="sm" variant="outline" className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300">
-                  <Eye className="w-4 h-4 mr-1" />
-                  View
-                </Button>
-                <Button size="sm" variant="outline" className="flex-1 border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300">
-                  <Target className="w-4 h-4 mr-1" />
-                  Assign
-                </Button>
-                <Button size="sm" variant="outline" className="flex-1 border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300">
-                  <Send className="w-4 h-4 mr-1" />
-                  Message
-                </Button>
               </div>
             </CardContent>
           </Card>
-        ))}
+
+          {/* Workout List */}
+          <Card className="card-elevated">
+            <CardHeader>
+              <CardTitle>Workout History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {athleteData.workouts.map((workout) => (
+                  <div
+                    key={workout.id}
+                    onClick={() => setSelectedWorkout(workout)}
+                    className={`p-3 rounded-lg cursor-pointer transition-all ${
+                      selectedWorkout.id === workout.id
+                        ? 'bg-primary/10 border-2 border-primary'
+                        : 'bg-secondary/30 hover:bg-secondary/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold">{workout.activityName}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(workout.timestamp)}</p>
+                      </div>
+                      <Badge className={workout.accuracy >= 80 ? 'bg-green-500' : 'bg-yellow-500'}>
+                        {workout.accuracy}%
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Selected Workout Details */}
+          <Card className="card-elevated">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Workout Details</CardTitle>
+                <div className="flex space-x-2">
+                  {selectedWorkout.pdfDataUrl && (
+                    <Button size="sm" variant="outline" onClick={() => handleDownloadPDF(selectedWorkout)}>
+                      <FileText className="w-4 h-4 mr-1" />
+                      PDF
+                    </Button>
+                  )}
+                  {selectedWorkout.videoDataUrl && (
+                    <Button size="sm" variant="outline" onClick={() => handleDownloadVideo(selectedWorkout)}>
+                      <Download className="w-4 h-4 mr-1" />
+                      Video
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Performance Metrics */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-blue-50 text-center">
+                  <div className="text-2xl font-bold text-blue-600">{selectedWorkout.totalReps}</div>
+                  <div className="text-xs text-blue-600/70">Total Reps</div>
+                </div>
+                <div className="p-3 rounded-lg bg-green-50 text-center">
+                  <div className="text-2xl font-bold text-green-600">{selectedWorkout.correctReps}</div>
+                  <div className="text-xs text-green-600/70">Correct</div>
+                </div>
+                <div className="p-3 rounded-lg bg-red-50 text-center">
+                  <div className="text-2xl font-bold text-red-600">{selectedWorkout.incorrectReps}</div>
+                  <div className="text-xs text-red-600/70">Incorrect</div>
+                </div>
+                <div className="p-3 rounded-lg bg-purple-50 text-center">
+                  <div className="text-2xl font-bold text-purple-600">{formatDuration(selectedWorkout.duration)}</div>
+                  <div className="text-xs text-purple-600/70">Duration</div>
+                </div>
+              </div>
+
+              {/* Accuracy Bar */}
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="font-semibold">Form Accuracy</span>
+                  <span className="font-bold">{selectedWorkout.accuracy}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div
+                    className={`h-full rounded-full ${
+                      selectedWorkout.accuracy >= 80 ? 'bg-green-500' : 
+                      selectedWorkout.accuracy >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                    }`}
+                    style={{ width: `${selectedWorkout.accuracy}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Form Score: {selectedWorkout.formScore}
+                </p>
+              </div>
+
+              {/* Video Player */}
+              {selectedWorkout.videoDataUrl && (
+                <div>
+                  <h4 className="font-semibold mb-2 flex items-center">
+                    <Play className="w-4 h-4 mr-2" />
+                    Workout Video
+                  </h4>
+                  <div className="relative rounded-lg overflow-hidden bg-black">
+                    <video
+                      src={selectedWorkout.videoDataUrl}
+                      controls
+                      className="w-full"
+                      playsInline
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                </div>
+              )}
+
+              {/* Screenshots */}
+              {selectedWorkout.screenshots && selectedWorkout.screenshots.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">Workout Screenshots</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    {selectedWorkout.screenshots.slice(0, 6).map((screenshot, index) => (
+                      <div key={index} className="relative rounded-lg overflow-hidden bg-black">
+                        <img
+                          src={screenshot}
+                          alt={`Screenshot ${index + 1}`}
+                          className="w-full h-auto"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // Default: Show athletes list
+    return (
+      <div className="space-y-6">
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2">
+          {filterTags.map((tag) => (
+            <Button
+              key={tag}
+              variant={selectedFilter === tag ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedFilter(selectedFilter === tag ? null : tag)}
+              className={`rounded-full h-9 text-xs font-medium transition-all duration-300 ${
+                selectedFilter === tag 
+                  ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-md hover:shadow-lg scale-105' 
+                  : 'bg-white text-foreground border-2 border-primary/20 hover:border-primary hover:bg-primary/5'
+              }`}
+            >
+              {tag}
+            </Button>
+          ))}
+        </div>
+
+        {/* Real Athletes with Workouts */}
+        {athleteWorkouts.length > 0 ? (
+          <div className="space-y-3">
+            {athleteWorkouts.map((athlete) => (
+              <Card key={athlete.name} className="card-elevated hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold text-sm">
+                        {athlete.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">{athlete.name}</h3>
+                        <p className="text-sm text-muted-foreground">{formatDate(athlete.lastWorkout)}</p>
+                      </div>
+                    </div>
+                    <Badge className="bg-gradient-to-r from-primary to-primary/80 text-white shadow-sm">
+                      {athlete.workoutCount} workouts
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4 mb-3 text-center">
+                    {athlete.workouts.slice(0, 3).map((workout, idx) => (
+                      <div key={idx} className="p-2 rounded-lg bg-blue-50">
+                        <div className="text-xs font-bold text-blue-600">{workout.activityName}</div>
+                        <div className="text-xs text-blue-600/70">{workout.accuracy}%</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button 
+                    size="sm" 
+                    className="w-full bg-gradient-to-r from-primary to-primary/80"
+                    onClick={() => handleViewWorkouts(athlete.name)}
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    View All Workouts
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="card-elevated">
+            <CardContent className="p-8 text-center">
+              <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Athlete Workouts Yet</h3>
+              <p className="text-sm text-muted-foreground">
+                Athlete workout data will appear here after they complete workouts and generate reports.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderChallengesContent = () => (
     <div className="space-y-6">
