@@ -271,19 +271,78 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
         ctx.fillText(`Reps: ${metrics.repCount}`, 20, 50);
       }
 
-      // Track body depth for visual indicator (during recording)
+      // Track body depth for visual indicator (during recording) - workout-specific
       if (isRecordingRef.current && results.poseLandmarks) {
-        // Use shoulder midpoint Y position to track depth
-        const leftShoulder = results.poseLandmarks[11];
-        const rightShoulder = results.poseLandmarks[12];
+        let depthPercent = 50; // Default middle position
 
-        if (leftShoulder && rightShoulder) {
-          const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-          // Convert Y position (0-1) to depth percentage (0-100)
-          // Lower Y value = higher on screen = more dipped
-          const depthPercent = Math.max(0, Math.min(100, shoulderY * 100));
-          setBodyDepthPercent(depthPercent);
+        switch (activityName) {
+          case 'Push-ups': {
+            // Use shoulder Y position for push-ups
+            const leftShoulder = results.poseLandmarks[11];
+            const rightShoulder = results.poseLandmarks[12];
+            if (leftShoulder && rightShoulder) {
+              const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+              depthPercent = Math.max(0, Math.min(100, shoulderY * 100));
+            }
+            break;
+          }
+          case 'Squats':
+          case 'Sit-ups': {
+            // Use hip Y position for squats and sit-ups
+            const leftHip = results.poseLandmarks[23];
+            const rightHip = results.poseLandmarks[24];
+            if (leftHip && rightHip) {
+              const hipY = (leftHip.y + rightHip.y) / 2;
+              depthPercent = Math.max(0, Math.min(100, hipY * 100));
+            }
+            break;
+          }
+          case 'Pull-ups': {
+            // Use wrist Y position for pull-ups (hands go up)
+            const leftWrist = results.poseLandmarks[15];
+            const rightWrist = results.poseLandmarks[16];
+            if (leftWrist && rightWrist) {
+              const wristY = (leftWrist.y + rightWrist.y) / 2;
+              // Invert for pull-ups (lower Y = higher position = better)
+              depthPercent = Math.max(0, Math.min(100, 100 - (wristY * 100)));
+            }
+            break;
+          }
+          case 'Vertical Jump': {
+            // Use ankle Y position for jumps
+            const leftAnkle = results.poseLandmarks[27];
+            const rightAnkle = results.poseLandmarks[28];
+            if (leftAnkle && rightAnkle) {
+              const ankleY = (leftAnkle.y + rightAnkle.y) / 2;
+              // Invert for jumps (lower Y = higher jump = better)
+              depthPercent = Math.max(0, Math.min(100, 100 - (ankleY * 100)));
+            }
+            break;
+          }
+          case 'Shuttle Run':
+          case 'Modified Shuttle Run': {
+            // Use hip X position for lateral movement
+            const leftHip = results.poseLandmarks[23];
+            const rightHip = results.poseLandmarks[24];
+            if (leftHip && rightHip) {
+              const hipX = (leftHip.x + rightHip.x) / 2;
+              depthPercent = Math.max(0, Math.min(100, hipX * 100));
+            }
+            break;
+          }
+          case 'Sit Reach': {
+            // Use wrist Y position for reach
+            const leftWrist = results.poseLandmarks[15];
+            const rightWrist = results.poseLandmarks[16];
+            if (leftWrist && rightWrist) {
+              const wristY = (leftWrist.y + rightWrist.y) / 2;
+              depthPercent = Math.max(0, Math.min(100, wristY * 100));
+            }
+            break;
+          }
         }
+
+        setBodyDepthPercent(depthPercent);
       }
 
       if (results.poseLandmarks && window.drawConnectors && window.drawLandmarks) {
