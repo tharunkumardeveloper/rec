@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import workoutStorageService, { StoredWorkout } from '@/services/workoutStorageService';
+import PDFViewer from '@/components/coach/PDFViewer';
 import { 
   Search, 
   Settings, 
@@ -40,6 +41,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
   const [athleteWorkouts, setAthleteWorkouts] = useState<Array<{ name: string; workoutCount: number; lastWorkout: string; workouts: StoredWorkout[] }>>([]);
   const [selectedAthlete, setSelectedAthlete] = useState<string | null>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<StoredWorkout | null>(null);
+  const [showPDFViewer, setShowPDFViewer] = useState(false);
 
   // Load athlete workout data
   useEffect(() => {
@@ -117,16 +119,8 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
     const pdfUrl = workout.pdfUrl || workout.pdfDataUrl;
     if (!pdfUrl) return;
     
-    if (workout.pdfUrl) {
-      // Open Cloudinary URL in new tab
-      window.open(pdfUrl, '_blank');
-    } else {
-      // Download base64 PDF
-      const link = document.createElement('a');
-      link.href = pdfUrl;
-      link.download = `${workout.athleteName}_${workout.activityName}_Report.pdf`;
-      link.click();
-    }
+    // Show PDF viewer instead of downloading
+    setShowPDFViewer(true);
   };
 
   const handleDownloadVideo = (workout: StoredWorkout) => {
@@ -388,7 +382,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
                   {(selectedWorkout.pdfUrl || selectedWorkout.pdfDataUrl) && (
                     <Button size="sm" variant="outline" onClick={() => handleDownloadPDF(selectedWorkout)}>
                       <FileText className="w-4 h-4 mr-1" />
-                      {selectedWorkout.pdfUrl ? 'View PDF Report' : 'Download PDF'}
+                      View Report
                     </Button>
                   )}
                   {selectedWorkout.videoDataUrl && (
@@ -929,6 +923,16 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
           </div>
         </div>
       </div>
+
+      {/* PDF Viewer Modal */}
+      {showPDFViewer && selectedWorkout && (selectedWorkout.pdfUrl || selectedWorkout.pdfDataUrl) && (
+        <PDFViewer
+          pdfUrl={selectedWorkout.pdfUrl || selectedWorkout.pdfDataUrl!}
+          athleteName={selectedWorkout.athleteName}
+          activityName={selectedWorkout.activityName}
+          onClose={() => setShowPDFViewer(false)}
+        />
+      )}
     </>
   );
 };

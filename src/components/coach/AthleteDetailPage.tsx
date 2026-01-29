@@ -13,6 +13,7 @@ const AthleteDetailPage = () => {
   const [selectedWorkout, setSelectedWorkout] = useState<StoredWorkout | null>(null);
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
   const [showPDFViewer, setShowPDFViewer] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (athleteName) {
@@ -22,27 +23,37 @@ const AthleteDetailPage = () => {
 
   const loadWorkouts = async () => {
     if (!athleteName) return;
-    const decodedName = decodeURIComponent(athleteName);
-    const athleteWorkouts = await workoutStorageService.getWorkoutsByAthlete(decodedName);
-    setWorkouts(athleteWorkouts);
-    
-    // Auto-select the most recent workout
-    if (athleteWorkouts.length > 0 && !selectedWorkout) {
-      setSelectedWorkout(athleteWorkouts[0]);
+    setIsRefreshing(true);
+    try {
+      const decodedName = decodeURIComponent(athleteName);
+      const athleteWorkouts = await workoutStorageService.getWorkoutsByAthlete(decodedName);
+      setWorkouts(athleteWorkouts);
+      
+      // Auto-select the most recent workout
+      if (athleteWorkouts.length > 0 && !selectedWorkout) {
+        setSelectedWorkout(athleteWorkouts[0]);
+      }
+    } catch (error) {
+      console.error('Error loading workouts:', error);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
   const handleViewPDF = () => {
-    if (!selectedWorkout?.pdfDataUrl) return;
+    if (!selectedWorkout?.pdfDataUrl && !selectedWorkout?.pdfUrl) return;
+    const pdfUrl = selectedWorkout.pdfUrl || selectedWorkout.pdfDataUrl;
     setShowPDFViewer(true);
   };
 
   const handleDownloadVideo = () => {
-    if (!selectedWorkout?.videoDataUrl) return;
+    if (!selectedWorkout?.videoDataUrl && !selectedWorkout?.videoUrl) return;
     
+    const videoUrl = selectedWorkout.videoUrl || selectedWorkout.videoDataUrl;
     const link = document.createElement('a');
-    link.href = selectedWorkout.videoDataUrl;
+    link.href = videoUrl;
     link.download = `${selectedWorkout.athleteName}_${selectedWorkout.activityName}_Video.webm`;
+    link.target = '_blank';
     link.click();
   };
 
@@ -80,12 +91,20 @@ const AthleteDetailPage = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-4xl font-bold text-gray-900">
               {decodeURIComponent(athleteName)}
             </h1>
             <p className="text-gray-600 mt-1">{workouts.length} total workouts</p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadWorkouts}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -138,13 +157,13 @@ const AthleteDetailPage = () => {
                     <div className="flex items-center justify-between">
                       <CardTitle>Performance Summary</CardTitle>
                       <div className="flex items-center space-x-2">
-                        {selectedWorkout.pdfDataUrl && (
+                        {(selectedWorkout.pdfDataUrl || selectedWorkout.pdfUrl) && (
                           <Button size="sm" variant="outline" onClick={handleViewPDF}>
                             <FileText className="w-4 h-4 mr-2" />
                             View Report
                           </Button>
                         )}
-                        {selectedWorkout.videoDataUrl && (
+                        {(selectedWorkout.videoDataUrl || selectedWorkout.videoUrl) && (
                           <Button size="sm" variant="outline" onClick={handleDownloadVideo}>
                             <Download className="w-4 h-4 mr-2" />
                             Video
@@ -200,7 +219,7 @@ const AthleteDetailPage = () => {
                 </Card>
 
                 {/* Video Player */}
-                {selectedWorkout.videoDataUrl && (
+                {(selectedWorkout.videoDataUrl || selectedWorkout.videoUrl) && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center">
@@ -211,7 +230,7 @@ const AthleteDetailPage = () => {
                     <CardContent>
                       <div className="relative rounded-lg overflow-hidden bg-black">
                         <video
-                          src={selectedWorkout.videoDataUrl}
+                          src={selectedWorkout.videoUrl || selectedWorkout.videoDataUrl}
                           controls
                           className="w-full"
                           onPlay={() => setIsPlayingVideo(true)}
@@ -311,9 +330,9 @@ const AthleteDetailPage = () => {
       </div>
 
       {/* PDF Viewer Modal */}
-      {showPDFViewer && selectedWorkout?.pdfDataUrl && (
+      {showPDFViewer && (selectedWorkout?.pdfDataUrl || selectedWorkout?.pdfUrl) && (
         <PDFViewer
-          pdfUrl={selectedWorkout.pdfDataUrl}
+          pdfUrl={selectedWorkout.pdfUrl || selectedWorkout.pdfDataUrl || ''}
           athleteName={selectedWorkout.athleteName}
           activityName={selectedWorkout.activityName}
           onClose={() => setShowPDFViewer(false)}

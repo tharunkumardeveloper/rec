@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 
 const CoachDashboard = () => {
   const [athletes, setAthletes] = useState<Array<{ name: string; workoutCount: number; lastWorkout: string }>>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,8 +15,15 @@ const CoachDashboard = () => {
   }, []);
 
   const loadAthletes = async () => {
-    const athleteList = await workoutStorageService.getAllAthletes();
-    setAthletes(athleteList);
+    setIsRefreshing(true);
+    try {
+      const athleteList = await workoutStorageService.getAllAthletes();
+      setAthletes(athleteList);
+    } catch (error) {
+      console.error('Error loading athletes:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleAthleteClick = (athleteName: string) => {
@@ -42,8 +50,8 @@ const CoachDashboard = () => {
             <h1 className="text-4xl font-bold text-gray-900">Coach Dashboard</h1>
             <p className="text-gray-600 mt-2">Monitor your athletes' performance</p>
           </div>
-          <Button onClick={loadAthletes} variant="outline">
-            Refresh
+          <Button onClick={loadAthletes} variant="outline" disabled={isRefreshing}>
+            {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
           </Button>
         </div>
 

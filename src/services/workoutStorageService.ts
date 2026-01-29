@@ -205,8 +205,8 @@ class WorkoutStorageService {
         formScore: workout.formScore,
         repDetails: workout.repDetails || [],
         timestamp: workout.timestamp,
-        videoDataUrl: workout.videoDataUrl,
-        pdfDataUrl: workout.pdfDataUrl,
+        videoDataUrl: workout.videoDataUrl || workout.videoUrl, // Support both
+        pdfDataUrl: workout.pdfDataUrl || workout.pdfUrl, // Support both
         videoUrl: workout.videoUrl,
         pdfUrl: workout.pdfUrl,
         screenshots: workout.screenshots || []
