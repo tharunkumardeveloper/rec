@@ -30,6 +30,7 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
 
   // Check if it's a Cloudinary URL or base64
   const isCloudinaryUrl = pdfUrl.includes('cloudinary.com');
+  const isCloudinaryRaw = pdfUrl.includes('/raw/upload/');
   const isBase64 = pdfUrl.startsWith('data:');
 
   return (
@@ -65,18 +66,32 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
 
         {/* PDF Content */}
         <div className="flex-1 overflow-auto bg-gray-100 p-4">
-          {isCloudinaryUrl ? (
-            // For Cloudinary URLs, try iframe first with fallback to download
+          {isCloudinaryRaw ? (
+            // For Cloudinary raw files, show direct download (raw files can't be embedded)
+            <div className="flex flex-col items-center justify-center h-full space-y-4">
+              <div className="text-center">
+                <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold mb-2">PDF Report Ready</h3>
+                <p className="text-gray-600 mb-2">Cloudinary raw files require download to view</p>
+                <p className="text-sm text-gray-500 mb-6">Click the button below to download and open the report</p>
+                <Button onClick={handleDownload} size="lg" className="bg-blue-600 hover:bg-blue-700">
+                  <Download className="w-5 h-5 mr-2" />
+                  Download PDF Report
+                </Button>
+              </div>
+            </div>
+          ) : isCloudinaryUrl && !isCloudinaryRaw ? (
+            // For other Cloudinary URLs, try iframe
             <div className="h-full flex flex-col">
               <div className="bg-white shadow-lg mx-auto w-full h-full">
                 <iframe
                   src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
                   className="w-full h-full border-0"
                   title="PDF Report"
-                  onError={() => {
-                    // If iframe fails, show download button
-                    console.warn('PDF iframe failed to load, showing download option');
-                  }}
                 />
               </div>
               <div className="text-center mt-4">

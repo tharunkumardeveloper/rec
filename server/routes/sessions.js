@@ -147,6 +147,11 @@ router.get("/athlete/:athleteName", async (req, res) => {
           .sort({ repNumber: 1 })
           .toArray();
         
+        console.log(`📸 Found ${reps.length} rep images for workout ${workout._id}`);
+        if (reps.length > 0) {
+          console.log(`   First rep URL: ${reps[0].imageUrl?.substring(0, 60)}...`);
+        }
+        
         return {
           ...workout,
           screenshots: reps.map(rep => rep.imageUrl),
