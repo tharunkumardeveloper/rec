@@ -4,6 +4,7 @@ import { PushupRepData } from '@/services/workoutDetectors/PushupLiveDetector';
 import { useState, useRef, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import coachDashboardService from '@/services/coachDashboardService';
+import workoutStorageService from '@/services/workoutStorageService';
 
 interface WorkoutResultsScreenLightProps {
   activityName: string;
@@ -362,7 +363,35 @@ const WorkoutResultsScreenLight = ({
       // Save PDF locally
       pdf.save(filename);
 
-      // Auto-submit to coach dashboard
+      // Save to local storage for coach dashboard
+      try {
+        const pdfBlob = pdf.output('blob');
+        const pdfDataUrl = await workoutStorageService.blobToDataUrl(pdfBlob);
+        const videoDataUrl = videoBlob ? await workoutStorageService.blobToDataUrl(videoBlob) : undefined;
+
+        await workoutStorageService.saveWorkout({
+          athleteName: userName,
+          athleteProfilePic: userProfilePic || undefined,
+          activityName,
+          totalReps,
+          correctReps,
+          incorrectReps,
+          duration,
+          accuracy,
+          formScore,
+          repDetails,
+          timestamp: new Date().toISOString(),
+          videoDataUrl,
+          pdfDataUrl,
+          screenshots: workoutScreenshots
+        });
+
+        console.log('Workout saved to local storage for coach dashboard');
+      } catch (storageError) {
+        console.error('Failed to save workout locally:', storageError);
+      }
+
+      // Auto-submit to coach dashboard (if configured)
       try {
         const pdfBlob = pdf.output('blob');
         
