@@ -14,16 +14,26 @@ const SAIAthleteDetailPage = () => {
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
   const [showPDFViewer, setShowPDFViewer] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (athleteName) {
       loadWorkouts();
+      
+      // Auto-refresh every 30 seconds
+      const interval = setInterval(() => {
+        loadWorkouts(true); // Silent refresh
+      }, 30000);
+      
+      return () => clearInterval(interval);
     }
   }, [athleteName]);
 
-  const loadWorkouts = async () => {
+  const loadWorkouts = async (silent = false) => {
     if (!athleteName) return;
-    setIsRefreshing(true);
+    if (!silent) {
+      setIsRefreshing(true);
+    }
     try {
       const decodedName = decodeURIComponent(athleteName);
       const athleteWorkouts = await workoutStorageService.getWorkoutsByAthlete(decodedName);
@@ -36,6 +46,7 @@ const SAIAthleteDetailPage = () => {
       console.error('Error loading workouts:', error);
     } finally {
       setIsRefreshing(false);
+      setIsLoading(false);
     }
   };
 
@@ -98,7 +109,7 @@ const SAIAthleteDetailPage = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={loadWorkouts}
+            onClick={() => loadWorkouts()}
             disabled={isRefreshing}
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -245,26 +256,54 @@ const SAIAthleteDetailPage = () => {
                   </Card>
                 )}
 
-                {/* Screenshots */}
+                {/* Rep Screenshots - Individual frames for each rep */}
                 {selectedWorkout.screenshots && selectedWorkout.screenshots.length > 0 && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Workout Screenshots</CardTitle>
+                      <CardTitle>Rep Screenshots</CardTitle>
+                      <p className="text-sm text-gray-600 mt-1">Individual frame captured for each rep</p>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {selectedWorkout.screenshots.map((screenshot, index) => (
-                          <div key={index} className="relative rounded-lg overflow-hidden bg-black">
-                            <img
-                              src={screenshot}
-                              alt={`Screenshot ${index + 1}`}
-                              className="w-full h-auto"
-                            />
-                            <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-2 py-1 text-xs text-white text-center">
-                              Frame {index + 1}
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {selectedWorkout.screenshots.map((screenshot, index) => {
+                          const repDetail = selectedWorkout.repDetails?.[index];
+                          const isCorrect = repDetail?.correct ?? true;
+                          
+                          return (
+                            <div 
+                              key={index} 
+                              className={`relative rounded-lg overflow-hidden border-2 ${
+                                isCorrect ? 'border-green-500' : 'border-red-500'
+                              }`}
+                            >
+                              <img
+                                src={screenshot}
+                                alt={`Rep ${index + 1}`}
+                                className="w-full h-auto"
+                              />
+                              <div className={`absolute top-2 right-2 ${
+                                isCorrect ? 'bg-green-500' : 'bg-red-500'
+                              } text-white px-2 py-1 rounded-full text-xs font-bold`}>
+                                {isCorrect ? '✓' : '✗'}
+                              </div>
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/80 px-2 py-2 text-white">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-bold">Rep {index + 1}</span>
+                                  <span className="text-xs">
+                                    {isCorrect ? 'Correct' : 'Incorrect'}
+                                  </span>
+                                </div>
+                                {repDetail && (
+                                  <div className="text-xs text-gray-300 mt-1">
+                                    {repDetail.min_elbow && `Elbow: ${repDetail.min_elbow}°`}
+                                    {repDetail.angle && `Angle: ${repDetail.angle}°`}
+                                    {repDetail.knee_angle && `Knee: ${repDetail.knee_angle}°`}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>

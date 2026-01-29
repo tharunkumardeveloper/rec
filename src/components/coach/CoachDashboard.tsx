@@ -8,14 +8,24 @@ import { useNavigate } from 'react-router-dom';
 const CoachDashboard = () => {
   const [athletes, setAthletes] = useState<Array<{ name: string; workoutCount: number; lastWorkout: string }>>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     loadAthletes();
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      loadAthletes(true); // Silent refresh
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
-  const loadAthletes = async () => {
-    setIsRefreshing(true);
+  const loadAthletes = async (silent = false) => {
+    if (!silent) {
+      setIsRefreshing(true);
+    }
     try {
       const athleteList = await workoutStorageService.getAllAthletes();
       setAthletes(athleteList);
@@ -23,6 +33,7 @@ const CoachDashboard = () => {
       console.error('Error loading athletes:', error);
     } finally {
       setIsRefreshing(false);
+      setIsLoading(false);
     }
   };
 
@@ -50,7 +61,7 @@ const CoachDashboard = () => {
             <h1 className="text-4xl font-bold text-gray-900">Coach Dashboard</h1>
             <p className="text-gray-600 mt-2">Monitor your athletes' performance</p>
           </div>
-          <Button onClick={loadAthletes} variant="outline" disabled={isRefreshing}>
+          <Button onClick={() => loadAthletes()} variant="outline" disabled={isRefreshing}>
             {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
           </Button>
         </div>
@@ -114,7 +125,12 @@ const CoachDashboard = () => {
             <CardTitle>Athletes</CardTitle>
           </CardHeader>
           <CardContent>
-            {athletes.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <p className="text-gray-500 text-lg">Loading athletes...</p>
+              </div>
+            ) : athletes.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">No athletes yet</p>

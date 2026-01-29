@@ -8,14 +8,24 @@ import { useNavigate } from 'react-router-dom';
 const SAIWorkoutsDashboard = () => {
   const [athletes, setAthletes] = useState<Array<{ name: string; workoutCount: number; lastWorkout: string; athleteProfilePic?: string }>>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     loadAthletes();
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      loadAthletes(true); // Silent refresh
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
-  const loadAthletes = async () => {
-    setIsRefreshing(true);
+  const loadAthletes = async (silent = false) => {
+    if (!silent) {
+      setIsRefreshing(true);
+    }
     try {
       const athleteList = await workoutStorageService.getAllAthletes();
       setAthletes(athleteList);
@@ -23,6 +33,7 @@ const SAIWorkoutsDashboard = () => {
       console.error('Error loading athletes:', error);
     } finally {
       setIsRefreshing(false);
+      setIsLoading(false);
     }
   };
 
@@ -50,7 +61,7 @@ const SAIWorkoutsDashboard = () => {
             <h1 className="text-4xl font-bold text-gray-900">SAI Admin Dashboard</h1>
             <p className="text-gray-600 mt-2">Monitor all athletes' performance across the system</p>
           </div>
-          <Button onClick={loadAthletes} variant="outline" disabled={isRefreshing}>
+          <Button onClick={() => loadAthletes()} variant="outline" disabled={isRefreshing}>
             <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
           </Button>
@@ -115,7 +126,12 @@ const SAIWorkoutsDashboard = () => {
             <CardTitle>All Athletes</CardTitle>
           </CardHeader>
           <CardContent>
-            {athletes.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                <p className="text-gray-500 text-lg">Loading athletes...</p>
+              </div>
+            ) : athletes.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">No athletes yet</p>
