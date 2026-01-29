@@ -1,160 +1,136 @@
-import sys
-
-sys.path.append('/path/to/ffmpeg')
-import mediapipe as mp
 import cv2
+import mediapipe as mp
 import numpy as np
-import sys
-from pydub import AudioSegment
-from pydub.playback import play
+import pandas as pd
+from collections import deque
+import os
 
-sound = AudioSegment.from_wav('/home/annamma/notebook/jupyterenv/py/projects/squat-counter/ding.wav')
+# ================= UTILITIES =================
+def angle(a, b, c):
+    ba = np.array([a[0] - b[0], a[1] - b[1]])
+    bc = np.array([c[0] - b[0], c[1] - b[1]])
+    cosang = np.clip(
+        np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc) + 1e-9),
+        -1.0, 1.0
+    )
+    return np.degrees(np.arccos(cosang))
 
+def lm_xy(lm, w, h):
+    return (int(lm.x * w), int(lm.y * h))
 
-def findAngle(a, b, c, minVis=0.8):
-    # Finds the angle at b with endpoints a and c
-    # Returns -1 if below minimum visibility threshold
-    # Takes lm_arr elements
+# ================= THRESHOLDS =================
+GREEN_ANGLE = 120     # knee bent (squat down)
+SMOOTH_N = 5
 
-    if a.visibility > minVis and b.visibility > minVis and c.visibility > minVis:
-        bc = np.array([c.x - b.x, c.y - b.y, c.z - b.z])
-        ba = np.array([a.x - b.x, a.y - b.y, a.z - b.z])
+# ================= CAMERA =================
+cap = cv2.VideoCapture(0)
+if not cap.isOpened():
+    raise RuntimeError("Cannot access camera")
 
-        angle = np.arccos((np.dot(ba, bc)) / (np.linalg.norm(ba)
-                                              * np.linalg.norm(bc))) * (180 / np.pi)
+fps = cap.get(cv2.CAP_PROP_FPS) or 30
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        if angle > 180:
-            return 360 - angle
-        else:
-            return angle
-    else:
-        return -1
+os.makedirs("output", exist_ok=True)
+out = cv2.VideoWriter(
+    "output/squat_annotated.mp4",
+    cv2.VideoWriter_fourcc(*"mp4v"),
+    fps,
+    (width, height)
+)
 
+# ================= MEDIAPIPE =================
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
+)
+draw = mp.solutions.drawing_utils
 
-def legState(angle):
-    if angle < 0:
-        return 0  # Joint is not being picked up
-    elif angle < 105:
-        return 1  # Squat range
-    elif angle < 150:
-        return 2  # Transition range
-    else:
-        return 3  # Upright range
+# ================= STATE =================
+angle_hist = deque(maxlen=SMOOTH_N)
+prev_color = "RED"
+reps = []
 
+# ================= MAIN LOOP =================
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
 
-if __name__ == "__main__":
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    result = pose.process(rgb)
 
-    # Init mediapipe drawing and pose
-    mp_drawing = mp.solutions.drawing_utils
-    mp_pose = mp.solutions.pose
+    smooth_angle = None
+    curr_color = prev_color
 
-    # Init Video Feed
-    # Opens file if passed as parameter from terminal
-    # Else Defaults to webcam
+    if result.pose_landmarks:
+        draw.draw_landmarks(frame, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+        lm = result.pose_landmarks.landmark
 
-    # cap = cv2.VideoCapture("/home/annamma/notebook/jupyterenv/py/projects/squat-counter/squat.mp4")
-    cap = None
-    if len(sys.argv) > 1:
-        # cap = cv2.VideoCapture(str(sys.argv[1]))
-        cap = cv2.VideoCapture(0)
-    else:
-        cap = cv2.VideoCapture("/home/annamma/notebook/jupyterenv/py/projects/squat-counter/video.mp4")
-    while cap.read()[1] is None:
-        print("Waiting for Video")
+        try:
+            hip = lm_xy(lm[mp_pose.PoseLandmark.LEFT_HIP], width, height)
+            knee = lm_xy(lm[mp_pose.PoseLandmark.LEFT_KNEE], width, height)
+            ankle = lm_xy(lm[mp_pose.PoseLandmark.LEFT_ANKLE], width, height)
 
-    # Main Detection Loop
-    with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
+            knee_angle = angle(hip, knee, ankle)
+            angle_hist.append(knee_angle)
+            smooth_angle = sum(angle_hist) / len(angle_hist)
 
-        # Initialize Reps and Body State
-        repCount = 0
-        lastState = 9
+            # RED / GREEN logic
+            curr_color = "GREEN" if smooth_angle <= GREEN_ANGLE else "RED"
 
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if frame is None:
-                print('Error: Image not found or could not be loaded.')
-            else:
-                frame = cv2.resize(frame, (1024, 600))
+            # -------- REP COUNT (RED → GREEN) --------
+            if prev_color == "RED" and curr_color == "GREEN":
+                reps.append({
+                    "rep": len(reps) + 1,
+                    "knee_angle": round(smooth_angle, 2)
+                })
 
-            # frame = cv2.resize(frame, (1280, 800),fx=0,fy=0, interpolation = cv2.INTER_CUBIC)
+            prev_color = curr_color
 
-            if ret == True:
-                try:
-                    # Convert frame to RGB
-                    # Writeable = False forces pass by ref (faster)
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    frame.flags.writeable = False
+        except:
+            pass
 
-                    # Detect Pose Landmarks
-                    # lm used for drawing
-                    # lm_arr is actually indexable with .x, .y, .z attr
-                    lm = pose.process(frame).pose_landmarks
-                    lm_arr = lm.landmark
-                except:
-                    print("Please Step Into Frame")
-                    cv2.imshow("Squat Rep Counter", frame)
-                    cv2.waitKey(1)
-                    continue
+    # ================= HUD =================
+    cv2.putText(
+        frame, f"Squats: {len(reps)}",
+        (20, 40),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1.0, (0, 255, 255), 2
+    )
 
-                # Allow write, convert back to BGR
-                frame.flags.writeable = True
-                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    if smooth_angle is not None:
+        color = (0, 255, 0) if curr_color == "GREEN" else (0, 0, 255)
+        cv2.putText(
+            frame,
+            f"Knee Angle: {int(smooth_angle)}",
+            (20, 90),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.8, color, 2
+        )
 
-                # Draw overlay with parameters:
-                # (frame, landmarks, list of connected landmarks, landmark draw spec, connection draw spec)
-                mp_drawing.draw_landmarks(frame, lm, mp_pose.POSE_CONNECTIONS, mp_drawing.DrawingSpec(color=(
-                    0, 255, 0), thickness=2, circle_radius=2),
-                                          mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2))
+    cv2.putText(
+        frame, f"State: {curr_color}",
+        (20, 130),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.8, (200, 200, 200), 2
+    )
 
-                # Calculate Angle
-                # Hip -Knee-Foot Indices:
-                # R: 24, 26, 28
-                # L: 23, 25, 27
-                rAngle = findAngle(lm_arr[24], lm_arr[26], lm_arr[28])
-                lAngle = findAngle(lm_arr[23], lm_arr[25], lm_arr[27])
+    cv2.imshow("Squat Counter (Live)", frame)
+    out.write(frame)
 
-                # Calculate state
-                rState = legState(rAngle)
-                lState = legState(lAngle)
-                state = rState * lState
+    if cv2.waitKey(1) & 0xFF in [27, ord("q")]:
+        break
 
-                # Final state is product of two leg states
-                # 0 -> One or both legs not being picked up
-                # Even -> One or both legs are still transitioning
-                # Odd
-                #   1 -> Squatting
-                #   9 -> Upright
-                #   3 -> One squatting, one upright
+# ================= CLEANUP =================
+cap.release()
+out.release()
+cv2.destroyAllWindows()
+pose.close()
 
-                # Only update lastState on 1 or 9
+pd.DataFrame(reps).to_csv("output/squat_log.csv", index=False)
 
-                if state == 0:  # One or both legs not detected
-                    if rState == 0:
-                        print("Right Leg Not Detected")
-                    if lState == 0:
-                        print("Left Leg Not Detected")
-                elif state % 2 == 0 or rState != lState:  # One or both legs still transitioning
-                    if lastState == 1:
-                        if lState == 2 or lState == 1:
-                            print("Fully extend left leg")
-                        if rState == 2 or lState == 1:
-                            print("Fully extend right leg")
-                    else:
-                        if lState == 2 or lState == 3:
-                            print("Fully retract left leg")
-                        if rState == 2 or lState == 3:
-                            print("Fully retract right leg")
-                else:
-                    if state == 1 or state == 9:
-                        if lastState != state:
-                            lastState = state
-                            if lastState == 1:
-                                print("GOOD!")
-                                # for playing note.wav file
-                                play(sound)
-                                repCount += 1
-                print("Squats: " + (str)(repCount))
-
-                cv2.imshow("Squat Rep Counter", frame)
-                if cv2.waitKey(1) & 0xFF == 27:
-                    break
+print("Done.")
+print("Saved: output/squat_annotated.mp4")
+print("Saved: output/squat_log.csv")
