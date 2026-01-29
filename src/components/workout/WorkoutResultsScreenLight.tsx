@@ -3,6 +3,7 @@ import { CheckCircle2, XCircle, Clock, Download, Home, Play, Pause, TrendingUp, 
 import { PushupRepData } from '@/services/workoutDetectors/PushupLiveDetector';
 import { useState, useRef, useEffect } from 'react';
 import jsPDF from 'jspdf';
+import coachDashboardService from '@/services/coachDashboardService';
 
 interface WorkoutResultsScreenLightProps {
   activityName: string;
@@ -358,7 +359,34 @@ const WorkoutResultsScreenLight = ({
       const dateStr = new Date().toISOString().split('T')[0];
       const filename = `${sanitizedUserName}_${sanitizedActivity}_Report_${dateStr}.pdf`;
       
+      // Save PDF locally
       pdf.save(filename);
+
+      // Auto-submit to coach dashboard
+      try {
+        const pdfBlob = pdf.output('blob');
+        
+        await coachDashboardService.submitWorkout({
+          athleteName: userName,
+          athleteProfilePic: userProfilePic || undefined,
+          activityName,
+          totalReps,
+          correctReps,
+          incorrectReps,
+          duration,
+          accuracy,
+          formScore,
+          repDetails,
+          timestamp: new Date().toISOString(),
+          videoBlob,
+          pdfBlob
+        });
+        
+        console.log('Workout automatically submitted to coach dashboard');
+      } catch (submitError) {
+        console.error('Failed to submit to coach dashboard:', submitError);
+        // Don't show error to user - submission happens in background
+      }
       
     } catch (error) {
       console.error('PDF generation error:', error);
