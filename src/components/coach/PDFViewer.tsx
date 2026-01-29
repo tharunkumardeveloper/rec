@@ -14,7 +14,14 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  // Debug logging
+  console.group('📄 PDF Viewer Debug');
+  console.log('PDF URL:', pdfUrl);
+  console.log('Athlete:', athleteName);
+  console.log('Activity:', activityName);
+
   const handleDownload = () => {
+    console.log('🔽 Download clicked for:', pdfUrl);
     const link = document.createElement('a');
     link.href = pdfUrl;
     link.download = `${athleteName}_${activityName}_Report.pdf`;
@@ -35,12 +42,23 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
   const isCloudinaryRaw = pdfUrl.includes('/raw/upload/');
   const isBase64 = pdfUrl.startsWith('data:');
 
+  console.log('URL Type Detection:');
+  console.log('  - Is Cloudinary:', isCloudinaryUrl);
+  console.log('  - Is Cloudinary Raw:', isCloudinaryRaw);
+  console.log('  - Is Base64:', isBase64);
+
   // For Cloudinary raw URLs, convert to a viewable format using Google Docs Viewer
   const viewerUrl = isCloudinaryRaw 
     ? `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`
     : pdfUrl;
 
+  console.log('Viewer URL:', viewerUrl);
+  console.groupEnd();
+
   useEffect(() => {
+    console.log('📄 PDF Viewer mounted/updated');
+    console.log('  - Loading state:', loading);
+    console.log('  - Error state:', error);
     setLoading(true);
     setError(false);
   }, [pdfUrl]);
@@ -83,6 +101,7 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
               <div className="text-center">
                 <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
                 <p className="text-gray-600">Loading PDF...</p>
+                <p className="text-xs text-gray-500 mt-2">Check console for details</p>
               </div>
             </div>
           )}
@@ -93,8 +112,12 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
               src={viewerUrl}
               className="w-full h-full border-0"
               title="PDF Report"
-              onLoad={() => setLoading(false)}
-              onError={() => {
+              onLoad={() => {
+                console.log('✅ PDF iframe loaded successfully');
+                setLoading(false);
+              }}
+              onError={(e) => {
+                console.error('❌ PDF iframe load error:', e);
                 setError(true);
                 setLoading(false);
               }}
@@ -107,7 +130,10 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
                   src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
                   className="w-full h-[800px] border-0"
                   title="PDF Report"
-                  onLoad={() => setLoading(false)}
+                  onLoad={() => {
+                    console.log('✅ Base64 PDF loaded successfully');
+                    setLoading(false);
+                  }}
                 />
               </div>
             </div>
@@ -117,8 +143,12 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
               src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
               className="w-full h-full border-0"
               title="PDF Report"
-              onLoad={() => setLoading(false)}
-              onError={() => {
+              onLoad={() => {
+                console.log('✅ Direct PDF loaded successfully');
+                setLoading(false);
+              }}
+              onError={(e) => {
+                console.error('❌ Direct PDF load error:', e);
                 setError(true);
                 setLoading(false);
               }}
@@ -135,8 +165,11 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Unable to Preview PDF</h3>
-                <p className="text-gray-600 mb-6">
-                  The PDF couldn't be displayed in the browser. Please download it to view.
+                <p className="text-gray-600 mb-2">
+                  The PDF couldn't be displayed in the browser.
+                </p>
+                <p className="text-sm text-gray-500 mb-6">
+                  Check console for error details. Download to view.
                 </p>
                 <Button onClick={handleDownload} size="lg" className="bg-blue-600 hover:bg-blue-700">
                   <Download className="w-5 h-5 mr-2" />
