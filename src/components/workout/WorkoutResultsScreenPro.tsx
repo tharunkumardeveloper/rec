@@ -31,6 +31,7 @@ const WorkoutResultsScreenPro = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [workoutScreenshots, setWorkoutScreenshots] = useState<string[]>([]);
+  const [autoSaved, setAutoSaved] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   useEffect(() => {
@@ -47,6 +48,46 @@ const WorkoutResultsScreenPro = ({
       captureWorkoutScreenshots();
     }
   }, [videoUrl]);
+
+  // AUTO-SAVE workout data when component mounts
+  useEffect(() => {
+    if (!autoSaved && videoBlob && workoutScreenshots.length > 0) {
+      autoSaveWorkout();
+    }
+  }, [workoutScreenshots, videoBlob, autoSaved]);
+
+  const autoSaveWorkout = async () => {
+    try {
+      const userName = localStorage.getItem('user_name') || 'Athlete';
+      const userProfilePic = localStorage.getItem('user_profile_pic');
+      const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
+      const formScore = accuracy >= 80 ? 'Excellent' : accuracy >= 60 ? 'Good' : 'Needs Work';
+
+      const videoDataUrl = videoBlob ? await workoutStorageService.blobToDataUrl(videoBlob) : undefined;
+
+      await workoutStorageService.saveWorkout({
+        athleteName: userName,
+        athleteProfilePic: userProfilePic || undefined,
+        activityName,
+        totalReps,
+        correctReps,
+        incorrectReps,
+        duration,
+        accuracy,
+        formScore,
+        repDetails,
+        timestamp: new Date().toISOString(),
+        videoDataUrl,
+        pdfDataUrl: undefined,
+        screenshots: workoutScreenshots
+      });
+
+      setAutoSaved(true);
+      console.log('✅ Workout auto-saved for coach dashboard');
+    } catch (error) {
+      console.error('❌ Auto-save failed:', error);
+    }
+  };
 
   const captureWorkoutScreenshots = async () => {
     if (!videoRef.current) return;

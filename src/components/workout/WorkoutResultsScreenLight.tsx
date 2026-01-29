@@ -33,6 +33,7 @@ const WorkoutResultsScreenLight = ({
   const [videoDuration, setVideoDuration] = useState(0);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [workoutScreenshots, setWorkoutScreenshots] = useState<string[]>([]);
+  const [autoSaved, setAutoSaved] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   useEffect(() => {
@@ -42,6 +43,38 @@ const WorkoutResultsScreenLight = ({
       return () => URL.revokeObjectURL(url);
     }
   }, [videoBlob]);
+
+  // AUTO-SAVE workout when screenshots are ready
+  useEffect(() => {
+    if (!autoSaved && videoBlob && workoutScreenshots.length > 0) {
+      const userName = localStorage.getItem('user_name') || 'Athlete';
+      const userProfilePic = localStorage.getItem('user_profile_pic');
+      const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
+      const formScore = accuracy >= 80 ? 'Excellent' : accuracy >= 60 ? 'Good' : 'Needs Work';
+
+      workoutStorageService.blobToDataUrl(videoBlob).then(videoDataUrl => {
+        workoutStorageService.saveWorkout({
+          athleteName: userName,
+          athleteProfilePic: userProfilePic || undefined,
+          activityName,
+          totalReps,
+          correctReps,
+          incorrectReps,
+          duration,
+          accuracy,
+          formScore,
+          repDetails,
+          timestamp: new Date().toISOString(),
+          videoDataUrl,
+          pdfDataUrl: undefined,
+          screenshots: workoutScreenshots
+        }).then(() => {
+          setAutoSaved(true);
+          console.log('✅ Workout auto-saved!');
+        }).catch(err => console.error('❌ Auto-save failed:', err));
+      });
+    }
+  }, [workoutScreenshots, videoBlob, autoSaved, activityName, totalReps, correctReps, incorrectReps, duration, repDetails]);
 
   // Capture screenshots from video for PDF
   useEffect(() => {
