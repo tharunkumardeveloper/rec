@@ -28,6 +28,7 @@ import SettingsPage from '@/components/settings/SettingsPage';
 import BadgesScreen from '@/components/badges/BadgesScreen';
 import { preloadAllAssets } from '@/utils/imagePreloader';
 import { scrollToTop, scrollToTopInstant } from '@/utils/scrollToTop';
+import { userProfileService } from '@/services/userProfileService';
 
 type AppState = 'loading' | 'auth' | 'setup' | 'home' | 'profile' | 'settings' | 'badges' | 'challenges' | 'challenge-detail' | 'ghost-mode' | 'ghost-workout-detail' | 'test-mode' | 'test-workout-detail' | 'test-workout-interface';
 type UserRole = 'athlete' | 'coach' | 'admin';
@@ -36,6 +37,7 @@ const Index = () => {
   const [appState, setAppState] = useState<AppState>('loading');
   const [userRole, setUserRole] = useState<UserRole>('athlete');
   const [userName, setUserName] = useState('');
+  const [userProfilePic, setUserProfilePic] = useState('');
   const [activeTab, setActiveTab] = useState('training');
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const [showWorkout, setShowWorkout] = useState(false);
@@ -45,6 +47,36 @@ const Index = () => {
   const [userSetupData, setUserSetupData] = useState<any>(null);
   const [selectedChallengeId, setSelectedChallengeId] = useState<string | null>(null);
   const [showGhostAnimation, setShowGhostAnimation] = useState(false);
+
+  // Load user profile data
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      const profile = userProfileService.getProfile();
+      if (profile) {
+        setUserName(profile.name || 'User');
+        setUserProfilePic(profile.profilePic || '');
+        
+        // Map profile role to app role
+        const roleMap: { [key: string]: UserRole } = {
+          'ATHLETE': 'athlete',
+          'COACH': 'coach',
+          'SAI_ADMIN': 'admin'
+        };
+        setUserRole(roleMap[profile.role] || 'athlete');
+        
+        // Try to sync from MongoDB
+        if (profile.userId) {
+          const synced = await userProfileService.syncFromMongoDB(profile.userId);
+          if (synced) {
+            setUserName(synced.name || 'User');
+            setUserProfilePic(synced.profilePic || '');
+          }
+        }
+      }
+    };
+
+    loadUserProfile();
+  }, [appState]); // Reload when app state changes (e.g., after settings)
 
   // Simulate checking for returning user and preload assets
   useEffect(() => {
