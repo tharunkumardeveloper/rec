@@ -513,29 +513,6 @@ class ElevenLabsTTSService {
       return encouraging[Math.floor(Math.random() * encouraging.length)];
     }
   }
-        "Check your posture!",
-        "Adjust your form!",
-        "Focus on technique!"
-      ];
-      return gentle[Math.floor(Math.random() * gentle.length)];
-    } else if (this.context.consecutiveIncorrect === 2) {
-      const firm = [
-        "Keep your body straight!",
-        "Go lower!",
-        "Full range of motion!",
-        "Control the movement!"
-      ];
-      return firm[Math.floor(Math.random() * firm.length)];
-    } else {
-      const encouraging = [
-        "You got this! Focus on form!",
-        "Take your time, perfect the form!",
-        "Quality over quantity!",
-        "Slow down, nail the technique!"
-      ];
-      return encouraging[Math.floor(Math.random() * encouraging.length)];
-    }
-  }
 
   announceStart(activityName: string): void {
     // Set current workout
