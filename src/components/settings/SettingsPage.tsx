@@ -198,14 +198,6 @@ const SettingsPage = ({ onBack, userName = 'User', userRole = 'athlete' }: Setti
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={() => navigate('/coach-workouts')}
-            >
-              <Users className="w-4 h-4 mr-3" />
-              Coach Workouts Dashboard
-            </Button>
             <Button variant="outline" className="w-full justify-start">
               <HelpCircle className="w-4 h-4 mr-3" />
               Help Center
