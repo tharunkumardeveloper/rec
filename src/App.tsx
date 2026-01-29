@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CoachWorkoutsPage from "./components/coach/CoachDashboard";
 import AthleteDetailPage from "./components/coach/AthleteDetailPage";
+import SAIWorkoutsDashboard from "./components/home/SAIWorkoutsDashboard";
+import SAIAthleteDetailPage from "./components/home/SAIAthleteDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +22,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/coach-workouts" element={<CoachWorkoutsPage />} />
           <Route path="/coach-workouts/athlete/:athleteName" element={<AthleteDetailPage />} />
+          <Route path="/sai-workouts" element={<SAIWorkoutsDashboard />} />
+          <Route path="/sai-workouts/athlete/:athleteName" element={<SAIAthleteDetailPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
