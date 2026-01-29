@@ -327,20 +327,20 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
 
               return (
                 <Card key={athlete.name} className="card-elevated hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3 flex-1">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold text-sm">
                           {athlete.name ? athlete.name.split(' ').map(n => n[0]).join('') : '?'}
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-base">{athlete.name}</h3>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="text-xs text-muted-foreground">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-sm sm:text-base truncate">{athlete.name}</h3>
+                          <div className="flex items-center flex-wrap gap-2 mt-1">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
                               {athlete.workoutCount} workout{athlete.workoutCount !== 1 ? 's' : ''}
                             </span>
                             <span className="text-xs text-muted-foreground">•</span>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
                               {totalReps} reps
                             </span>
                             <span className="text-xs text-muted-foreground">•</span>
@@ -352,7 +352,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
                       </div>
                       <Button 
                         size="sm" 
-                        className="bg-gradient-to-r from-primary to-primary/80 ml-3"
+                        className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 flex-shrink-0"
                         onClick={() => handleViewWorkouts(athlete.name)}
                       >
                         <Eye className="w-4 h-4 mr-2" />
