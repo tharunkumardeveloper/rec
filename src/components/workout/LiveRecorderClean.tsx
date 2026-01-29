@@ -33,7 +33,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
   const [showInstructionOverlay, setShowInstructionOverlay] = useState(true); // Show instruction first
   const [bodyDepthPercent, setBodyDepthPercent] = useState(50); // 0-100, 50 is middle
   const [previousRepCount, setPreviousRepCount] = useState(0);
-  
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -56,13 +56,13 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
   useEffect(() => {
     if (isInitialized && !autoStartTriggeredRef.current && !showInstructionOverlay && countdown !== null && !isRecording) {
       autoStartTriggeredRef.current = true;
-      
+
       let currentCount = 3;
       setCountdown(currentCount);
-      
+
       countdownIntervalRef.current = window.setInterval(() => {
         currentCount--;
-        
+
         if (currentCount <= 0) {
           if (countdownIntervalRef.current) {
             clearInterval(countdownIntervalRef.current);
@@ -86,7 +86,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
       const timer = setTimeout(() => {
         setShowInstructionOverlay(false);
       }, 3000); // Show instruction for 3 seconds
-      
+
       return () => clearTimeout(timer);
     }
   }, [isInitialized, showInstructionOverlay]);
@@ -174,7 +174,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
       }
 
       processFrame(poseInstance);
-      
+
       // Mark as initialized to trigger countdown
       setIsInitialized(true);
     } catch (error) {
@@ -197,7 +197,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
     if (canvasRef.current && videoRef.current) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d')!;
-      
+
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
 
@@ -207,10 +207,10 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
       if (isRecordingRef.current && detectorRef.current && results.poseLandmarks) {
         // Set canvas dimensions for detector
         detectorRef.current.setDimensions(canvas.width, canvas.height);
-        
+
         const currentTime = (Date.now() - recordingStartTimeRef.current) / 1000;
         const newRepCount = detectorRef.current.process(results.poseLandmarks, currentTime);
-        
+
         // Update rep count and trigger TTS
         if (newRepCount > previousRepCount) {
           const reps = detectorRef.current.getReps();
@@ -219,12 +219,12 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
           ttsCoach.onRepCompleted(newRepCount, activityName, isCorrect);
           setPreviousRepCount(newRepCount);
         }
-        
+
         setRepCount(newRepCount);
-        
+
         // Only show rep count on canvas - removed distracting metrics
         const metrics = detectorRef.current.getCurrentMetrics();
-        
+
         ctx.font = 'bold 32px Arial';
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 4;
@@ -238,7 +238,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
         // Use shoulder midpoint Y position to track depth
         const leftShoulder = results.poseLandmarks[11];
         const rightShoulder = results.poseLandmarks[12];
-        
+
         if (leftShoulder && rightShoulder) {
           const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
           // Convert Y position (0-1) to depth percentage (0-100)
@@ -257,7 +257,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
           color: connectionColor,
           lineWidth: 5
         });
-        
+
         window.drawLandmarks(ctx, results.poseLandmarks, {
           color: landmarkColor,
           lineWidth: 3,
@@ -289,7 +289,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
       setIsRecording(true);
       isRecordingRef.current = true; // Update ref
       recordingStartTimeRef.current = Date.now();
-      
+
       timerIntervalRef.current = window.setInterval(() => {
         setRecordingTime(Math.floor((Date.now() - recordingStartTimeRef.current) / 1000));
       }, 1000);
@@ -320,7 +320,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
 
     mediaRecorderRef.current.onstop = async () => {
       const videoBlob = new Blob(chunksRef.current, { type: 'video/webm' });
-      
+
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
         timerIntervalRef.current = null;
@@ -329,10 +329,10 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
       // Get results from detector
       const reps = detectorRef.current ? detectorRef.current.getReps() : [];
       const correctReps = reps.filter((r: any) => r.correct === true).length;
-      
+
       // Announce workout completion
       ttsCoach.onWorkoutEnd(reps.length, correctReps);
-      
+
       const results = {
         videoBlob,
         reps: reps.length,
@@ -411,13 +411,13 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
             <div className="text-center space-y-6 px-6 max-w-2xl">
               <h2 className="text-4xl font-bold text-white mb-4">Get Into Position</h2>
               <div className="bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10">
-                <img 
+                <img
                   src={
                     activityName === 'Push-ups' ? '/pushup.gif' :
-                    activityName === 'Squats' ? '/squat.webp' :
-                    activityName === 'Pull-ups' ? '/pullup.gif' :
-                    activityName === 'Sit-ups' ? '/situp.gif' :
-                    '/pushup.gif' // fallback
+                      activityName === 'Squats' ? '/squat.webp' :
+                        activityName === 'Pull-ups' ? '/pullup.gif' :
+                          activityName === 'Sit-ups' ? '/situp.gif' :
+                            '/pushup.gif' // fallback
                   }
                   alt={`${activityName} form demonstration`}
                   className="w-full h-auto mx-auto rounded-2xl"
@@ -458,20 +458,20 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
                 </p>
               </div>
               <div className="flex items-center space-x-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={toggleCamera} 
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleCamera}
                   className="text-white hover:bg-white/20"
                   disabled={isRecording || countdown !== null || showInstructionOverlay}
                   title="Switch Camera"
                 >
                   <SwitchCamera className="w-5 h-5" />
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={onBack} 
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onBack}
                   className="text-white hover:bg-white/20"
                   disabled={isRecording || countdown !== null || showInstructionOverlay}
                 >
@@ -530,15 +530,15 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
             <div className="relative w-1.5 h-64 bg-gradient-to-b from-purple-500/30 via-purple-500/20 to-purple-500/30 rounded-full backdrop-blur-sm">
               {/* Top marker */}
               <div className="absolute -left-2 top-0 w-5 h-0.5 bg-purple-400/60 rounded-full" />
-              
+
               {/* Middle target line - Green theme */}
               <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-7 h-1 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full shadow-lg shadow-green-400/50" />
-              
+
               {/* Bottom marker */}
               <div className="absolute -left-2 bottom-0 w-5 h-0.5 bg-purple-400/60 rounded-full" />
-              
+
               {/* Moving position indicator - Purple theme */}
-              <div 
+              <div
                 className="absolute left-1/2 -translate-x-1/2 w-4 h-4 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full shadow-lg shadow-purple-500/50 transition-all duration-100 border-2 border-white/80"
                 style={{
                   top: `${bodyDepthPercent}%`,

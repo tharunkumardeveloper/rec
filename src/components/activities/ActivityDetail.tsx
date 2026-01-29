@@ -138,6 +138,27 @@ const activityContent = {
     ],
     outputFields: ['max_reach_m', 'reach_time_s', 'flexibility_rating']
   },
+  'Squats': {
+    description: 'Lower body strength and endurance assessment measuring quad, glute, and hamstring power through controlled descent and ascent.',
+    muscles: ['Quadriceps', 'Glutes', 'Hamstrings', 'Core', 'Calves'],
+    category: 'Strength Training',
+    steps: [
+      'Stand with feet shoulder-width apart, toes slightly pointed out.',
+      'Lower hips back and down until thighs are parallel to ground.',
+      'Keep chest up, core engaged, and knees tracking over toes.',
+      'Drive through heels to return to standing position.',
+      'Maintain neutral spine throughout the movement.'
+    ],
+    mistakes: [
+      'Knees caving inward (valgus collapse)',
+      'Heels lifting off ground',
+      'Leaning too far forward',
+      'Not reaching parallel depth',
+      'Rounding lower back',
+      'Looking down instead of forward'
+    ],
+    outputFields: ['total_reps', 'correct_reps', 'avg_knee_angle', 'min_knee_angle', 'symmetry_score', 'total_time_sec']
+  },
   'Chest Stretch': {
     description: 'Static or dynamic stretch targeting the pectorals to improve shoulder mobility.',
     muscles: ['Pectoralis Major', 'Anterior Deltoid', 'Serratus Anterior'],
