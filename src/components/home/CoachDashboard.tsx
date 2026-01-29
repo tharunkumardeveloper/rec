@@ -159,52 +159,123 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
       : 0
   };
 
-  const renderDashboardContent = () => (
-    <div className="space-y-6">
-      {/* Overview Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="border-2 border-primary bg-gradient-to-br from-primary/10 to-primary/5">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center mb-2">
-              <Users className="w-5 h-5 text-primary mr-2" />
-              <span className="text-2xl font-bold text-primary">{overviewStats.totalAthletes}</span>
-            </div>
-            <p className="text-sm text-foreground font-medium">Total Athletes</p>
-          </CardContent>
-        </Card>
+  const renderDashboardContent = () => {
+    // Calculate workout type distribution
+    const workoutTypes: { [key: string]: number } = {};
+    athleteWorkouts.forEach(athlete => {
+      athlete.workouts.forEach(workout => {
+        workoutTypes[workout.activityName] = (workoutTypes[workout.activityName] || 0) + 1;
+      });
+    });
 
-        <Card className="border-2 border-success bg-gradient-to-br from-success/10 to-success/5">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center mb-2">
-              <Activity className="w-5 h-5 text-success mr-2" />
-              <span className="text-2xl font-bold text-success">{overviewStats.activeToday}</span>
-            </div>
-            <p className="text-sm text-foreground font-medium">Active Today</p>
-          </CardContent>
-        </Card>
+    const topWorkouts = Object.entries(workoutTypes)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
 
-        <Card className="border-2 border-info bg-gradient-to-br from-info/10 to-info/5">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center mb-2">
-              <Target className="w-5 h-5 text-info mr-2" />
-              <span className="text-2xl font-bold text-info">{overviewStats.totalWorkouts}</span>
-            </div>
-            <p className="text-sm text-foreground font-medium">Total Workouts</p>
-          </CardContent>
-        </Card>
+    // Calculate performance trends
+    const highPerformers = athleteWorkouts.filter(athlete => {
+      const avgAcc = athlete.workouts.reduce((sum, w) => sum + w.accuracy, 0) / athlete.workouts.length;
+      return avgAcc >= 80;
+    }).length;
 
-        <Card className="border-2 border-warning bg-gradient-to-br from-warning/10 to-warning/5">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center mb-2">
-              <Trophy className="w-5 h-5 text-warning mr-2" />
-              <span className="text-2xl font-bold text-warning">{overviewStats.avgAccuracy}%</span>
-            </div>
-            <p className="text-sm text-foreground font-medium">Avg Accuracy</p>
-          </CardContent>
-        </Card>
+    return (
+      <div className="space-y-6">
+        {/* Overview Cards */}
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="border-2 border-primary bg-gradient-to-br from-primary/10 to-primary/5">
+            <CardContent className="p-4 text-center">
+              <div className="flex items-center justify-center mb-2">
+                <Users className="w-5 h-5 text-primary mr-2" />
+                <span className="text-2xl font-bold text-primary">{overviewStats.totalAthletes}</span>
+              </div>
+              <p className="text-sm text-foreground font-medium">Total Athletes</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 border-success bg-gradient-to-br from-success/10 to-success/5">
+            <CardContent className="p-4 text-center">
+              <div className="flex items-center justify-center mb-2">
+                <Activity className="w-5 h-5 text-success mr-2" />
+                <span className="text-2xl font-bold text-success">{overviewStats.activeToday}</span>
+              </div>
+              <p className="text-sm text-foreground font-medium">Active Today</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 border-info bg-gradient-to-br from-info/10 to-info/5">
+            <CardContent className="p-4 text-center">
+              <div className="flex items-center justify-center mb-2">
+                <Target className="w-5 h-5 text-info mr-2" />
+                <span className="text-2xl font-bold text-info">{overviewStats.totalWorkouts}</span>
+              </div>
+              <p className="text-sm text-foreground font-medium">Total Workouts</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 border-warning bg-gradient-to-br from-warning/10 to-warning/5">
+            <CardContent className="p-4 text-center">
+              <div className="flex items-center justify-center mb-2">
+                <Trophy className="w-5 h-5 text-warning mr-2" />
+                <span className="text-2xl font-bold text-warning">{overviewStats.avgAccuracy}%</span>
+              </div>
+              <p className="text-sm text-foreground font-medium">Avg Accuracy</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Performance Insights */}
+        {athleteWorkouts.length > 0 && (
+          <Card className="card-elevated">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center">
+                <Star className="w-5 h-5 mr-2 text-primary" />
+                Performance Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
+                  <div className="text-2xl font-bold text-green-600">{highPerformers}</div>
+                  <p className="text-xs text-green-600/80 font-medium">High Performers (≥80%)</p>
+                </div>
+                <div className="p-4 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
+                  <div className="text-2xl font-bold text-blue-600">{athleteWorkouts.length - highPerformers}</div>
+                  <p className="text-xs text-blue-600/80 font-medium">Need Attention (&lt;80%)</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Popular Workouts */}
+        {topWorkouts.length > 0 && (
+          <Card className="card-elevated">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center">
+                <Activity className="w-5 h-5 mr-2 text-primary" />
+                Popular Workouts
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {topWorkouts.map(([name, count], index) => (
+                  <div key={name} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-sm font-bold text-primary">{index + 1}</span>
+                      </div>
+                      <span className="font-medium">{name}</span>
+                    </div>
+                    <Badge variant="secondary">{count} sessions</Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderAthletesContent = () => {
     // If viewing specific athlete's workouts
@@ -247,44 +318,66 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
         {/* Real Athletes with Workouts */}
         {athleteWorkouts.length > 0 ? (
           <div className="space-y-3">
-            {athleteWorkouts.map((athlete) => (
-              <Card key={athlete.name} className="card-elevated hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold text-sm">
-                        {athlete.name ? athlete.name.split(' ').map(n => n[0]).join('') : '?'}
+            {athleteWorkouts.map((athlete) => {
+              // Get unique workout types
+              const uniqueWorkouts = Array.from(
+                new Set(athlete.workouts.map(w => w.activityName))
+              ).slice(0, 3);
+              
+              // Calculate athlete stats
+              const totalReps = athlete.workouts.reduce((sum, w) => sum + w.totalReps, 0);
+              const avgAccuracy = Math.round(
+                athlete.workouts.reduce((sum, w) => sum + w.accuracy, 0) / athlete.workouts.length
+              );
+
+              return (
+                <Card key={athlete.name} className="card-elevated hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold text-sm">
+                          {athlete.name ? athlete.name.split(' ').map(n => n[0]).join('') : '?'}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">{athlete.name}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {athlete.workoutCount} workout{athlete.workoutCount !== 1 ? 's' : ''} • {totalReps} total reps
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold">{athlete.name}</h3>
-                        <p className="text-sm text-muted-foreground">{formatDate(athlete.lastWorkout)}</p>
+                      <div className="text-right">
+                        <Badge className={`${avgAccuracy >= 80 ? 'bg-green-500' : 'bg-yellow-500'} text-white`}>
+                          {avgAccuracy}%
+                        </Badge>
+                        <p className="text-xs text-muted-foreground mt-1">{formatDate(athlete.lastWorkout)}</p>
                       </div>
                     </div>
-                    <Badge className="bg-gradient-to-r from-primary to-primary/80 text-white shadow-sm">
-                      Latest
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-4 mb-3 text-center">
-                    {athlete.workouts.slice(0, 3).map((workout, idx) => (
-                      <div key={idx} className="p-2 rounded-lg bg-blue-50">
-                        <div className="text-xs font-bold text-blue-600">{workout.activityName}</div>
-                        <div className="text-xs text-blue-600/70">{workout.accuracy}%</div>
-                      </div>
-                    ))}
-                  </div>
+                    
+                    <div className="flex gap-2 mb-3 overflow-x-auto">
+                      {uniqueWorkouts.map((workoutName, idx) => (
+                        <div key={idx} className="flex-shrink-0 px-3 py-1 rounded-full bg-blue-50 border border-blue-200">
+                          <span className="text-xs font-medium text-blue-600">{workoutName}</span>
+                        </div>
+                      ))}
+                      {athlete.workouts.length > 3 && (
+                        <div className="flex-shrink-0 px-3 py-1 rounded-full bg-gray-100 border border-gray-200">
+                          <span className="text-xs font-medium text-gray-600">+{athlete.workouts.length - 3} more</span>
+                        </div>
+                      )}
+                    </div>
 
-                  <Button 
-                    size="sm" 
-                    className="w-full bg-gradient-to-r from-primary to-primary/80"
-                    onClick={() => handleViewWorkouts(athlete.name)}
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    View All Workouts
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                    <Button 
+                      size="sm" 
+                      className="w-full bg-gradient-to-r from-primary to-primary/80"
+                      onClick={() => handleViewWorkouts(athlete.name)}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      View All Workouts
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         ) : (
           <Card className="card-elevated">
