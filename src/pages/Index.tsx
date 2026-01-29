@@ -104,10 +104,20 @@ const Index = () => {
     };
     setUserName(names[role]);
 
-    // Check if user needs setup (simulate first-time login)
-    if (isFirstTime) {
+    // Only athletes need setup flow - coaches and admins skip directly to home
+    if (isFirstTime && role === 'athlete') {
       setAppState('setup');
     } else {
+      // For coaches/admins or returning users, go directly to home
+      if (role !== 'athlete') {
+        // Mark as not first time for coaches/admins
+        localStorage.setItem('talenttrack_user', JSON.stringify({
+          role: role,
+          name: names[role],
+          setupComplete: true
+        }));
+        setIsFirstTime(false);
+      }
       setAppState('home');
     }
   };

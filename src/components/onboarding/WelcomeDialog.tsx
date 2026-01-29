@@ -14,14 +14,33 @@ const WelcomeDialog = () => {
     // Check if user has completed onboarding
     const hasCompletedOnboarding = localStorage.getItem('onboarding_completed');
     
-    // Check user role - skip dialog for coaches and SAI admins
+    // Check user role from multiple sources
     const profile = userProfileService.getProfile();
     const userRole = profile?.role;
     
+    // Also check from talenttrack_user in localStorage
+    const talenttrackUser = localStorage.getItem('talenttrack_user');
+    let storedRole = null;
+    if (talenttrackUser) {
+      try {
+        const userData = JSON.parse(talenttrackUser);
+        storedRole = userData.role;
+      } catch (e) {
+        console.error('Error parsing talenttrack_user:', e);
+      }
+    }
+    
+    // Determine if user is coach or admin from either source
+    const isCoachOrAdmin = 
+      userRole === 'COACH' || 
+      userRole === 'SAI_ADMIN' || 
+      storedRole === 'coach' || 
+      storedRole === 'admin';
+    
     // Only show dialog for athletes who haven't completed onboarding
-    if (!hasCompletedOnboarding && userRole !== 'COACH' && userRole !== 'SAI_ADMIN') {
+    if (!hasCompletedOnboarding && !isCoachOrAdmin) {
       setIsOpen(true);
-    } else if (userRole === 'COACH' || userRole === 'SAI_ADMIN') {
+    } else if (isCoachOrAdmin) {
       // Auto-complete onboarding for coaches and admins
       localStorage.setItem('onboarding_completed', 'true');
     }
