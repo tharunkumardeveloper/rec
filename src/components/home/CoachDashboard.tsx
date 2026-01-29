@@ -291,7 +291,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
                   </div>
                   <div>
                     <h2 className="text-xl font-bold">{selectedAthlete}</h2>
-                    <p className="text-sm text-muted-foreground">{athleteData.workoutCount} total workouts</p>
+                    <p className="text-sm text-muted-foreground">Latest Workout</p>
                   </div>
                 </div>
               </div>
@@ -301,7 +301,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
           {/* Workout List */}
           <Card className="card-elevated">
             <CardHeader>
-              <CardTitle>Workout History</CardTitle>
+              <CardTitle>Latest Workout</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -491,7 +491,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
                       </div>
                     </div>
                     <Badge className="bg-gradient-to-r from-primary to-primary/80 text-white shadow-sm">
-                      {athlete.workoutCount} workouts
+                      Latest
                     </Badge>
                   </div>
                   

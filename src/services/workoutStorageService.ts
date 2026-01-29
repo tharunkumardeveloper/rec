@@ -27,23 +27,29 @@ class WorkoutStorageService {
 
   /**
    * Save a workout with video and PDF
+   * Keeps only the LATEST workout per athlete (deletes old ones)
    */
   public async saveWorkout(workout: Omit<StoredWorkout, 'id'>): Promise<string> {
     const workouts = this.getAllWorkouts();
+    
+    // Remove ALL previous workouts from this athlete
+    const filteredWorkouts = workouts.filter(w => w.athleteName !== workout.athleteName);
     
     const newWorkout: StoredWorkout = {
       ...workout,
       id: this.generateId()
     };
 
-    workouts.unshift(newWorkout); // Add to beginning
+    // Add new workout at the beginning
+    filteredWorkouts.unshift(newWorkout);
 
-    // Keep only last MAX_WORKOUTS
-    if (workouts.length > this.MAX_WORKOUTS) {
-      workouts.splice(this.MAX_WORKOUTS);
+    // Keep only last MAX_WORKOUTS total (across all athletes)
+    if (filteredWorkouts.length > this.MAX_WORKOUTS) {
+      filteredWorkouts.splice(this.MAX_WORKOUTS);
     }
 
-    this.saveToStorage(workouts);
+    this.saveToStorage(filteredWorkouts);
+    console.log(`✅ Saved workout for ${workout.athleteName}, removed old workouts`);
     return newWorkout.id;
   }
 
@@ -92,19 +98,18 @@ class WorkoutStorageService {
 
   /**
    * Get all unique athlete names
+   * Since we keep only 1 workout per athlete, this is simplified
    */
   public getAllAthletes(): Array<{ name: string; workoutCount: number; lastWorkout: string }> {
     const workouts = this.getAllWorkouts();
     const athleteMap = new Map<string, { count: number; lastWorkout: string }>();
 
     workouts.forEach(workout => {
-      const existing = athleteMap.get(workout.athleteName);
-      if (!existing || new Date(workout.timestamp) > new Date(existing.lastWorkout)) {
-        athleteMap.set(workout.athleteName, {
-          count: (existing?.count || 0) + 1,
-          lastWorkout: workout.timestamp
-        });
-      }
+      // Since we keep only 1 workout per athlete, each athlete appears once
+      athleteMap.set(workout.athleteName, {
+        count: 1, // Always 1 since we keep only latest
+        lastWorkout: workout.timestamp
+      });
     });
 
     return Array.from(athleteMap.entries()).map(([name, data]) => ({
