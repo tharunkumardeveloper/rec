@@ -49,9 +49,8 @@ async function uploadPDF(base64Data, folder = 'talenttrack/reports', publicId = 
     try {
         const options = {
             folder,
-            resource_type: 'auto', // Changed from 'raw' to 'auto' to avoid untrusted account issues
-            format: 'pdf',
-            access_mode: 'public', // Make publicly accessible
+            resource_type: 'raw', // Use 'raw' for PDFs
+            access_mode: 'public',
             type: 'upload'
         };
 
