@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Play, FileText, Image as ImageIcon, X } from 'lucide-react';
+import { ArrowLeft, Play, FileText, Image as ImageIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { StoredWorkout } from '@/services/workoutStorageService';
 import PDFViewer from './PDFViewer';
 
@@ -26,7 +26,83 @@ const AthleteWorkoutDetail = ({
   isSAIAdmin = false
 }: AthleteWorkoutDetailProps) => {
   const [showPDFViewer, setShowPDFViewer] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+
+  const screenshots = selectedWorkout.screenshots || [];
+
+  // Handle keyboard navigation for image zoom
+  useEffect(() => {
+    if (selectedImageIndex === null) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        navigateImage('prev');
+      } else if (e.key === 'ArrowRight') {
+        navigateImage('next');
+      } else if (e.key === 'Escape') {
+        setSelectedImageIndex(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedImageIndex, screenshots.length]);
+
+  // Handle touch swipe for image navigation
+  useEffect(() => {
+    if (selectedImageIndex === null) return;
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.changedTouches[0].screenX;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    };
+
+    const handleSwipe = () => {
+      const swipeThreshold = 50;
+      if (touchStartX - touchEndX > swipeThreshold) {
+        navigateImage('next');
+      } else if (touchEndX - touchStartX > swipeThreshold) {
+        navigateImage('prev');
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart);
+    window.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [selectedImageIndex, screenshots.length]);
+
+  const navigateImage = (direction: 'prev' | 'next') => {
+    if (selectedImageIndex === null) return;
+
+    if (direction === 'prev') {
+      setSelectedImageIndex(selectedImageIndex > 0 ? selectedImageIndex - 1 : screenshots.length - 1);
+    } else {
+      setSelectedImageIndex(selectedImageIndex < screenshots.length - 1 ? selectedImageIndex + 1 : 0);
+    }
+  };
+
+  const getRepCountForScreenshot = (index: number): string => {
+    // Calculate which rep this screenshot represents
+    const totalScreenshots = screenshots.length;
+    const totalReps = selectedWorkout.totalReps;
+    
+    if (totalScreenshots === 0 || totalReps === 0) return '';
+    
+    // Distribute reps evenly across screenshots
+    const repNumber = Math.floor((index / totalScreenshots) * totalReps) + 1;
+    return `Rep ${repNumber}`;
+  };
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -187,27 +263,32 @@ const AthleteWorkoutDetail = ({
         )}
 
         {/* Screenshots Gallery */}
-        {selectedWorkout.screenshots && selectedWorkout.screenshots.length > 0 && (
+        {screenshots.length > 0 && (
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center">
                 <ImageIcon className="w-4 h-4 mr-2" />
-                Screenshots ({selectedWorkout.screenshots.length})
+                Screenshots ({screenshots.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-2">
-                {selectedWorkout.screenshots.map((screenshot, index) => (
+                {screenshots.map((screenshot, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedImage(screenshot)}
-                    className="relative aspect-video rounded-lg overflow-hidden bg-black hover:opacity-90 transition-opacity"
+                    onClick={() => setSelectedImageIndex(index)}
+                    className="relative aspect-video rounded-lg overflow-hidden bg-black hover:opacity-90 transition-opacity group"
                   >
                     <img
                       src={screenshot}
                       alt={`Screenshot ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                      <p className="text-white text-xs font-semibold">
+                        {getRepCountForScreenshot(index)}
+                      </p>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -226,24 +307,76 @@ const AthleteWorkoutDetail = ({
         />
       )}
 
-      {/* Image Zoom Modal */}
-      {selectedImage && (
+      {/* Image Zoom Modal with Swipe Navigation */}
+      {selectedImageIndex !== null && (
         <div 
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setSelectedImage(null)}
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          onClick={() => setSelectedImageIndex(null)}
         >
+          {/* Close Button */}
           <button
-            onClick={() => setSelectedImage(null)}
-            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+            onClick={() => setSelectedImageIndex(null)}
+            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors z-10"
           >
             <X className="w-6 h-6 text-white" />
           </button>
+
+          {/* Image Counter */}
+          <div className="absolute top-4 left-4 bg-black/50 px-3 py-1 rounded-full z-10">
+            <p className="text-white text-sm font-medium">
+              {selectedImageIndex + 1} / {screenshots.length}
+            </p>
+          </div>
+
+          {/* Rep Counter */}
+          <div className="absolute top-14 left-4 bg-black/50 px-3 py-1 rounded-full z-10">
+            <p className="text-white text-sm font-medium">
+              {getRepCountForScreenshot(selectedImageIndex)}
+            </p>
+          </div>
+
+          {/* Previous Button */}
+          {screenshots.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigateImage('prev');
+              }}
+              className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors z-10"
+            >
+              <ChevronLeft className="w-6 h-6 text-white" />
+            </button>
+          )}
+
+          {/* Image */}
           <img
-            src={selectedImage}
-            alt="Zoomed screenshot"
-            className="max-w-full max-h-full object-contain"
+            src={screenshots[selectedImageIndex]}
+            alt={`Screenshot ${selectedImageIndex + 1}`}
+            className="max-w-full max-h-full object-contain px-16"
             onClick={(e) => e.stopPropagation()}
           />
+
+          {/* Next Button */}
+          {screenshots.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigateImage('next');
+              }}
+              className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors z-10"
+            >
+              <ChevronRight className="w-6 h-6 text-white" />
+            </button>
+          )}
+
+          {/* Swipe Hint */}
+          {screenshots.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 px-4 py-2 rounded-full z-10">
+              <p className="text-white text-xs">
+                Swipe or use arrow keys to navigate
+              </p>
+            </div>
+          )}
         </div>
       )}
     </>
