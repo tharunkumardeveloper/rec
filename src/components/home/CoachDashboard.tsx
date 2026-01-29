@@ -319,11 +319,6 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
         {athleteWorkouts.length > 0 ? (
           <div className="space-y-3">
             {athleteWorkouts.map((athlete) => {
-              // Get unique workout types
-              const uniqueWorkouts = Array.from(
-                new Set(athlete.workouts.map(w => w.activityName))
-              ).slice(0, 3);
-              
               // Calculate athlete stats
               const totalReps = athlete.workouts.reduce((sum, w) => sum + w.totalReps, 0);
               const avgAccuracy = Math.round(
@@ -333,47 +328,37 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
               return (
                 <Card key={athlete.name} className="card-elevated hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold text-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3 flex-1">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold">
                           {athlete.name ? athlete.name.split(' ').map(n => n[0]).join('') : '?'}
                         </div>
-                        <div>
-                          <h3 className="font-semibold">{athlete.name}</h3>
-                          <p className="text-xs text-muted-foreground">
-                            {athlete.workoutCount} workout{athlete.workoutCount !== 1 ? 's' : ''} • {totalReps} total reps
-                          </p>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-base">{athlete.name}</h3>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-xs text-muted-foreground">
+                              {athlete.workoutCount} workout{athlete.workoutCount !== 1 ? 's' : ''}
+                            </span>
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <span className="text-xs text-muted-foreground">
+                              {totalReps} reps
+                            </span>
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <Badge className={`${avgAccuracy >= 80 ? 'bg-green-500' : 'bg-yellow-500'} text-white text-xs`}>
+                              {avgAccuracy}%
+                            </Badge>
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <Badge className={`${avgAccuracy >= 80 ? 'bg-green-500' : 'bg-yellow-500'} text-white`}>
-                          {avgAccuracy}%
-                        </Badge>
-                        <p className="text-xs text-muted-foreground mt-1">{formatDate(athlete.lastWorkout)}</p>
-                      </div>
+                      <Button 
+                        size="sm" 
+                        className="bg-gradient-to-r from-primary to-primary/80 ml-3"
+                        onClick={() => handleViewWorkouts(athlete.name)}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        View
+                      </Button>
                     </div>
-                    
-                    <div className="flex gap-2 mb-3 overflow-x-auto">
-                      {uniqueWorkouts.map((workoutName, idx) => (
-                        <div key={idx} className="flex-shrink-0 px-3 py-1 rounded-full bg-blue-50 border border-blue-200">
-                          <span className="text-xs font-medium text-blue-600">{workoutName}</span>
-                        </div>
-                      ))}
-                      {athlete.workouts.length > 3 && (
-                        <div className="flex-shrink-0 px-3 py-1 rounded-full bg-gray-100 border border-gray-200">
-                          <span className="text-xs font-medium text-gray-600">+{athlete.workouts.length - 3} more</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <Button 
-                      size="sm" 
-                      className="w-full bg-gradient-to-r from-primary to-primary/80"
-                      onClick={() => handleViewWorkouts(athlete.name)}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      View All Workouts
-                    </Button>
                   </CardContent>
                 </Card>
               );
