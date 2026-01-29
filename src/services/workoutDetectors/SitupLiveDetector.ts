@@ -1,154 +1,197 @@
-// Sit-up Live Detector - Real-time sit-up counting and form analysis
-// Based on torso angle and elbow movement tracking
+/**
+ * Sit-up Live Detector
+ * Direct translation from situp_live.py
+ * Uses MediaPipe Pose landmarks to detect and count sit-ups based on torso angle
+ */
 
-interface RepDetail {
-  count: number;
-  downTime: number;
-  upTime: number;
-  angleChange: number;
+export interface SitupRepData {
+  rep: number;
+  angle: number;
   correct: boolean;
-  formIssues: string[];
-}
-
-interface CurrentMetrics {
-  repCount: number;
-  state: string;
-  elbowAngle: number;
 }
 
 export class SitupLiveDetector {
-  private reps: RepDetail[] = [];
-  private state: 'up' | 'down' = 'up';
-  private dipStartTime: number = 0;
-  private lastExtremeAngle: number | null = null;
-  private angleHistory: number[] = [];
+  // Thresholds from Python
+  private readonly GREEN_ANGLE = 110; // sitting up (liberal)
   private readonly SMOOTH_N = 5;
-  private readonly MIN_DIP_CHANGE = 15; // Minimum angle change to count as movement
-  private canvasWidth: number = 640;
-  private canvasHeight: number = 480;
+
+  // State variables
+  private angleHistory: number[] = [];
+  private prevColor: 'RED' | 'GREEN' = 'RED';
+  private reps: SitupRepData[] = [];
+  
+  // Frame counter
+  private frameCount = 0;
+
+  // Canvas dimensions
+  private width = 640;
+  private height = 480;
+
+  // Current frame values for display
+  private lastTorsoAngle: number | null = null;
+  private lastSmoothAngle: number | null = null;
+  private currentColor: 'RED' | 'GREEN' = 'RED';
 
   constructor() {
-    this.reset();
+    console.log('🎯 SitupLiveDetector created');
   }
 
   setDimensions(width: number, height: number) {
-    this.canvasWidth = width;
-    this.canvasHeight = height;
+    this.width = width;
+    this.height = height;
+    console.log('📐 Dimensions set:', { width, height });
   }
 
-  private calculateAngle(a: [number, number], b: [number, number], c: [number, number]): number {
+  /**
+   * Python: def angle(a, b, c)
+   * Calculate angle at point b formed by points a-b-c
+   */
+  private angle(a: [number, number], b: [number, number], c: [number, number]): number {
     const ba = [a[0] - b[0], a[1] - b[1]];
     const bc = [c[0] - b[0], c[1] - b[1]];
     
     const dotProduct = ba[0] * bc[0] + ba[1] * bc[1];
-    const magnitudeBA = Math.sqrt(ba[0] * ba[0] + ba[1] * ba[1]);
-    const magnitudeBC = Math.sqrt(bc[0] * bc[0] + bc[1] * bc[1]);
+    const magBA = Math.sqrt(ba[0] * ba[0] + ba[1] * ba[1]);
+    const magBC = Math.sqrt(bc[0] * bc[0] + bc[1] * bc[1]);
     
-    const cosAngle = Math.max(-1, Math.min(1, dotProduct / ((magnitudeBA * magnitudeBC) + 1e-9)));
-    return Math.acos(cosAngle) * (180 / Math.PI);
+    const cosAngle = Math.max(-1.0, Math.min(1.0, dotProduct / ((magBA * magBC) + 1e-9)));
+    return (Math.acos(cosAngle) * 180) / Math.PI;
   }
 
+  /**
+   * Python: def lm_xy(lm, w, h)
+   * Convert normalized landmark to pixel coordinates
+   */
+  private lmXY(lm: any): [number, number] {
+    return [
+      Math.floor(lm.x * this.width),
+      Math.floor(lm.y * this.height)
+    ];
+  }
+
+  /**
+   * Main processing function - called for each frame
+   * Python: Main loop in situp_live.py
+   */
   process(landmarks: any[], currentTime: number): number {
-    if (!landmarks || landmarks.length < 33) {
-      return this.reps.length;
+    this.frameCount++;
+    
+    // DEBUG: Print landmark structure once
+    if (this.frameCount === 1) {
+      console.log('🔍 Situp Landmark structure:', {
+        isArray: Array.isArray(landmarks),
+        length: landmarks?.length,
+        sample: landmarks?.[11]
+      });
     }
+    
+    let torsoAngle: number | null = null;
+    let smoothAngle: number | null = null;
+    let currColor: 'RED' | 'GREEN' = this.prevColor;
 
-    try {
-      // Get key landmarks for sit-up (shoulders, elbows, wrists)
-      const leftShoulder = landmarks[11];
-      const leftElbow = landmarks[13];
-      const leftWrist = landmarks[15];
-      const rightShoulder = landmarks[12];
-      const rightElbow = landmarks[14];
-      const rightWrist = landmarks[16];
+    // Python: if result.pose_landmarks:
+    if (landmarks && landmarks.length >= 33) {
+      try {
+        // Python: lm = result.pose_landmarks.landmark
+        const lm = landmarks;
 
-      // Calculate elbow angles (indicates torso position)
-      const leftElbowAngle = this.calculateAngle(
-        [leftShoulder.x * this.canvasWidth, leftShoulder.y * this.canvasHeight],
-        [leftElbow.x * this.canvasWidth, leftElbow.y * this.canvasHeight],
-        [leftWrist.x * this.canvasWidth, leftWrist.y * this.canvasHeight]
-      );
+        // Get landmark pixel coordinates
+        // Python: shoulder = lm_xy(lm[mp_pose.PoseLandmark.LEFT_SHOULDER], width, height)
+        const shoulder = this.lmXY(lm[11]); // LEFT_SHOULDER = 11
+        const hip = this.lmXY(lm[23]); // LEFT_HIP = 23
+        const knee = this.lmXY(lm[25]); // LEFT_KNEE = 25
 
-      const rightElbowAngle = this.calculateAngle(
-        [rightShoulder.x * this.canvasWidth, rightShoulder.y * this.canvasHeight],
-        [rightElbow.x * this.canvasWidth, rightElbow.y * this.canvasHeight],
-        [rightWrist.x * this.canvasWidth, rightWrist.y * this.canvasHeight]
-      );
-
-      const elbowAngle = (leftElbowAngle + rightElbowAngle) / 2;
-
-      // Smooth angle
-      this.angleHistory.push(elbowAngle);
-      if (this.angleHistory.length > this.SMOOTH_N) {
-        this.angleHistory.shift();
-      }
-      const smoothedAngle = this.angleHistory.reduce((a, b) => a + b, 0) / this.angleHistory.length;
-
-      // Initialize last extreme angle
-      if (this.lastExtremeAngle === null) {
-        this.lastExtremeAngle = smoothedAngle;
-      }
-
-      // State machine for sit-up detection
-      if (this.state === 'up' && this.lastExtremeAngle - smoothedAngle >= this.MIN_DIP_CHANGE) {
-        // Going down
-        this.state = 'down';
-        this.dipStartTime = currentTime;
-        this.lastExtremeAngle = smoothedAngle;
-      } else if (this.state === 'down' && smoothedAngle - this.lastExtremeAngle >= this.MIN_DIP_CHANGE) {
-        // Coming back up - rep completed
-        const angleChange = smoothedAngle - this.lastExtremeAngle;
-        
-        const formIssues: string[] = [];
-        let correct = true;
-
-        // Check form
-        if (angleChange < this.MIN_DIP_CHANGE + 5) {
-          formIssues.push('Incomplete range of motion');
-          correct = false;
+        // DEBUG: Print coordinates once
+        if (this.frameCount === 1) {
+          console.log('🔍 Situp coordinates:', { shoulder, hip, knee });
         }
 
-        const rep: RepDetail = {
-          count: this.reps.length + 1,
-          downTime: this.dipStartTime,
-          upTime: currentTime,
-          angleChange: angleChange,
-          correct: correct,
-          formIssues: formIssues
-        };
+        // Python: torso_angle = angle(shoulder, hip, knee)
+        torsoAngle = this.angle(shoulder, hip, knee);
+        
+        // Python: angle_hist.append(torso_angle)
+        this.angleHistory.push(torsoAngle);
+        
+        // Maintain deque maxlen behavior
+        if (this.angleHistory.length > this.SMOOTH_N) {
+          this.angleHistory.shift();
+        }
+        
+        // Python: smooth_angle = sum(angle_hist) / len(angle_hist)
+        smoothAngle = this.angleHistory.reduce((sum, val) => sum + val, 0) / this.angleHistory.length;
 
-        this.reps.push(rep);
-        this.state = 'up';
-        this.dipStartTime = 0;
-        this.lastExtremeAngle = smoothedAngle;
+        // Store for display
+        this.lastTorsoAngle = torsoAngle;
+        this.lastSmoothAngle = smoothAngle;
+
+        // Python: curr_color = "GREEN" if smooth_angle <= GREEN_ANGLE else "RED"
+        currColor = smoothAngle <= this.GREEN_ANGLE ? 'GREEN' : 'RED';
+        this.currentColor = currColor;
+
+        // DEBUG: Print angles occasionally
+        if (this.frameCount % 30 === 0) {
+          console.log(`📊 Torso: ${Math.round(smoothAngle)}° | Color: ${currColor} | Reps: ${this.reps.length}`);
+        }
+
+        // Python: if prev_color == "RED" and curr_color == "GREEN":
+        if (this.prevColor === 'RED' && currColor === 'GREEN') {
+          console.log(`✅ REP COMPLETED! Angle: ${Math.round(smoothAngle)}°`);
+          
+          // Python: reps.append({...})
+          const repData: SitupRepData = {
+            rep: this.reps.length + 1,
+            angle: Math.round(smoothAngle * 100) / 100,
+            correct: true // All reps counted are considered correct in Python version
+          };
+
+          this.reps.push(repData);
+        }
+
+        // Python: prev_color = curr_color
+        this.prevColor = currColor;
+
+      } catch (error) {
+        console.error('❌ Error in situp angle calculation:', error);
       }
-
-    } catch (error) {
-      console.error('Sit-up detection error:', error);
+    } else {
+      // DEBUG: Log when landmarks not available
+      if (this.frameCount % 30 === 0) {
+        console.warn('⚠️ Situp landmarks not available');
+      }
     }
 
     return this.reps.length;
   }
 
-  getCurrentMetrics(): CurrentMetrics {
+  /**
+   * Get current metrics for HUD display
+   */
+  getCurrentMetrics() {
     return {
-      repCount: this.reps.length,
-      state: this.state,
-      elbowAngle: this.angleHistory.length > 0 
-        ? this.angleHistory[this.angleHistory.length - 1] 
-        : 0
+      torsoAngle: this.lastSmoothAngle !== null ? Math.round(this.lastSmoothAngle) : 0,
+      state: this.currentColor,
+      repCount: this.reps.length
     };
   }
 
-  getReps(): RepDetail[] {
+  /**
+   * Get all completed reps
+   */
+  getReps(): SitupRepData[] {
     return this.reps;
   }
 
+  /**
+   * Reset detector state
+   */
   reset() {
-    this.reps = [];
-    this.state = 'up';
-    this.dipStartTime = 0;
-    this.lastExtremeAngle = null;
+    console.log('🔄 Resetting situp detector');
     this.angleHistory = [];
+    this.prevColor = 'RED';
+    this.reps = [];
+    this.frameCount = 0;
+    this.lastTorsoAngle = null;
+    this.lastSmoothAngle = null;
+    this.currentColor = 'RED';
   }
 }
