@@ -47,9 +47,9 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
   console.log('  - Is Cloudinary Raw:', isCloudinaryRaw);
   console.log('  - Is Base64:', isBase64);
 
-  // For Cloudinary raw URLs, convert to a viewable format using Google Docs Viewer
+  // For Cloudinary raw URLs, use Mozilla PDF.js viewer
   const viewerUrl = isCloudinaryRaw 
-    ? `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`
+    ? `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(pdfUrl)}`
     : pdfUrl;
 
   console.log('Viewer URL:', viewerUrl);
@@ -185,7 +185,7 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
           <div className="p-3 bg-blue-50 border-t border-blue-200">
             <div className="flex items-center justify-between">
               <p className="text-sm text-blue-800">
-                💡 Viewing via Google Docs Viewer. For best quality, download the PDF.
+                💡 Viewing via Mozilla PDF.js. For best quality, download the PDF.
               </p>
               <div className="flex space-x-2">
                 <Button 
@@ -202,7 +202,7 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
                   size="sm" 
                   variant="outline"
                   onClick={() => {
-                    console.log('🔗 Testing Google Viewer in new tab...');
+                    console.log('🔗 Testing PDF.js viewer in new tab...');
                     window.open(viewerUrl, '_blank');
                   }}
                 >
