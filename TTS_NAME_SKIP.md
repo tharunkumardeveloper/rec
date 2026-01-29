@@ -40,19 +40,21 @@ useEffect(() => {
 - Voice coaching is a key feature during workouts
 - Personalized encouragement ("Great work John! Keep going!")
 - Enhances motivation and engagement
+- **TTS settings available in Settings page**
 
 ### For Coaches & SAI Admins
 - Don't perform workouts themselves
 - Focus on monitoring and managing athletes
 - TTS name prompt is not relevant to their workflow
+- **TTS settings hidden from Settings page**
 - Skipping improves onboarding experience
 
 ## User Experience Flow
 
 ### Athlete Login
 1. Login as athlete
-2. See WelcomeDialog asking for name
-3. Enter name (optional) or skip
+2. WelcomeDialog automatically skipped (onboarding completed)
+3. Can access TTS settings in Settings page
 4. Name used for voice coaching during workouts
 
 ### Coach/Admin Login
@@ -60,6 +62,7 @@ useEffect(() => {
 2. WelcomeDialog automatically skipped
 3. Onboarding marked as complete
 4. Direct access to dashboard
+5. **TTS Settings hidden** - Not relevant for coaches/admins who don't perform workouts
 
 ## Testing
 

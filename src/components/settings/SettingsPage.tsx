@@ -186,8 +186,8 @@ const SettingsPage = ({ onBack, userName = 'User', userRole = 'athlete' }: Setti
           {/* Profile Settings */}
           <ProfileSettings />
           
-          {/* Voice Coach Settings */}
-          <TTSSettings />
+          {/* Voice Coach Settings - Only for Athletes */}
+          {userRole === 'athlete' && <TTSSettings />}
           
           {/* Support */}
         <Card className="card-elevated">
