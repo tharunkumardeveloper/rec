@@ -49,7 +49,7 @@ async function uploadPDF(base64Data, folder = 'talenttrack/reports', publicId = 
     try {
         const options = {
             folder,
-            resource_type: 'raw', // Use 'raw' for PDFs
+            resource_type: 'auto', // Use 'auto' for maximum compatibility
             access_mode: 'public',
             type: 'upload'
         };
@@ -59,6 +59,7 @@ async function uploadPDF(base64Data, folder = 'talenttrack/reports', publicId = 
         }
 
         const result = await cloudinary.uploader.upload(base64Data, options);
+        console.log('✅ PDF uploaded to Cloudinary:', result.secure_url);
         return result.secure_url;
     } catch (error) {
         console.error('Cloudinary PDF upload error:', error);
