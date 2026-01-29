@@ -284,16 +284,14 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
       if (!athleteData) return null;
 
       return (
-        <div className="-mx-4 px-4">
-          <AthleteWorkoutDetail
-            athleteName={selectedAthlete}
-            workouts={athleteData.workouts}
-            selectedWorkout={selectedWorkout}
-            onBack={handleBackToList}
-            onWorkoutSelect={setSelectedWorkout}
-            isSAIAdmin={false}
-          />
-        </div>
+        <AthleteWorkoutDetail
+          athleteName={selectedAthlete}
+          workouts={athleteData.workouts}
+          selectedWorkout={selectedWorkout}
+          onBack={handleBackToList}
+          onWorkoutSelect={setSelectedWorkout}
+          isSAIAdmin={false}
+        />
       );
     }
 
