@@ -25,8 +25,10 @@ class ElevenLabsTTSService {
   private isEnabled: boolean = true;
   private isSpeaking: boolean = false;
   private lastSpeakTime: number = 0;
-  private readonly SPEAK_INTERVAL = 2000; // 2 seconds
+  private readonly SPEAK_INTERVAL = 1500; // 1.5 seconds to prevent overlap
   private currentAudio: HTMLAudioElement | null = null;
+  private audioQueue: string[] = []; // Queue for pending messages
+  private isProcessingQueue: boolean = false;
   
   // Coaching context for intelligent responses
   private context: CoachingContext = {
@@ -163,13 +165,39 @@ class ElevenLabsTTSService {
   }
 
   /**
-   * Speak using ElevenLabs with browser fallback
+   * Speak using ElevenLabs with browser fallback - prevents overlap
    */
   async speak(text: string, force: boolean = false): Promise<void> {
-    if (!this.isEnabled || (this.isSpeaking && !force)) return;
+    if (!this.isEnabled) return;
+
+    // If force is true, stop current audio and clear queue
+    if (force) {
+      this.audioQueue = [];
+      if (this.currentAudio) {
+        this.currentAudio.pause();
+        this.currentAudio = null;
+      }
+      if (this.synth) {
+        this.synth.cancel();
+      }
+      this.isSpeaking = false;
+    }
+
+    // If already speaking and not forced, add to queue
+    if (this.isSpeaking && !force) {
+      // Only keep last 2 messages in queue to prevent buildup
+      if (this.audioQueue.length < 2) {
+        this.audioQueue.push(text);
+      }
+      return;
+    }
 
     const now = Date.now();
     if (!force && (now - this.lastSpeakTime) < this.SPEAK_INTERVAL) {
+      // Add to queue if too soon
+      if (this.audioQueue.length < 2) {
+        this.audioQueue.push(text);
+      }
       return;
     }
 
@@ -193,12 +221,16 @@ class ElevenLabsTTSService {
             this.isSpeaking = false;
             URL.revokeObjectURL(audioUrl);
             this.currentAudio = null;
+            // Process next in queue
+            this.processQueue();
           };
 
           this.currentAudio.onerror = () => {
             this.isSpeaking = false;
             URL.revokeObjectURL(audioUrl);
             this.currentAudio = null;
+            // Process next in queue
+            this.processQueue();
           };
 
           await this.currentAudio.play();
@@ -214,12 +246,33 @@ class ElevenLabsTTSService {
     } catch (error) {
       console.error('❌ TTS error:', error);
       this.isSpeaking = false;
+      this.processQueue();
     }
+  }
+
+  /**
+   * Process queued messages
+   */
+  private processQueue(): void {
+    if (this.isProcessingQueue || this.audioQueue.length === 0) return;
+    
+    this.isProcessingQueue = true;
+    
+    // Wait a bit before processing next message
+    setTimeout(() => {
+      const nextMessage = this.audioQueue.shift();
+      this.isProcessingQueue = false;
+      
+      if (nextMessage) {
+        this.speak(nextMessage, false);
+      }
+    }, 500); // Small delay between messages
   }
 
   private speakWithBrowser(text: string): void {
     if (!this.synth) {
       this.isSpeaking = false;
+      this.processQueue();
       return;
     }
 
@@ -237,10 +290,12 @@ class ElevenLabsTTSService {
 
     utterance.onend = () => {
       this.isSpeaking = false;
+      this.processQueue();
     };
 
     utterance.onerror = () => {
       this.isSpeaking = false;
+      this.processQueue();
     };
 
     this.synth.speak(utterance);
@@ -361,10 +416,11 @@ class ElevenLabsTTSService {
 
   private getRepCountMessage(count: number, userName?: string): string {
     const messages = userName ? [
-      `${count}! Nice work ${userName}!`,
-      `${count} down ${userName}!`,
-      `That's ${count} ${userName}!`,
-      `${count} reps! Great job ${userName}!`
+      `${count}! Awesome ${userName}!`,
+      `That's ${count} ${userName}! Looking good!`,
+      `${count} reps! You're doing great ${userName}!`,
+      `Nice one ${userName}! ${count} down!`,
+      `${count}! Keep that energy up ${userName}!`
     ] : [
       `${count}! Nice!`,
       `${count} down!`,
@@ -372,19 +428,23 @@ class ElevenLabsTTSService {
       `${count} reps!`,
       `${count}! Keep going!`,
       `${count}! Solid!`,
-      `${count}! Yes!`
+      `${count}! Yes!`,
+      `${count}! Beautiful!`,
+      `${count}! Strong work!`
     ];
     return messages[Math.floor(Math.random() * messages.length)];
   }
 
   private getEncouragementMessage(count: number, userName?: string): string {
     const messages = userName ? [
-      `You're crushing it ${userName}!`,
-      `Looking strong ${userName}!`,
-      `${userName}, you got this!`,
-      `Amazing work ${userName}!`,
-      `${userName}, you're on fire!`,
-      `Keep pushing ${userName}!`
+      `You're absolutely crushing it ${userName}!`,
+      `Looking super strong ${userName}!`,
+      `${userName}, you got this! Keep it up!`,
+      `Amazing work ${userName}! I'm impressed!`,
+      `${userName}, you're on fire today!`,
+      `Keep pushing ${userName}! You're unstoppable!`,
+      `${userName}, your form is getting better every rep!`,
+      `I love the energy ${userName}! Don't stop!`
     ] : [
       "You're crushing it!",
       "Looking strong!",
@@ -397,18 +457,21 @@ class ElevenLabsTTSService {
       "That's the spirit!",
       "You're unstoppable!",
       "Love the energy!",
-      "Perfect rhythm!"
+      "Perfect rhythm!",
+      "You're a machine!",
+      "Incredible effort!"
     ];
     return messages[Math.floor(Math.random() * messages.length)];
   }
 
   private getPosturePraise(count: number, userName?: string): string {
     const messages = userName ? [
-      `Perfect form ${userName}!`,
-      `Great posture ${userName}!`,
-      `${userName}, form is on point!`,
-      `Textbook form ${userName}!`,
-      `${userName}, that's how it's done!`
+      `Perfect form ${userName}! That's textbook!`,
+      `Great posture ${userName}! Keep it up!`,
+      `${userName}, your form is on point today!`,
+      `Textbook technique ${userName}!`,
+      `${userName}, that's exactly how it's done!`,
+      `Beautiful form ${userName}! I'm loving it!`
     ] : [
       "Perfect form!",
       "Great posture!",
@@ -419,19 +482,23 @@ class ElevenLabsTTSService {
       "Beautiful technique!",
       "Form looking clean!",
       "Nailing the form!",
-      "Posture is perfect!"
+      "Posture is perfect!",
+      "Technique is flawless!",
+      "Form is dialed in!"
     ];
     return messages[Math.floor(Math.random() * messages.length)];
   }
 
   private getEnergyBoost(count: number, userName?: string): string {
     const messages = userName ? [
-      `Let's go ${userName}!`,
-      `You're a beast ${userName}!`,
-      `${userName}, you're unstoppable!`,
-      `Pure power ${userName}!`,
-      `${userName}, you're amazing!`,
-      `Killing it ${userName}!`
+      `Let's go ${userName}! You're a powerhouse!`,
+      `You're a beast ${userName}! Keep it going!`,
+      `${userName}, you're absolutely unstoppable!`,
+      `Pure power ${userName}! I can feel it!`,
+      `${userName}, you're amazing! Don't quit!`,
+      `Killing it ${userName}! This is your moment!`,
+      `${userName}, you're stronger than you think!`,
+      `Unleash that power ${userName}!`
     ] : [
       "Let's go!",
       "You're a beast!",
@@ -444,7 +511,9 @@ class ElevenLabsTTSService {
       "So strong!",
       "Killing it!",
       "On another level!",
-      "You're the best!"
+      "You're the best!",
+      "Phenomenal!",
+      "Explosive power!"
     ];
     return messages[Math.floor(Math.random() * messages.length)];
   }
@@ -477,38 +546,41 @@ class ElevenLabsTTSService {
   private getFormCorrection(userName?: string): string {
     if (this.context.consecutiveIncorrect === 1) {
       const gentle = userName ? [
-        `Watch your form ${userName}!`,
-        `Check your posture ${userName}!`,
-        `${userName}, adjust your form!`
+        `Hey ${userName}, let's adjust that form a bit!`,
+        `${userName}, watch your posture there!`,
+        `${userName}, small tweak needed on form!`,
+        `Just a little adjustment ${userName}!`
       ] : [
-        "Watch your form!",
-        "Check your posture!",
-        "Adjust your form!",
+        "Let's adjust that form!",
+        "Watch your posture!",
+        "Small tweak needed!",
         "Focus on technique!"
       ];
       return gentle[Math.floor(Math.random() * gentle.length)];
     } else if (this.context.consecutiveIncorrect === 2) {
       const firm = userName ? [
-        `${userName}, keep your body straight!`,
-        `Go lower ${userName}!`,
-        `Full range of motion ${userName}!`
+        `${userName}, remember to keep your body straight!`,
+        `${userName}, let's work on that range of motion!`,
+        `${userName}, full movement! You got this!`,
+        `${userName}, control the movement! Almost there!`
       ] : [
         "Keep your body straight!",
-        "Go lower!",
+        "Work on that range!",
         "Full range of motion!",
         "Control the movement!"
       ];
       return firm[Math.floor(Math.random() * firm.length)];
     } else {
       const encouraging = userName ? [
-        `You got this ${userName}! Focus on form!`,
-        `${userName}, take your time, perfect the form!`,
-        `Quality over quantity ${userName}!`
+        `${userName}, no worries! Let's slow down and perfect it!`,
+        `You got this ${userName}! Quality over quantity!`,
+        `${userName}, take your time! Form is everything!`,
+        `${userName}, let's nail this technique together!`
       ] : [
-        "You got this! Focus on form!",
-        "Take your time, perfect the form!",
-        "Quality over quantity!",
-        "Slow down, nail the technique!"
+        "No worries! Let's perfect it!",
+        "You got this! Quality matters!",
+        "Take your time! Form first!",
+        "Let's nail the technique!"
       ];
       return encouraging[Math.floor(Math.random() * encouraging.length)];
     }
@@ -519,7 +591,14 @@ class ElevenLabsTTSService {
     this.context.currentWorkout = activityName;
     this.context.lastRepTime = Date.now();
     
-    const messages = [
+    const userName = this.getUserName();
+    const messages = userName ? [
+      `Welcome back ${userName}! Let's crush these ${activityName}!`,
+      `Hey ${userName}! Ready to dominate ${activityName}? Let's go!`,
+      `${userName}! Time to show what you're made of! ${activityName} starting now!`,
+      `Alright ${userName}, let's make this ${activityName} session count!`,
+      `${userName}! I'm excited to see you work! ${activityName} time!`
+    ] : [
       `Let's do this! ${activityName} time!`,
       `Ready? Let's crush these ${activityName}!`,
       `Time to shine! ${activityName} starting now!`,
@@ -620,6 +699,7 @@ class ElevenLabsTTSService {
 
   stop(): void {
     this.stopIdleDetection();
+    this.audioQueue = []; // Clear queue
     if (this.currentAudio) {
       this.currentAudio.pause();
       this.currentAudio = null;
@@ -628,11 +708,14 @@ class ElevenLabsTTSService {
       this.synth.cancel();
     }
     this.isSpeaking = false;
+    this.isProcessingQueue = false;
   }
 
   reset(): void {
     this.lastSpeakTime = 0;
     this.stopIdleDetection();
+    this.audioQueue = []; // Clear queue
+    this.isProcessingQueue = false;
     this.context = {
       lastMessageType: '',
       consecutiveCorrect: 0,
