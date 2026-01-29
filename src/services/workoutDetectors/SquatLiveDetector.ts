@@ -1,193 +1,197 @@
-// Squat Live Detector - Real-time squat counting and form analysis
-// Based on knee angle tracking (hip-knee-ankle)
+/**
+ * Squat Live Detector
+ * Direct translation from squat_live.py
+ * Uses MediaPipe Pose landmarks to detect and count squats based on knee angle
+ */
 
-interface RepDetail {
-  count: number;
-  timestamp: number;
-  leftKneeAngle: number;
-  rightKneeAngle: number;
+export interface SquatRepData {
+  rep: number;
+  knee_angle: number;
   correct: boolean;
-  formIssues: string[];
-}
-
-interface CurrentMetrics {
-  repCount: number;
-  state: string;
-  leftKneeAngle: number;
-  rightKneeAngle: number;
 }
 
 export class SquatLiveDetector {
-  private reps: RepDetail[] = [];
-  private lastState: number = 9; // 9 = upright, 1 = squatting
-  private readonly SQUAT_ANGLE = 105; // Below this is squat range
-  private readonly TRANSITION_ANGLE = 150; // Between squat and upright
-  private readonly MIN_VISIBILITY = 0.8;
-  private canvasWidth: number = 640;
-  private canvasHeight: number = 480;
+  // Thresholds from Python
+  private readonly GREEN_ANGLE = 120; // knee bent (squat down)
+  private readonly SMOOTH_N = 5;
+
+  // State variables
+  private angleHistory: number[] = [];
+  private prevColor: 'RED' | 'GREEN' = 'RED';
+  private reps: SquatRepData[] = [];
+  
+  // Frame counter
+  private frameCount = 0;
+
+  // Canvas dimensions
+  private width = 640;
+  private height = 480;
+
+  // Current frame values for display
+  private lastKneeAngle: number | null = null;
+  private lastSmoothAngle: number | null = null;
+  private currentColor: 'RED' | 'GREEN' = 'RED';
 
   constructor() {
-    this.reset();
+    console.log('🎯 SquatLiveDetector created');
   }
 
   setDimensions(width: number, height: number) {
-    this.canvasWidth = width;
-    this.canvasHeight = height;
+    this.width = width;
+    this.height = height;
+    console.log('📐 Dimensions set:', { width, height });
   }
 
-  private calculateAngle(a: any, b: any, c: any): number {
-    // Check visibility
-    if (a.visibility < this.MIN_VISIBILITY || 
-        b.visibility < this.MIN_VISIBILITY || 
-        c.visibility < this.MIN_VISIBILITY) {
-      return -1;
-    }
-
-    // Calculate vectors
-    const bc = [c.x - b.x, c.y - b.y, c.z - b.z];
-    const ba = [a.x - b.x, a.y - b.y, a.z - b.z];
-
-    // Calculate angle
-    const dotProduct = ba[0] * bc[0] + ba[1] * bc[1] + ba[2] * bc[2];
-    const magnitudeBA = Math.sqrt(ba[0] * ba[0] + ba[1] * ba[1] + ba[2] * ba[2]);
-    const magnitudeBC = Math.sqrt(bc[0] * bc[0] + bc[1] * bc[1] + bc[2] * bc[2]);
-
-    const cosAngle = Math.max(-1, Math.min(1, dotProduct / (magnitudeBA * magnitudeBC)));
-    let angle = Math.acos(cosAngle) * (180 / Math.PI);
-
-    if (angle > 180) {
-      angle = 360 - angle;
-    }
-
-    return angle;
+  /**
+   * Python: def angle(a, b, c)
+   * Calculate angle at point b formed by points a-b-c
+   */
+  private angle(a: [number, number], b: [number, number], c: [number, number]): number {
+    const ba = [a[0] - b[0], a[1] - b[1]];
+    const bc = [c[0] - b[0], c[1] - b[1]];
+    
+    const dotProduct = ba[0] * bc[0] + ba[1] * bc[1];
+    const magBA = Math.sqrt(ba[0] * ba[0] + ba[1] * ba[1]);
+    const magBC = Math.sqrt(bc[0] * bc[0] + bc[1] * bc[1]);
+    
+    const cosAngle = Math.max(-1.0, Math.min(1.0, dotProduct / ((magBA * magBC) + 1e-9)));
+    return (Math.acos(cosAngle) * 180) / Math.PI;
   }
 
-  private getLegState(angle: number): number {
-    if (angle < 0) {
-      return 0; // Joint not detected
-    } else if (angle < this.SQUAT_ANGLE) {
-      return 1; // Squat range
-    } else if (angle < this.TRANSITION_ANGLE) {
-      return 2; // Transition range
-    } else {
-      return 3; // Upright range
-    }
+  /**
+   * Python: def lm_xy(lm, w, h)
+   * Convert normalized landmark to pixel coordinates
+   */
+  private lmXY(lm: any): [number, number] {
+    return [
+      Math.floor(lm.x * this.width),
+      Math.floor(lm.y * this.height)
+    ];
   }
 
+  /**
+   * Main processing function - called for each frame
+   * Python: Main loop in squat_live.py
+   */
   process(landmarks: any[], currentTime: number): number {
-    if (!landmarks || landmarks.length < 33) {
-      return this.reps.length;
+    this.frameCount++;
+    
+    // DEBUG: Print landmark structure once
+    if (this.frameCount === 1) {
+      console.log('🔍 Squat Landmark structure:', {
+        isArray: Array.isArray(landmarks),
+        length: landmarks?.length,
+        sample: landmarks?.[23]
+      });
     }
+    
+    let kneeAngle: number | null = null;
+    let smoothAngle: number | null = null;
+    let currColor: 'RED' | 'GREEN' = this.prevColor;
 
-    try {
-      // Get key landmarks for squat (hip-knee-ankle)
-      // Right leg: hip(24), knee(26), ankle(28)
-      // Left leg: hip(23), knee(25), ankle(27)
-      const rightHip = landmarks[24];
-      const rightKnee = landmarks[26];
-      const rightAnkle = landmarks[28];
-      const leftHip = landmarks[23];
-      const leftKnee = landmarks[25];
-      const leftAnkle = landmarks[27];
+    // Python: if result.pose_landmarks:
+    if (landmarks && landmarks.length >= 33) {
+      try {
+        // Python: lm = result.pose_landmarks.landmark
+        const lm = landmarks;
 
-      // Calculate knee angles
-      const rightAngle = this.calculateAngle(rightHip, rightKnee, rightAnkle);
-      const leftAngle = this.calculateAngle(leftHip, leftKnee, leftAnkle);
+        // Get landmark pixel coordinates
+        // Python: hip = lm_xy(lm[mp_pose.PoseLandmark.LEFT_HIP], width, height)
+        const hip = this.lmXY(lm[23]); // LEFT_HIP = 23
+        const knee = this.lmXY(lm[25]); // LEFT_KNEE = 25
+        const ankle = this.lmXY(lm[27]); // LEFT_ANKLE = 27
 
-      // Get leg states
-      const rightState = this.getLegState(rightAngle);
-      const leftState = this.getLegState(leftAngle);
-
-      // Combined state (product of both leg states)
-      // 0 -> One or both legs not detected
-      // Even -> One or both legs transitioning
-      // Odd:
-      //   1 -> Squatting
-      //   9 -> Upright
-      //   3 -> One squatting, one upright (bad form)
-      const state = rightState * leftState;
-
-      const formIssues: string[] = [];
-
-      // Check for detection issues
-      if (state === 0) {
-        if (rightState === 0) formIssues.push('Right leg not detected');
-        if (leftState === 0) formIssues.push('Left leg not detected');
-      }
-      // Check for asymmetry
-      else if (rightState !== leftState) {
-        formIssues.push('Uneven squat - both legs should move together');
-      }
-      // Valid state change (1 or 9)
-      else if (state === 1 || state === 9) {
-        if (this.lastState !== state) {
-          // State changed
-          if (state === 1) {
-            // Completed squat (went down)
-            const correct = formIssues.length === 0 && 
-                          rightAngle > 0 && leftAngle > 0 &&
-                          rightAngle < this.SQUAT_ANGLE && 
-                          leftAngle < this.SQUAT_ANGLE;
-
-            const rep: RepDetail = {
-              count: this.reps.length + 1,
-              timestamp: currentTime,
-              leftKneeAngle: Math.round(leftAngle),
-              rightKneeAngle: Math.round(rightAngle),
-              correct: correct,
-              formIssues: formIssues
-            };
-
-            this.reps.push(rep);
-          }
-          this.lastState = state;
+        // DEBUG: Print coordinates once
+        if (this.frameCount === 1) {
+          console.log('🔍 Squat coordinates:', { hip, knee, ankle });
         }
-      }
-      // Transitioning - provide form feedback
-      else if (state % 2 === 0) {
-        if (this.lastState === 1) {
-          // Coming up from squat
-          if (leftState === 2 || leftState === 1) {
-            formIssues.push('Fully extend left leg');
-          }
-          if (rightState === 2 || rightState === 1) {
-            formIssues.push('Fully extend right leg');
-          }
-        } else {
-          // Going down into squat
-          if (leftState === 2 || leftState === 3) {
-            formIssues.push('Go deeper with left leg');
-          }
-          if (rightState === 2 || rightState === 3) {
-            formIssues.push('Go deeper with right leg');
-          }
-        }
-      }
 
-    } catch (error) {
-      console.error('Squat detection error:', error);
+        // Python: knee_angle = angle(hip, knee, ankle)
+        kneeAngle = this.angle(hip, knee, ankle);
+        
+        // Python: angle_hist.append(knee_angle)
+        this.angleHistory.push(kneeAngle);
+        
+        // Maintain deque maxlen behavior
+        if (this.angleHistory.length > this.SMOOTH_N) {
+          this.angleHistory.shift();
+        }
+        
+        // Python: smooth_angle = sum(angle_hist) / len(angle_hist)
+        smoothAngle = this.angleHistory.reduce((sum, val) => sum + val, 0) / this.angleHistory.length;
+
+        // Store for display
+        this.lastKneeAngle = kneeAngle;
+        this.lastSmoothAngle = smoothAngle;
+
+        // Python: curr_color = "GREEN" if smooth_angle <= GREEN_ANGLE else "RED"
+        currColor = smoothAngle <= this.GREEN_ANGLE ? 'GREEN' : 'RED';
+        this.currentColor = currColor;
+
+        // DEBUG: Print angles occasionally
+        if (this.frameCount % 30 === 0) {
+          console.log(`📊 Knee: ${Math.round(smoothAngle)}° | Color: ${currColor} | Reps: ${this.reps.length}`);
+        }
+
+        // Python: if prev_color == "RED" and curr_color == "GREEN":
+        if (this.prevColor === 'RED' && currColor === 'GREEN') {
+          console.log(`✅ SQUAT REP COMPLETED! Angle: ${Math.round(smoothAngle)}°`);
+          
+          // Python: reps.append({...})
+          const repData: SquatRepData = {
+            rep: this.reps.length + 1,
+            knee_angle: Math.round(smoothAngle * 100) / 100,
+            correct: true // All reps counted are considered correct in Python version
+          };
+
+          this.reps.push(repData);
+        }
+
+        // Python: prev_color = curr_color
+        this.prevColor = currColor;
+
+      } catch (error) {
+        console.error('❌ Error in squat angle calculation:', error);
+      }
+    } else {
+      // DEBUG: Log when landmarks not available
+      if (this.frameCount % 30 === 0) {
+        console.warn('⚠️ Squat landmarks not available');
+      }
     }
 
     return this.reps.length;
   }
 
-  getCurrentMetrics(): CurrentMetrics {
-    const lastRep = this.reps[this.reps.length - 1];
-    
+  /**
+   * Get current metrics for HUD display
+   */
+  getCurrentMetrics() {
     return {
-      repCount: this.reps.length,
-      state: this.lastState === 1 ? 'Squatting' : this.lastState === 9 ? 'Upright' : 'Transitioning',
-      leftKneeAngle: lastRep?.leftKneeAngle || 0,
-      rightKneeAngle: lastRep?.rightKneeAngle || 0
+      kneeAngle: this.lastSmoothAngle !== null ? Math.round(this.lastSmoothAngle) : 0,
+      state: this.currentColor,
+      repCount: this.reps.length
     };
   }
 
-  getReps(): RepDetail[] {
+  /**
+   * Get all completed reps
+   */
+  getReps(): SquatRepData[] {
     return this.reps;
   }
 
+  /**
+   * Reset detector state
+   */
   reset() {
+    console.log('🔄 Resetting squat detector');
+    this.angleHistory = [];
+    this.prevColor = 'RED';
     this.reps = [];
-    this.lastState = 9; // Start in upright position
+    this.frameCount = 0;
+    this.lastKneeAngle = null;
+    this.lastSmoothAngle = null;
+    this.currentColor = 'RED';
   }
 }

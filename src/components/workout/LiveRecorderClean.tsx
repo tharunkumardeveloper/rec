@@ -93,20 +93,45 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
 
   const initializeCamera = async () => {
     try {
+      console.log('📷 Initializing camera...');
+      
       if (stream) {
         stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
       }
 
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, facingMode: facingMode },
+        video: { 
+          width: { ideal: 640 }, 
+          height: { ideal: 480 }, 
+          facingMode: facingMode 
+        },
         audio: false
       });
+      
+      console.log('✅ Camera stream obtained');
       setStream(mediaStream);
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        
+        // Wait for video to be ready before initializing MediaPipe
+        await new Promise<void>((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = () => {
+              console.log('✅ Video metadata loaded');
+              videoRef.current?.play().then(() => {
+                console.log('✅ Video playing');
+                resolve();
+              }).catch(err => {
+                console.error('Video play error:', err);
+                resolve();
+              });
+            };
+          }
+        });
       }
 
+      // Initialize MediaPipe after video is ready
       await initializeMediaPipe();
     } catch (error) {
       console.error('Camera access error:', error);
@@ -116,18 +141,26 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
 
   const initializeMediaPipe = async () => {
     try {
+      console.log('🔧 Initializing MediaPipe...');
+      
       if (typeof window !== 'undefined' && !window.Pose) {
-        await new Promise((resolve) => {
+        console.log('⏳ Waiting for MediaPipe Pose to load...');
+        await new Promise((resolve, reject) => {
           const checkInterval = setInterval(() => {
             if (window.Pose) {
               clearInterval(checkInterval);
+              console.log('✅ MediaPipe Pose loaded');
               resolve(true);
             }
           }, 100);
-          setTimeout(() => clearInterval(checkInterval), 10000);
+          setTimeout(() => {
+            clearInterval(checkInterval);
+            reject(new Error('MediaPipe Pose load timeout'));
+          }, 10000);
         });
       }
 
+      console.log('🎯 Creating Pose instance...');
       const poseInstance = new window.Pose({
         locateFile: (file: string) => {
           return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
@@ -145,6 +178,7 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
       setPose(poseInstance);
 
       // Initialize workout detector based on activity type
+      console.log(`🏋️ Initializing detector for ${activityName}...`);
       switch (activityName) {
         case 'Push-ups':
           detectorRef.current = new PushupLiveDetector();
@@ -173,12 +207,16 @@ const LiveRecorderClean = ({ activityName, onBack, onComplete, initialFacingMode
           detectorRef.current = new PushupLiveDetector();
       }
 
+      console.log('🎬 Starting frame processing...');
+      // Start processing immediately
       processFrame(poseInstance);
 
       // Mark as initialized to trigger countdown
+      console.log('✅ Initialization complete!');
       setIsInitialized(true);
     } catch (error) {
       console.error('MediaPipe initialization error:', error);
+      toast.error('Failed to initialize pose detection');
     }
   };
 
