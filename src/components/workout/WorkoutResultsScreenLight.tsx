@@ -30,6 +30,7 @@ const WorkoutResultsScreenLight = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [workoutScreenshots, setWorkoutScreenshots] = useState<string[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   useEffect(() => {
@@ -39,6 +40,48 @@ const WorkoutResultsScreenLight = ({
       return () => URL.revokeObjectURL(url);
     }
   }, [videoBlob]);
+
+  // Capture screenshots from video for PDF
+  useEffect(() => {
+    if (videoRef.current && videoUrl) {
+      captureWorkoutScreenshots();
+    }
+  }, [videoUrl]);
+
+  const captureWorkoutScreenshots = async () => {
+    if (!videoRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    await new Promise<void>((resolve) => {
+      video.onloadedmetadata = () => resolve();
+      if (video.readyState >= 2) resolve();
+    });
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const screenshots: string[] = [];
+    const numScreenshots = Math.min(6, totalReps || 3);
+
+    for (let i = 0; i < numScreenshots; i++) {
+      const time = (video.duration / (numScreenshots + 1)) * (i + 1);
+      video.currentTime = time;
+
+      await new Promise<void>((resolve) => {
+        video.onseeked = () => {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          screenshots.push(canvas.toDataURL('image/jpeg', 0.7));
+          resolve();
+        };
+      });
+    }
+
+    setWorkoutScreenshots(screenshots);
+  };
 
   const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
   const formScore = accuracy >= 80 ? 'Excellent' : accuracy >= 60 ? 'Good' : 'Needs Work';
@@ -104,10 +147,15 @@ const WorkoutResultsScreenLight = ({
       const pageHeight = pdf.internal.pageSize.getHeight();
       
       const userName = localStorage.getItem('user_name') || 'Athlete';
+      const userProfilePic = localStorage.getItem('user_profile_pic');
       const currentDate = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
+      });
+      const currentTime = new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
       });
 
       // Header
@@ -123,38 +171,67 @@ const WorkoutResultsScreenLight = ({
       pdf.setFont('helvetica', 'normal');
       pdf.text(activityName, pageWidth / 2, 30, { align: 'center' });
 
-      // Profile
+      // Profile Section with Picture
       pdf.setTextColor(0, 0, 0);
       pdf.setFontSize(16);
       pdf.setFont('helvetica', 'bold');
       pdf.text('Athlete Profile', 20, 55);
       
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Name: ${userName}`, 20, 65);
-      pdf.text(`Date: ${currentDate}`, 20, 72);
-      pdf.text(`Workout Type: ${activityName}`, 20, 79);
+      let profileYPos = 65;
+      
+      // Add profile picture if available
+      if (userProfilePic) {
+        try {
+          pdf.addImage(userProfilePic, 'JPEG', 20, 60, 25, 25);
+          profileYPos = 65;
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'normal');
+          pdf.text(`Name: ${userName}`, 50, profileYPos);
+          pdf.text(`Date: ${currentDate}`, 50, profileYPos + 7);
+          pdf.text(`Time: ${currentTime}`, 50, profileYPos + 14);
+          pdf.text(`Workout: ${activityName}`, 50, profileYPos + 21);
+          profileYPos = 95;
+        } catch (e) {
+          // If profile pic fails, use text only
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'normal');
+          pdf.text(`Name: ${userName}`, 20, 65);
+          pdf.text(`Date: ${currentDate}`, 20, 72);
+          pdf.text(`Time: ${currentTime}`, 20, 79);
+          pdf.text(`Workout Type: ${activityName}`, 20, 86);
+          profileYPos = 95;
+        }
+      } else {
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Name: ${userName}`, 20, 65);
+        pdf.text(`Date: ${currentDate}`, 20, 72);
+        pdf.text(`Time: ${currentTime}`, 20, 79);
+        pdf.text(`Workout Type: ${activityName}`, 20, 86);
+        profileYPos = 95;
+      }
 
       // Metrics
       pdf.setFontSize(16);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Key Metrics', 20, 95);
+      pdf.text('Key Metrics', 20, profileYPos);
 
       pdf.setFontSize(11);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(`Total Reps: ${totalReps}`, 20, 105);
-      pdf.text(`Correct Reps: ${correctReps}`, 20, 112);
-      pdf.text(`Incorrect Reps: ${incorrectReps}`, 20, 119);
-      pdf.text(`Duration: ${formatTime(duration)}`, 20, 126);
-      pdf.text(`Accuracy: ${accuracy}%`, 20, 133);
-      pdf.text(`Form Score: ${formScore}`, 20, 140);
+      pdf.text(`Total Reps: ${totalReps}`, 20, profileYPos + 10);
+      pdf.text(`Correct Reps: ${correctReps}`, 20, profileYPos + 17);
+      pdf.text(`Incorrect Reps: ${incorrectReps}`, 20, profileYPos + 24);
+      pdf.text(`Duration: ${formatTime(duration)}`, 20, profileYPos + 31);
+      pdf.text(`Accuracy: ${accuracy}%`, 20, profileYPos + 38);
+      pdf.text(`Form Score: ${formScore}`, 20, profileYPos + 45);
 
       // Performance Chart
+      const chartYPos = profileYPos + 60;
       pdf.setFontSize(16);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Performance Breakdown', 20, 160);
+      pdf.text('Performance Breakdown', 20, chartYPos);
 
-      const barY = 170;
+      const barY = chartYPos + 10;
       const barHeight = 8;
       const maxBarWidth = 170;
 
@@ -168,6 +245,49 @@ const WorkoutResultsScreenLight = ({
       const incorrectWidth = totalReps > 0 ? (incorrectReps / totalReps) * maxBarWidth : 0;
       pdf.rect(20, barY + 15, incorrectWidth, barHeight, 'F');
       pdf.text(`Incorrect: ${incorrectReps}`, 20, barY + 13);
+
+      // Workout Screenshots
+      if (workoutScreenshots.length > 0) {
+        pdf.addPage();
+        pdf.setFillColor(59, 130, 246);
+        pdf.rect(0, 0, pageWidth, 30, 'F');
+        
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(20);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Workout Screenshots', pageWidth / 2, 18, { align: 'center' });
+
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('Key moments captured during your workout:', 20, 40);
+
+        let yPos = 50;
+        const imgWidth = 80;
+        const imgHeight = 60;
+        const spacing = 10;
+
+        for (let i = 0; i < Math.min(6, workoutScreenshots.length); i++) {
+          const xPos = i % 2 === 0 ? 20 : 110;
+          
+          if (i > 0 && i % 2 === 0) {
+            yPos += imgHeight + spacing + 5;
+          }
+
+          if (yPos + imgHeight > pageHeight - 20) {
+            pdf.addPage();
+            yPos = 20;
+          }
+
+          try {
+            pdf.addImage(workoutScreenshots[i], 'JPEG', xPos, yPos, imgWidth, imgHeight);
+            pdf.setFontSize(9);
+            pdf.text(`Screenshot ${i + 1}`, xPos + imgWidth / 2, yPos + imgHeight + 5, { align: 'center' });
+          } catch (e) {
+            console.error('Error adding screenshot:', e);
+          }
+        }
+      }
 
       // Rep Details
       if (repDetails.length > 0) {
@@ -232,7 +352,13 @@ const WorkoutResultsScreenLight = ({
         );
       }
 
-      pdf.save(`${activityName.replace(/\s+/g, '_')}_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+      // Generate filename with user name
+      const sanitizedUserName = userName.replace(/[^a-zA-Z0-9]/g, '_');
+      const sanitizedActivity = activityName.replace(/\s+/g, '_');
+      const dateStr = new Date().toISOString().split('T')[0];
+      const filename = `${sanitizedUserName}_${sanitizedActivity}_Report_${dateStr}.pdf`;
+      
+      pdf.save(filename);
       
     } catch (error) {
       console.error('PDF generation error:', error);
