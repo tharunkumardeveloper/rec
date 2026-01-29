@@ -55,16 +55,26 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
   }, [activeTab]);
 
   const loadAthleteData = () => {
+    console.log('🔄 Loading athlete data from localStorage...');
     const athletes = workoutStorageService.getAllAthletes();
-    console.log('Loading athlete data:', athletes); // Debug
+    console.log('📊 Found athletes:', athletes);
+    
     const athleteData = athletes.map(athlete => ({
       name: athlete.name,
       workoutCount: athlete.workoutCount,
       lastWorkout: athlete.lastWorkout,
       workouts: workoutStorageService.getWorkoutsByAthlete(athlete.name)
     }));
+    
     setAthleteWorkouts(athleteData);
-    console.log('Loaded workouts:', athleteData.length, 'athletes'); // Debug
+    console.log('✅ Loaded', athleteData.length, 'athletes with workouts');
+    
+    // Show alert if data found
+    if (athleteData.length > 0) {
+      console.log('✅ Athletes:', athleteData.map(a => a.name).join(', '));
+    } else {
+      console.log('⚠️ No athlete workouts found in localStorage');
+    }
   };
 
   const handleViewWorkouts = (athleteName: string) => {

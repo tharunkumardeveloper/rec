@@ -47,11 +47,14 @@ const WorkoutResultsScreenLight = ({
   // AUTO-SAVE workout when screenshots are ready
   useEffect(() => {
     if (!autoSaved && videoBlob && workoutScreenshots.length > 0) {
+      console.log('🔄 Starting auto-save...');
       const userName = localStorage.getItem('user_name') || 'Athlete';
       const userProfilePic = localStorage.getItem('user_profile_pic');
       const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
       const formScore = accuracy >= 80 ? 'Excellent' : accuracy >= 60 ? 'Good' : 'Needs Work';
 
+      console.log('📊 Saving workout for:', userName);
+      
       workoutStorageService.blobToDataUrl(videoBlob).then(videoDataUrl => {
         workoutStorageService.saveWorkout({
           athleteName: userName,
@@ -68,10 +71,18 @@ const WorkoutResultsScreenLight = ({
           videoDataUrl,
           pdfDataUrl: undefined,
           screenshots: workoutScreenshots
-        }).then(() => {
+        }).then((workoutId) => {
           setAutoSaved(true);
-          console.log('✅ Workout auto-saved!');
-        }).catch(err => console.error('❌ Auto-save failed:', err));
+          console.log('✅ Workout auto-saved! ID:', workoutId);
+          console.log('💾 Check localStorage key: athlete_workouts');
+          alert(`✅ Workout saved for ${userName}! Coach can now view it in Athletes tab.`);
+        }).catch(err => {
+          console.error('❌ Auto-save failed:', err);
+          alert(`❌ Failed to save workout: ${err}`);
+        });
+      }).catch(err => {
+        console.error('❌ Video conversion failed:', err);
+        alert(`❌ Failed to convert video: ${err}`);
       });
     }
   }, [workoutScreenshots, videoBlob, autoSaved, activityName, totalReps, correctReps, incorrectReps, duration, repDetails]);

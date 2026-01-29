@@ -58,14 +58,16 @@ const WorkoutResultsScreenPro = ({
 
   const autoSaveWorkout = async () => {
     try {
+      console.log('🔄 Starting auto-save (Pro)...');
       const userName = localStorage.getItem('user_name') || 'Athlete';
       const userProfilePic = localStorage.getItem('user_profile_pic');
       const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
       const formScore = accuracy >= 80 ? 'Excellent' : accuracy >= 60 ? 'Good' : 'Needs Work';
 
+      console.log('📊 Saving workout for:', userName);
       const videoDataUrl = videoBlob ? await workoutStorageService.blobToDataUrl(videoBlob) : undefined;
 
-      await workoutStorageService.saveWorkout({
+      const workoutId = await workoutStorageService.saveWorkout({
         athleteName: userName,
         athleteProfilePic: userProfilePic || undefined,
         activityName,
@@ -83,9 +85,11 @@ const WorkoutResultsScreenPro = ({
       });
 
       setAutoSaved(true);
-      console.log('✅ Workout auto-saved for coach dashboard');
+      console.log('✅ Workout auto-saved! ID:', workoutId);
+      alert(`✅ Workout saved for ${userName}! Coach can now view it in Athletes tab.`);
     } catch (error) {
       console.error('❌ Auto-save failed:', error);
+      alert(`❌ Failed to save workout: ${error}`);
     }
   };
 
