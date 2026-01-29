@@ -143,31 +143,8 @@ const AthleteWorkoutDetail = ({
             {isSAIAdmin && coachName && (
               <p className="text-sm text-muted-foreground">Coach: {coachName}</p>
             )}
+            <p className="text-sm text-muted-foreground">{selectedWorkout.activityName}</p>
           </div>
-        </div>
-
-        {/* Workout Selector */}
-        <div className="flex overflow-x-auto gap-2 pb-2 -mx-4 px-4">
-          {workouts.map((workout) => (
-            <button
-              key={workout.id}
-              onClick={() => onWorkoutSelect(workout)}
-              className={`flex-shrink-0 p-3 rounded-lg border-2 transition-all min-w-[140px] ${
-                selectedWorkout.id === workout.id
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border bg-card hover:border-primary/50'
-              }`}
-            >
-              <p className="font-semibold text-sm truncate">{workout.activityName}</p>
-              <p className="text-xs text-muted-foreground">{formatDate(workout.timestamp)}</p>
-              <Badge 
-                className={`mt-1 ${workout.accuracy >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`}
-                variant="secondary"
-              >
-                {workout.accuracy}%
-              </Badge>
-            </button>
-          ))}
         </div>
 
         {/* Performance Metrics */}
