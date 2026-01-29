@@ -16,9 +16,11 @@ export interface StoredWorkout {
   formScore: string;
   repDetails: any[];
   timestamp: string;
-  videoDataUrl?: string; // Base64 encoded video
-  pdfDataUrl?: string; // Base64 encoded PDF
-  screenshots: string[]; // Base64 encoded images
+  videoDataUrl?: string; // Base64 encoded video (legacy)
+  pdfDataUrl?: string; // Base64 encoded PDF (legacy)
+  videoUrl?: string; // Cloudinary video URL
+  pdfUrl?: string; // Cloudinary PDF URL
+  screenshots: string[]; // Base64 encoded images or Cloudinary URLs
 }
 
 class WorkoutStorageService {

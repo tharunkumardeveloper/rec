@@ -55,27 +55,30 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
   }, [activeTab]);
 
   const loadAthleteData = async () => {
-    console.log('🔄 Loading athlete data from localStorage...');
-    const athletes = await workoutStorageService.getAllAthletes();
-    console.log('📊 Found athletes:', athletes);
-    
-    const athleteData = await Promise.all(
-      athletes.map(async (athlete) => ({
-        name: athlete.name,
-        workoutCount: athlete.workoutCount,
-        lastWorkout: athlete.lastWorkout,
-        workouts: await workoutStorageService.getWorkoutsByAthlete(athlete.name)
-      }))
-    );
-    
-    setAthleteWorkouts(athleteData);
-    console.log('✅ Loaded', athleteData.length, 'athletes with workouts');
-    
-    // Show alert if data found
-    if (athleteData.length > 0) {
-      console.log('✅ Athletes:', athleteData.map(a => a.name).join(', '));
-    } else {
-      console.log('⚠️ No athlete workouts found in localStorage');
+    console.log('🔄 Loading athlete data from MongoDB...');
+    try {
+      const athletes = await workoutStorageService.getAllAthletes();
+      console.log('📊 Found athletes:', athletes);
+      
+      const athleteData = await Promise.all(
+        athletes.map(async (athlete) => ({
+          name: athlete.name,
+          workoutCount: athlete.workoutCount,
+          lastWorkout: athlete.lastWorkout,
+          workouts: await workoutStorageService.getWorkoutsByAthlete(athlete.name)
+        }))
+      );
+      
+      setAthleteWorkouts(athleteData);
+      console.log('✅ Loaded', athleteData.length, 'athletes with workouts');
+      
+      if (athleteData.length > 0) {
+        console.log('✅ Athletes:', athleteData.map(a => a.name).join(', '));
+      } else {
+        console.log('⚠️ No athlete workouts found');
+      }
+    } catch (error) {
+      console.error('❌ Error loading athletes:', error);
     }
   };
 
@@ -93,19 +96,35 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
   };
 
   const handleDownloadPDF = (workout: StoredWorkout) => {
-    if (!workout.pdfDataUrl) return;
-    const link = document.createElement('a');
-    link.href = workout.pdfDataUrl;
-    link.download = `${workout.athleteName}_${workout.activityName}_Report.pdf`;
-    link.click();
+    const pdfUrl = workout.pdfUrl || workout.pdfDataUrl;
+    if (!pdfUrl) return;
+    
+    if (workout.pdfUrl) {
+      // Open Cloudinary URL in new tab
+      window.open(pdfUrl, '_blank');
+    } else {
+      // Download base64 PDF
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = `${workout.athleteName}_${workout.activityName}_Report.pdf`;
+      link.click();
+    }
   };
 
   const handleDownloadVideo = (workout: StoredWorkout) => {
-    if (!workout.videoDataUrl) return;
-    const link = document.createElement('a');
-    link.href = workout.videoDataUrl;
-    link.download = `${workout.athleteName}_${workout.activityName}_Video.webm`;
-    link.click();
+    const videoUrl = workout.videoUrl || workout.videoDataUrl;
+    if (!videoUrl) return;
+    
+    if (workout.videoUrl) {
+      // Open Cloudinary URL in new tab
+      window.open(videoUrl, '_blank');
+    } else {
+      // Download base64 video
+      const link = document.createElement('a');
+      link.href = videoUrl;
+      link.download = `${workout.athleteName}_${workout.activityName}_Video.webm`;
+      link.click();
+    }
   };
 
   const formatDate = (timestamp: string) => {
@@ -348,10 +367,10 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
               <div className="flex items-center justify-between">
                 <CardTitle>Workout Details</CardTitle>
                 <div className="flex space-x-2">
-                  {selectedWorkout.pdfDataUrl && (
+                  {(selectedWorkout.pdfUrl || selectedWorkout.pdfDataUrl) && (
                     <Button size="sm" variant="outline" onClick={() => handleDownloadPDF(selectedWorkout)}>
                       <FileText className="w-4 h-4 mr-1" />
-                      PDF
+                      {selectedWorkout.pdfUrl ? 'View PDF Report' : 'Download PDF'}
                     </Button>
                   )}
                   {selectedWorkout.videoDataUrl && (
@@ -405,7 +424,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
               </div>
 
               {/* Video Player */}
-              {selectedWorkout.videoDataUrl && (
+              {(selectedWorkout.videoUrl || selectedWorkout.videoDataUrl) && (
                 <div>
                   <h4 className="font-semibold mb-2 flex items-center">
                     <Play className="w-4 h-4 mr-2" />
@@ -413,7 +432,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
                   </h4>
                   <div className="relative rounded-lg overflow-hidden bg-black">
                     <video
-                      src={selectedWorkout.videoDataUrl}
+                      src={selectedWorkout.videoUrl || selectedWorkout.videoDataUrl}
                       controls
                       className="w-full"
                       playsInline
@@ -421,6 +440,9 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
                       Your browser does not support the video tag.
                     </video>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {selectedWorkout.videoUrl ? '☁️ Streaming from Cloudinary CDN' : '💾 Loaded from local storage'}
+                  </p>
                 </div>
               )}
 
