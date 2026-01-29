@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Play, FileText, Calendar, TrendingUp, CheckCircle, XCircle } from 'lucide-react';
 import workoutStorageService, { StoredWorkout } from '@/services/workoutStorageService';
+import PDFViewer from './PDFViewer';
 
 const AthleteDetailPage = () => {
   const { athleteName } = useParams<{ athleteName: string }>();
@@ -11,6 +12,7 @@ const AthleteDetailPage = () => {
   const [workouts, setWorkouts] = useState<StoredWorkout[]>([]);
   const [selectedWorkout, setSelectedWorkout] = useState<StoredWorkout | null>(null);
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+  const [showPDFViewer, setShowPDFViewer] = useState(false);
 
   useEffect(() => {
     if (athleteName) {
@@ -30,13 +32,9 @@ const AthleteDetailPage = () => {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleViewPDF = () => {
     if (!selectedWorkout?.pdfDataUrl) return;
-    
-    const link = document.createElement('a');
-    link.href = selectedWorkout.pdfDataUrl;
-    link.download = `${selectedWorkout.athleteName}_${selectedWorkout.activityName}_Report.pdf`;
-    link.click();
+    setShowPDFViewer(true);
   };
 
   const handleDownloadVideo = () => {
@@ -141,9 +139,9 @@ const AthleteDetailPage = () => {
                       <CardTitle>Performance Summary</CardTitle>
                       <div className="flex items-center space-x-2">
                         {selectedWorkout.pdfDataUrl && (
-                          <Button size="sm" variant="outline" onClick={handleDownloadPDF}>
+                          <Button size="sm" variant="outline" onClick={handleViewPDF}>
                             <FileText className="w-4 h-4 mr-2" />
-                            PDF Report
+                            View Report
                           </Button>
                         )}
                         {selectedWorkout.videoDataUrl && (
@@ -311,6 +309,16 @@ const AthleteDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* PDF Viewer Modal */}
+      {showPDFViewer && selectedWorkout?.pdfDataUrl && (
+        <PDFViewer
+          pdfUrl={selectedWorkout.pdfDataUrl}
+          athleteName={selectedWorkout.athleteName}
+          activityName={selectedWorkout.activityName}
+          onClose={() => setShowPDFViewer(false)}
+        />
+      )}
     </div>
   );
 };
