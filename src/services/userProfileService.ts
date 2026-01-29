@@ -54,6 +54,78 @@ class UserProfileService {
   }
 
   /**
+   * Update specific profile fields
+   */
+  public async updateProfile(userId: string, updates: Partial<UserProfile>): Promise<UserProfile> {
+    const profile = this.getProfile();
+    if (!profile) {
+      throw new Error('No profile found');
+    }
+
+    const updatedProfile: UserProfile = {
+      ...profile,
+      ...updates,
+      userId,
+      updatedAt: new Date().toISOString()
+    };
+
+    // Save to localStorage
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedProfile));
+
+    // Try to update in MongoDB
+    try {
+      await this.updateInMongoDB(userId, updates);
+    } catch (error) {
+      console.warn('Failed to update profile in MongoDB:', error);
+    }
+
+    return updatedProfile;
+  }
+
+  /**
+   * Update profile in MongoDB (PATCH)
+   */
+  private async updateInMongoDB(userId: string, updates: Partial<UserProfile>): Promise<void> {
+    try {
+      const response = await fetch(`${this.BACKEND_URL}/api/users/profile/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updates)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update profile: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('Profile updated in MongoDB:', result);
+    } catch (error) {
+      console.error('MongoDB profile update error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Sync profile from MongoDB to localStorage
+   */
+  public async syncFromMongoDB(userId: string): Promise<UserProfile | null> {
+    try {
+      const mongoProfile = await this.getProfileFromMongoDB(userId);
+      if (mongoProfile) {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(mongoProfile));
+        console.log('✅ Profile synced from MongoDB');
+        return mongoProfile;
+      }
+      return null;
+    } catch (error) {
+      console.error('Failed to sync profile from MongoDB:', error);
+      return null;
+    }
+  }
+
+  /**
    * Get current user profile
    */
   public getProfile(): UserProfile | null {

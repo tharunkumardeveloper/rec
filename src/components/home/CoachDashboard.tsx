@@ -207,30 +207,6 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
 
   const renderDashboardContent = () => (
     <div className="space-y-6">
-      {/* Quick Action - View Workouts */}
-      <Card className="border-2 border-blue-500 bg-gradient-to-br from-blue-50 to-purple-50">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                <Activity className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg">Athlete Workouts</h3>
-                <p className="text-sm text-gray-600">View all workout sessions and performance data</p>
-              </div>
-            </div>
-            <Button 
-              onClick={() => navigate('/coach-workouts')}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
-            >
-              <Activity className="w-4 h-4 mr-2" />
-              View Workouts
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Overview Cards */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <Card className="border-2 border-primary bg-gradient-to-br from-primary/10 to-primary/5">
@@ -479,9 +455,6 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
                       Your browser does not support the video tag.
                     </video>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {selectedWorkout.videoUrl ? '☁️ Streaming from Cloudinary CDN' : '💾 Loaded from local storage'}
-                  </p>
                 </div>
               )}
 

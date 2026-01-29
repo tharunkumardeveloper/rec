@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sparkles, User } from 'lucide-react';
+import { userProfileService } from '@/services/userProfileService';
 
 const WelcomeDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,8 +13,17 @@ const WelcomeDialog = () => {
   useEffect(() => {
     // Check if user has completed onboarding
     const hasCompletedOnboarding = localStorage.getItem('onboarding_completed');
-    if (!hasCompletedOnboarding) {
+    
+    // Check user role - skip dialog for coaches and SAI admins
+    const profile = userProfileService.getProfile();
+    const userRole = profile?.role;
+    
+    // Only show dialog for athletes who haven't completed onboarding
+    if (!hasCompletedOnboarding && userRole !== 'COACH' && userRole !== 'SAI_ADMIN') {
       setIsOpen(true);
+    } else if (userRole === 'COACH' || userRole === 'SAI_ADMIN') {
+      // Auto-complete onboarding for coaches and admins
+      localStorage.setItem('onboarding_completed', 'true');
     }
   }, []);
 
