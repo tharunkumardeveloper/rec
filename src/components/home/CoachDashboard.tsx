@@ -44,10 +44,19 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
   // Load athlete workout data
   useEffect(() => {
     loadAthleteData();
+    // Refresh when Athletes tab becomes active
   }, []);
+
+  // Refresh data when tab changes to discover (Athletes)
+  useEffect(() => {
+    if (activeTab === 'discover') {
+      loadAthleteData();
+    }
+  }, [activeTab]);
 
   const loadAthleteData = () => {
     const athletes = workoutStorageService.getAllAthletes();
+    console.log('Loading athlete data:', athletes); // Debug
     const athleteData = athletes.map(athlete => ({
       name: athlete.name,
       workoutCount: athlete.workoutCount,
@@ -55,6 +64,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
       workouts: workoutStorageService.getWorkoutsByAthlete(athlete.name)
     }));
     setAthleteWorkouts(athleteData);
+    console.log('Loaded workouts:', athleteData.length, 'athletes'); // Debug
   };
 
   const handleViewWorkouts = (athleteName: string) => {
@@ -428,6 +438,23 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
     // Default: Show athletes list
     return (
       <div className="space-y-6">
+        {/* Header with count and refresh */}
+        {athleteWorkouts.length > 0 && (
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">
+              {athleteWorkouts.length} Athlete{athleteWorkouts.length !== 1 ? 's' : ''}
+            </h3>
+            <Button 
+              onClick={loadAthleteData}
+              variant="outline"
+              size="sm"
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+        )}
+
         {/* Filters */}
         <div className="flex flex-wrap gap-2">
           {filterTags.map((tag) => (
@@ -491,12 +518,31 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
           </div>
         ) : (
           <Card className="card-elevated">
-            <CardContent className="p-8 text-center">
-              <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Athlete Workouts Yet</h3>
+            <CardContent className="p-6 text-center space-y-4">
+              <Users className="w-16 h-16 text-gray-300 mx-auto" />
+              <h3 className="text-lg font-semibold">No Athlete Workouts Yet</h3>
               <p className="text-sm text-muted-foreground">
-                Athlete workout data will appear here after they complete workouts and generate reports.
+                Athlete workout data will appear here after they complete workouts and click "Download PDF Report".
               </p>
+              <Button 
+                onClick={loadAthleteData}
+                variant="outline"
+                size="sm"
+                className="mx-auto"
+              >
+                <Activity className="w-4 h-4 mr-2" />
+                Refresh Data
+              </Button>
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg text-left text-xs">
+                <p className="font-semibold text-blue-900 mb-2">📝 How to see workouts:</p>
+                <ol className="text-blue-800 space-y-1 list-decimal list-inside">
+                  <li>Complete workout as athlete</li>
+                  <li>Click "Download PDF Report"</li>
+                  <li>Logout → Login as coach</li>
+                  <li>Go to Athletes tab</li>
+                  <li>Click "Refresh Data"</li>
+                </ol>
+              </div>
             </CardContent>
           </Card>
         )}
