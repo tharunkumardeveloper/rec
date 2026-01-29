@@ -60,13 +60,32 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
       const athletes = await workoutStorageService.getAllAthletes();
       console.log('📊 Found athletes:', athletes);
       
+      if (!athletes || athletes.length === 0) {
+        console.log('⚠️ No athletes found');
+        setAthleteWorkouts([]);
+        return;
+      }
+      
       const athleteData = await Promise.all(
-        athletes.map(async (athlete) => ({
-          name: athlete.name,
-          workoutCount: athlete.workoutCount,
-          lastWorkout: athlete.lastWorkout,
-          workouts: await workoutStorageService.getWorkoutsByAthlete(athlete.name)
-        }))
+        athletes.map(async (athlete) => {
+          try {
+            const workouts = await workoutStorageService.getWorkoutsByAthlete(athlete.name);
+            return {
+              name: athlete.name,
+              workoutCount: athlete.workoutCount,
+              lastWorkout: athlete.lastWorkout,
+              workouts
+            };
+          } catch (error) {
+            console.error(`Error loading workouts for ${athlete.name}:`, error);
+            return {
+              name: athlete.name,
+              workoutCount: 0,
+              lastWorkout: athlete.lastWorkout,
+              workouts: []
+            };
+          }
+        })
       );
       
       setAthleteWorkouts(athleteData);
@@ -74,11 +93,10 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
       
       if (athleteData.length > 0) {
         console.log('✅ Athletes:', athleteData.map(a => a.name).join(', '));
-      } else {
-        console.log('⚠️ No athlete workouts found');
       }
     } catch (error) {
       console.error('❌ Error loading athletes:', error);
+      setAthleteWorkouts([]);
     }
   };
 
@@ -318,7 +336,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold">
-                    {selectedAthlete.split(' ').map(n => n[0]).join('')}
+                    {selectedAthlete ? selectedAthlete.split(' ').map(n => n[0]).join('') : '?'}
                   </div>
                   <div>
                     <h2 className="text-xl font-bold">{selectedAthlete}</h2>
@@ -517,7 +535,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold text-sm">
-                        {athlete.name.split(' ').map(n => n[0]).join('')}
+                        {athlete.name ? athlete.name.split(' ').map(n => n[0]).join('') : '?'}
                       </div>
                       <div>
                         <h3 className="font-semibold">{athlete.name}</h3>

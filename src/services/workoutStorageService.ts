@@ -176,29 +176,45 @@ class WorkoutStorageService {
   private async getWorkoutsFromMongoDB(athleteName: string): Promise<StoredWorkout[]> {
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rec-backend-yi7u.onrender.com';
     
-    const response = await fetch(`${backendUrl}/api/sessions/athlete/${encodeURIComponent(athleteName)}`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch workouts: ${response.statusText}`);
-    }
+    try {
+      const response = await fetch(`${backendUrl}/api/sessions/athlete/${encodeURIComponent(athleteName)}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch workouts: ${response.statusText}`);
+      }
 
-    const data = await response.json();
-    return data.workouts.map((workout: any) => ({
-      id: workout._id,
-      athleteName: workout.athleteName,
-      athleteProfilePic: workout.athleteProfilePic,
-      activityName: workout.activityName,
-      totalReps: workout.totalReps,
-      correctReps: workout.correctReps,
-      incorrectReps: workout.incorrectReps,
-      duration: workout.duration,
-      accuracy: workout.accuracy,
-      formScore: workout.formScore,
-      repDetails: workout.repDetails || [],
-      timestamp: workout.timestamp,
-      videoDataUrl: workout.videoDataUrl,
-      pdfDataUrl: workout.pdfDataUrl,
-      screenshots: workout.screenshots || []
-    }));
+      const data = await response.json();
+      
+      // Handle both response formats
+      const workouts = data.workouts || data;
+      
+      if (!Array.isArray(workouts)) {
+        console.warn('Invalid workouts data format:', data);
+        return [];
+      }
+      
+      return workouts.map((workout: any) => ({
+        id: workout._id || workout.id,
+        athleteName: workout.athleteName,
+        athleteProfilePic: workout.athleteProfilePic,
+        activityName: workout.activityName,
+        totalReps: workout.totalReps,
+        correctReps: workout.correctReps,
+        incorrectReps: workout.incorrectReps,
+        duration: workout.duration,
+        accuracy: workout.accuracy,
+        formScore: workout.formScore,
+        repDetails: workout.repDetails || [],
+        timestamp: workout.timestamp,
+        videoDataUrl: workout.videoDataUrl,
+        pdfDataUrl: workout.pdfDataUrl,
+        videoUrl: workout.videoUrl,
+        pdfUrl: workout.pdfUrl,
+        screenshots: workout.screenshots || []
+      }));
+    } catch (error) {
+      console.error('❌ MongoDB fetch error:', error);
+      throw error;
+    }
   }
 
   /**
@@ -269,11 +285,13 @@ class WorkoutStorageService {
     }
 
     const data = await response.json();
-    return data.athletes.map((athlete: any) => ({
-      name: athlete.name,
-      workoutCount: athlete.workoutCount,
-      lastWorkout: athlete.lastWorkout
-    }));
+    return data.athletes
+      .filter((athlete: any) => athlete.name && athlete.name.trim()) // Filter out null/empty names
+      .map((athlete: any) => ({
+        name: athlete.name,
+        workoutCount: athlete.workoutCount,
+        lastWorkout: athlete.lastWorkout
+      }));
   }
 
   /**
