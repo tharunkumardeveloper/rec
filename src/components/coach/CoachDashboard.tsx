@@ -19,7 +19,7 @@ const CoachDashboard = () => {
   };
 
   const handleAthleteClick = (athleteName: string) => {
-    navigate(`/coach/athlete/${encodeURIComponent(athleteName)}`);
+    navigate(`/coach-workouts/athlete/${encodeURIComponent(athleteName)}`);
   };
 
   const formatDate = (timestamp: string) => {

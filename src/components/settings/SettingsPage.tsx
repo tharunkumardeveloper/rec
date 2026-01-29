@@ -5,13 +5,15 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import TTSSettings from './TTSSettings';
 import NameSettings from './NameSettings';
+import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Bell, 
   Moon, 
   Info,
   Shield,
-  HelpCircle
+  HelpCircle,
+  Users
 } from 'lucide-react';
 
 interface SettingsPageProps {
@@ -21,6 +23,7 @@ interface SettingsPageProps {
 }
 
 const SettingsPage = ({ onBack, userName = 'User', userRole = 'athlete' }: SettingsPageProps) => {
+  const navigate = useNavigate();
   const [settings, setSettings] = useState({
     notifications: true,
     darkMode: false,
@@ -195,6 +198,14 @@ const SettingsPage = ({ onBack, userName = 'User', userRole = 'athlete' }: Setti
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => navigate('/coach-workouts')}
+            >
+              <Users className="w-4 h-4 mr-3" />
+              Coach Workouts Dashboard
+            </Button>
             <Button variant="outline" className="w-full justify-start">
               <HelpCircle className="w-4 h-4 mr-3" />
               Help Center
