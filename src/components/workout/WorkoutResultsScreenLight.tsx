@@ -44,48 +44,53 @@ const WorkoutResultsScreenLight = ({
     }
   }, [videoBlob]);
 
-  // AUTO-SAVE workout when screenshots are ready
+  // AUTO-SAVE workout when video is ready (with or without screenshots)
   useEffect(() => {
-    if (!autoSaved && videoBlob && workoutScreenshots.length > 0) {
-      console.log('🔄 Starting auto-save...');
-      const userName = localStorage.getItem('user_name') || 'Athlete';
-      const userProfilePic = localStorage.getItem('user_profile_pic');
-      const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
-      const formScore = accuracy >= 80 ? 'Excellent' : accuracy >= 60 ? 'Good' : 'Needs Work';
+    if (!autoSaved && videoBlob) {
+      // Wait a bit for screenshots, but don't block save if they fail
+      const timer = setTimeout(() => {
+        if (!autoSaved) {
+          console.log('🔄 Starting auto-save...');
+          console.log(`📸 Screenshots captured: ${workoutScreenshots.length}`);
+          const userName = localStorage.getItem('user_name') || 'Athlete';
+          const userProfilePic = localStorage.getItem('user_profile_pic');
+          const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
+          const formScore = accuracy >= 80 ? 'Excellent' : accuracy >= 60 ? 'Good' : 'Needs Work';
 
-      console.log('📊 Saving workout for:', userName);
-      
-      workoutStorageService.blobToDataUrl(videoBlob).then(videoDataUrl => {
-        workoutStorageService.saveWorkout({
-          athleteName: userName,
-          athleteProfilePic: userProfilePic || undefined,
-          activityName,
-          totalReps,
-          correctReps,
-          incorrectReps,
-          duration,
-          accuracy,
-          formScore,
-          repDetails,
-          timestamp: new Date().toISOString(),
-          videoDataUrl,
-          pdfDataUrl: undefined,
-          screenshots: workoutScreenshots
-        }).then((workoutId) => {
-          setAutoSaved(true);
-          console.log('✅ Workout auto-saved! ID:', workoutId);
-          console.log('💾 Check localStorage key: athlete_workouts');
-          alert(`✅ Workout saved for ${userName}! Coach can now view it in Athletes tab.`);
-        }).catch(err => {
-          console.error('❌ Auto-save failed:', err);
-          alert(`❌ Failed to save workout: ${err}`);
-        });
-      }).catch(err => {
-        console.error('❌ Video conversion failed:', err);
-        alert(`❌ Failed to convert video: ${err}`);
-      });
+          console.log('📊 Saving workout for:', userName);
+          
+          workoutStorageService.blobToDataUrl(videoBlob).then(videoDataUrl => {
+            workoutStorageService.saveWorkout({
+              athleteName: userName,
+              athleteProfilePic: userProfilePic || undefined,
+              activityName,
+              totalReps,
+              correctReps,
+              incorrectReps,
+              duration,
+              accuracy,
+              formScore,
+              repDetails,
+              timestamp: new Date().toISOString(),
+              videoDataUrl,
+              pdfDataUrl: undefined,
+              screenshots: workoutScreenshots
+            }).then((workoutId) => {
+              setAutoSaved(true);
+              console.log('✅ Workout auto-saved! ID:', workoutId);
+              console.log('💾 Check localStorage key: athlete_workouts');
+            }).catch(err => {
+              console.error('❌ Auto-save failed:', err);
+            });
+          }).catch(err => {
+            console.error('❌ Video conversion failed:', err);
+          });
+        }
+      }, 2000); // Wait 2 seconds for screenshots
+
+      return () => clearTimeout(timer);
     }
-  }, [workoutScreenshots, videoBlob, autoSaved, activityName, totalReps, correctReps, incorrectReps, duration, repDetails]);
+  }, [videoBlob, autoSaved, workoutScreenshots, activityName, totalReps, correctReps, incorrectReps, duration, repDetails]);
 
   // Capture screenshots from video for PDF
   useEffect(() => {
@@ -95,38 +100,51 @@ const WorkoutResultsScreenLight = ({
   }, [videoUrl]);
 
   const captureWorkoutScreenshots = async () => {
-    if (!videoRef.current) return;
+    try {
+      if (!videoRef.current) {
+        console.warn('⚠️ No video ref for screenshots');
+        return;
+      }
 
-    const video = videoRef.current;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    await new Promise<void>((resolve) => {
-      video.onloadedmetadata = () => resolve();
-      if (video.readyState >= 2) resolve();
-    });
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const screenshots: string[] = [];
-    const numScreenshots = Math.min(6, totalReps || 3);
-
-    for (let i = 0; i < numScreenshots; i++) {
-      const time = (video.duration / (numScreenshots + 1)) * (i + 1);
-      video.currentTime = time;
+      const video = videoRef.current;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.warn('⚠️ Could not get canvas context');
+        return;
+      }
 
       await new Promise<void>((resolve) => {
-        video.onseeked = () => {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          screenshots.push(canvas.toDataURL('image/jpeg', 0.7));
-          resolve();
-        };
+        video.onloadedmetadata = () => resolve();
+        if (video.readyState >= 2) resolve();
       });
-    }
 
-    setWorkoutScreenshots(screenshots);
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const screenshots: string[] = [];
+      const numScreenshots = Math.min(6, totalReps || 3);
+
+      for (let i = 0; i < numScreenshots; i++) {
+        const time = (video.duration / (numScreenshots + 1)) * (i + 1);
+        video.currentTime = time;
+
+        await new Promise<void>((resolve) => {
+          video.onseeked = () => {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            screenshots.push(canvas.toDataURL('image/jpeg', 0.7));
+            resolve();
+          };
+        });
+      }
+
+      console.log(`✅ Captured ${screenshots.length} screenshots`);
+      setWorkoutScreenshots(screenshots);
+    } catch (error) {
+      console.error('❌ Screenshot capture failed:', error);
+      // Set empty array so auto-save can proceed without screenshots
+      setWorkoutScreenshots([]);
+    }
   };
 
   const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;

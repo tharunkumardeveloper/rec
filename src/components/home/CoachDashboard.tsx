@@ -54,17 +54,19 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
     }
   }, [activeTab]);
 
-  const loadAthleteData = () => {
+  const loadAthleteData = async () => {
     console.log('🔄 Loading athlete data from localStorage...');
-    const athletes = workoutStorageService.getAllAthletes();
+    const athletes = await workoutStorageService.getAllAthletes();
     console.log('📊 Found athletes:', athletes);
     
-    const athleteData = athletes.map(athlete => ({
-      name: athlete.name,
-      workoutCount: athlete.workoutCount,
-      lastWorkout: athlete.lastWorkout,
-      workouts: workoutStorageService.getWorkoutsByAthlete(athlete.name)
-    }));
+    const athleteData = await Promise.all(
+      athletes.map(async (athlete) => ({
+        name: athlete.name,
+        workoutCount: athlete.workoutCount,
+        lastWorkout: athlete.lastWorkout,
+        workouts: await workoutStorageService.getWorkoutsByAthlete(athlete.name)
+      }))
+    );
     
     setAthleteWorkouts(athleteData);
     console.log('✅ Loaded', athleteData.length, 'athletes with workouts');
@@ -77,9 +79,9 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
     }
   };
 
-  const handleViewWorkouts = (athleteName: string) => {
+  const handleViewWorkouts = async (athleteName: string) => {
     setSelectedAthlete(athleteName);
-    const workouts = workoutStorageService.getWorkoutsByAthlete(athleteName);
+    const workouts = await workoutStorageService.getWorkoutsByAthlete(athleteName);
     if (workouts.length > 0) {
       setSelectedWorkout(workouts[0]); // Select most recent workout
     }

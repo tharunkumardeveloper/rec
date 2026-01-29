@@ -18,10 +18,10 @@ const AthleteDetailPage = () => {
     }
   }, [athleteName]);
 
-  const loadWorkouts = () => {
+  const loadWorkouts = async () => {
     if (!athleteName) return;
     const decodedName = decodeURIComponent(athleteName);
-    const athleteWorkouts = workoutStorageService.getWorkoutsByAthlete(decodedName);
+    const athleteWorkouts = await workoutStorageService.getWorkoutsByAthlete(decodedName);
     setWorkouts(athleteWorkouts);
     
     // Auto-select the most recent workout

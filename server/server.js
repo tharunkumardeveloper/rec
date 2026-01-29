@@ -7,6 +7,7 @@ const { spawn } = require('child_process');
 const csv = require('csv-parser');
 const ffmpeg = require('fluent-ffmpeg');
 const sharp = require('sharp');
+const { connectDB, getDB } = require('./db');
 
 // Try to set ffmpeg path
 try {
@@ -17,7 +18,7 @@ try {
     path.join(process.env.ProgramFiles || 'C:\\Program Files', 'ffmpeg', 'bin', 'ffmpeg.exe'),
     'ffmpeg' // System PATH
   ];
-  
+
   for (const ffmpegPath of possiblePaths) {
     if (fs.existsSync(ffmpegPath) || ffmpegPath === 'ffmpeg') {
       ffmpeg.setFfmpegPath(ffmpegPath);
@@ -91,8 +92,8 @@ const liveScripts = {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     message: 'Server is running',
     port: PORT,
     timestamp: new Date().toISOString()
@@ -101,7 +102,7 @@ app.get('/api/health', (req, res) => {
 
 // Test endpoint
 app.get('/api/test', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'Backend is working!',
     availableWorkouts: Object.keys(activityScripts)
   });
@@ -111,7 +112,7 @@ app.get('/api/test', (req, res) => {
 app.post('/api/process-video', upload.single('video'), async (req, res) => {
   console.log('\n=== New video processing request ===');
   console.log('Time:', new Date().toISOString());
-  
+
   try {
     const { activityName, mode } = req.body;
     const videoFile = req.file;
@@ -153,7 +154,7 @@ app.post('/api/process-video', upload.single('video'), async (req, res) => {
     // Execute Python script
     console.log('Executing Python script...');
     const result = await executeScript(scriptPath, videoPath, outputDir, activityName);
-    
+
     console.log('Processing complete!');
     console.log('Result:', JSON.stringify(result, null, 2));
 
@@ -253,13 +254,13 @@ app.get('/api/results/:outputId', async (req, res) => {
 app.get('/api/frames/:outputId', (req, res) => {
   const { outputId } = req.params;
   const framesDir = path.join(outputsDir, outputId, 'frames');
-  
+
   if (fs.existsSync(framesDir)) {
     const frames = fs.readdirSync(framesDir)
       .filter(f => f.endsWith('.jpg'))
       .sort()
       .map(f => `/api/frame/${outputId}/${f}`);
-    
+
     res.json({ frames, count: frames.length });
   } else {
     res.status(404).json({ error: 'Frames not found' });
@@ -270,7 +271,7 @@ app.get('/api/frames/:outputId', (req, res) => {
 app.get('/api/frame/:outputId/:filename', (req, res) => {
   const { outputId, filename } = req.params;
   const framePath = path.join(outputsDir, outputId, 'frames', filename);
-  
+
   if (fs.existsSync(framePath)) {
     res.sendFile(framePath);
   } else {
@@ -282,20 +283,20 @@ app.get('/api/frame/:outputId/:filename', (req, res) => {
 app.get('/api/video/:outputId/:filename', (req, res) => {
   const { outputId, filename } = req.params;
   const videoPath = path.join(outputsDir, outputId, filename);
-  
+
   console.log('Video request:', outputId, filename);
   console.log('Video path:', videoPath);
   console.log('File exists:', fs.existsSync(videoPath));
 
   if (fs.existsSync(videoPath)) {
     console.log('Serving video file');
-    
+
     // Set headers to prevent caching issues
     res.setHeader('Content-Type', 'video/mp4');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    
+
     res.sendFile(videoPath);
   } else {
     console.error('Video file not found!');
@@ -384,15 +385,15 @@ function createModifiedScript(originalScriptPath, videoPath, outputDir) {
   // Replace file selection with direct path
   // Use forward slashes for Python (works on Windows too)
   const videoPathForPython = videoPath.replace(/\\/g, '/');
-  
+
   // Remove the file dialog lines
   // First, remove the entire filedialog line (including nested brackets)
   const fileDialogPattern = /video_path = filedialog\.askopenfilename\([^)]*\[[^\]]*\][^)]*\)/g;
   script = script.replace(fileDialogPattern, `video_path = r"${videoPathForPython}"`);
-  
+
   // Also handle simpler patterns without filetypes
   script = script.replace(/video_path = filedialog\.askopenfilename\(\)/g, `video_path = r"${videoPathForPython}"`);
-  
+
   // Remove the exit conditions
   script = script.replace(/if not video_path:\s*\n\s*print\([^)]*\)\s*\n\s*exit\(\)/g, '');
   script = script.replace(/if not video_path:\s*\n\s*exit\(\)/g, '');
@@ -400,7 +401,7 @@ function createModifiedScript(originalScriptPath, videoPath, outputDir) {
   // Modify output paths to use our output directory
   const outputDirForPython = outputDir.replace(/\\/g, '/');
   const baseFilename = path.basename(outputDir);
-  
+
   script = script.replace(
     /filename = os\.path\.splitext\(os\.path\.basename\(video_path\)\)\[0\]/g,
     `filename = "${baseFilename}"`
@@ -417,11 +418,11 @@ function createModifiedScript(originalScriptPath, videoPath, outputDir) {
   // Remove cv2.imshow and waitKey calls to run headless
   // Comment out entire lines with cv2.imshow
   script = script.replace(/^(\s*)cv2\.imshow\([^)]*\)/gm, '$1pass  # cv2.imshow removed');
-  
+
   // Replace cv2.waitKey expressions properly
   script = script.replace(/cv2\.waitKey\(int\(1000\/fps\)\)/g, '1');
   script = script.replace(/cv2\.waitKey\([^)]*\)/g, '1');
-  
+
   // Comment out cv2.destroyAllWindows
   script = script.replace(/^(\s*)cv2\.destroyAllWindows\(\)/gm, '$1pass  # cv2.destroyAllWindows removed');
 
@@ -447,10 +448,10 @@ function createModifiedLiveScript(originalScriptPath, outputDir) {
   // Remove cv2.imshow and waitKey calls to run headless
   // Comment out entire lines with cv2.imshow
   script = script.replace(/^(\s*)cv2\.imshow\([^)]*\)/gm, '$1pass  # cv2.imshow removed');
-  
+
   // Replace cv2.waitKey expressions properly
   script = script.replace(/cv2\.waitKey\(1\)/g, '1');
-  
+
   // Comment out cv2.destroyAllWindows
   script = script.replace(/^(\s*)cv2\.destroyAllWindows\(\)/gm, '$1pass  # cv2.destroyAllWindows removed');
 
@@ -480,7 +481,7 @@ async function getProcessingResults(outputDir) {
   ) || files.find(file => file.endsWith('.csv'));
 
   const videoFile = files.find(file => file.endsWith('_annotated.mp4'));
-  
+
   console.log('Found CSV file:', csvFile);
   console.log('Found video file:', videoFile);
 
@@ -520,12 +521,12 @@ async function extractFramesFromVideo(outputDir, videoFile) {
   return new Promise((resolve, reject) => {
     const inputPath = path.join(outputDir, videoFile);
     const framesDir = path.join(outputDir, 'frames');
-    
+
     // Create frames directory
     fs.ensureDirSync(framesDir);
-    
+
     console.log('Extracting frames at 10 FPS...');
-    
+
     ffmpeg(inputPath)
       .outputOptions([
         '-vf fps=10', // Extract 10 frames per second
@@ -558,11 +559,11 @@ async function convertVideoToBrowserFormat(outputDir, videoFile) {
   return new Promise((resolve, reject) => {
     const inputPath = path.join(outputDir, videoFile);
     const outputPath = path.join(outputDir, videoFile.replace('.mp4', '_web.mp4'));
-    
+
     console.log('Converting video to browser-compatible format...');
     console.log('Input:', inputPath);
     console.log('Output:', outputPath);
-    
+
     ffmpeg(inputPath)
       .videoCodec('libx264')
       .audioCodec('aac')
@@ -633,6 +634,26 @@ function createMockLiveResults(activityName, outputDir) {
   };
 }
 
-app.listen(PORT, () => {
+// ============================================
+// MONGODB WORKOUT STORAGE ROUTES
+// ============================================
+const sessionsRouter = require('./routes/sessions');
+app.use('/api/sessions', sessionsRouter);
+
+// Legacy endpoint for backward compatibility
+app.post('/api/save-workout', async (req, res) => {
+  // Redirect to new endpoint
+  req.url = '/api/sessions/add';
+  sessionsRouter(req, res);
+});
+
+app.listen(PORT, async () => {
   console.log(`Workout processor server running on port ${PORT}`);
+
+  // Connect to MongoDB
+  try {
+    await connectDB();
+  } catch (error) {
+    console.error('Failed to connect to MongoDB, continuing without database:', error.message);
+  }
 });

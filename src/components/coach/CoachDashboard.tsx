@@ -13,8 +13,8 @@ const CoachDashboard = () => {
     loadAthletes();
   }, []);
 
-  const loadAthletes = () => {
-    const athleteList = workoutStorageService.getAllAthletes();
+  const loadAthletes = async () => {
+    const athleteList = await workoutStorageService.getAllAthletes();
     setAthletes(athleteList);
   };
 
