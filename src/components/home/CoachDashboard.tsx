@@ -38,7 +38,6 @@ interface CoachDashboardProps {
 
 const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSettingsOpen }: CoachDashboardProps) => {
   const [searchFocus, setSearchFocus] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
   const [athleteWorkouts, setAthleteWorkouts] = useState<Array<{ name: string; workoutCount: number; lastWorkout: string; workouts: StoredWorkout[] }>>([]);
   const [selectedAthlete, setSelectedAthlete] = useState<string | null>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<StoredWorkout | null>(null);
@@ -141,49 +140,29 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Mock coach data
+  // Calculate real stats from athlete data
   const overviewStats = {
-    totalAthletes: 28,
-    activeToday: 22,
-    challengesCompleted: 189,
-    totalBadges: 412
+    totalAthletes: athleteWorkouts.length,
+    totalWorkouts: athleteWorkouts.reduce((sum, a) => sum + a.workoutCount, 0),
+    activeToday: athleteWorkouts.filter(a => {
+      const lastWorkoutDate = new Date(a.lastWorkout);
+      const today = new Date();
+      return lastWorkoutDate.toDateString() === today.toDateString();
+    }).length,
+    avgAccuracy: athleteWorkouts.length > 0 
+      ? Math.round(
+          athleteWorkouts.reduce((sum, a) => {
+            const avgAcc = a.workouts.reduce((s, w) => s + w.accuracy, 0) / (a.workouts.length || 1);
+            return sum + avgAcc;
+          }, 0) / athleteWorkouts.length
+        )
+      : 0
   };
-
-  const weeklyActivity = [
-    { day: 'Mon', value: 85 },
-    { day: 'Tue', value: 92 },
-    { day: 'Wed', value: 78 },
-    { day: 'Thu', value: 95 },
-    { day: 'Fri', value: 88 },
-    { day: 'Sat', value: 76 },
-    { day: 'Sun', value: 82 }
-  ];
-
-  const challengeDistribution = [
-    { domain: 'Strength', count: 52, color: 'bg-gradient-to-r from-blue-500 to-blue-600', textColor: 'text-white', iconColor: 'text-blue-500' },
-    { domain: 'Endurance', count: 44, color: 'bg-gradient-to-r from-green-500 to-green-600', textColor: 'text-white', iconColor: 'text-green-500' },
-    { domain: 'Flexibility', count: 38, color: 'bg-gradient-to-r from-purple-500 to-purple-600', textColor: 'text-white', iconColor: 'text-purple-500' },
-    { domain: 'Calisthenics', count: 34, color: 'bg-gradient-to-r from-orange-500 to-orange-600', textColor: 'text-white', iconColor: 'text-orange-500' },
-    { domain: 'Para-Athlete', count: 21, color: 'bg-gradient-to-r from-pink-500 to-pink-600', textColor: 'text-white', iconColor: 'text-pink-500' }
-  ];
-
-  const athletes = [
-    { id: 1, name: 'Athlete Kumar', email: 'athlete@sai.gov.in', level: 8, lastActivity: '2 hours ago', challenges: 12, badges: 28 },
-    { id: 2, name: 'Priya Sharma', email: 'priya@sai.gov.in', level: 6, lastActivity: '1 day ago', challenges: 8, badges: 19 },
-    { id: 3, name: 'Akash Patel', email: 'akash@sai.gov.in', level: 10, lastActivity: '30 min ago', challenges: 15, badges: 35 },
-    { id: 4, name: 'Rohan Singh', email: 'rohan@sai.gov.in', level: 4, lastActivity: '3 hours ago', challenges: 6, badges: 14 },
-    { id: 5, name: 'Kavya Nair', email: 'kavya@sai.gov.in', level: 7, lastActivity: '1 hour ago', challenges: 10, badges: 22 },
-    { id: 6, name: 'Arjun Reddy', email: 'arjun@sai.gov.in', level: 9, lastActivity: '45 min ago', challenges: 14, badges: 31 },
-    { id: 7, name: 'Sneha Gupta', email: 'sneha@sai.gov.in', level: 5, lastActivity: '4 hours ago', challenges: 7, badges: 16 },
-    { id: 8, name: 'Vikram Joshi', email: 'vikram@sai.gov.in', level: 11, lastActivity: '1 hour ago', challenges: 18, badges: 42 }
-  ];
-
-  const filterTags = ['All Levels', 'Beginner', 'Intermediate', 'Advanced', 'Active Today', 'Inactive'];
 
   const renderDashboardContent = () => (
     <div className="space-y-6">
       {/* Overview Cards */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-4">
         <Card className="border-2 border-primary bg-gradient-to-br from-primary/10 to-primary/5">
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center mb-2">
@@ -208,9 +187,9 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center mb-2">
               <Target className="w-5 h-5 text-info mr-2" />
-              <span className="text-2xl font-bold text-info">{overviewStats.challengesCompleted}</span>
+              <span className="text-2xl font-bold text-info">{overviewStats.totalWorkouts}</span>
             </div>
-            <p className="text-sm text-foreground font-medium">Challenges Done</p>
+            <p className="text-sm text-foreground font-medium">Total Workouts</p>
           </CardContent>
         </Card>
 
@@ -218,68 +197,12 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center mb-2">
               <Trophy className="w-5 h-5 text-warning mr-2" />
-              <span className="text-2xl font-bold text-warning">{overviewStats.totalBadges}</span>
+              <span className="text-2xl font-bold text-warning">{overviewStats.avgAccuracy}%</span>
             </div>
-            <p className="text-sm text-foreground font-medium">Badges Earned</p>
+            <p className="text-sm text-foreground font-medium">Avg Accuracy</p>
           </CardContent>
         </Card>
       </div>
-
-      {/* Weekly Activity Chart */}
-      <Card className="card-elevated">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center space-x-2">
-            <Activity className="w-5 h-5 text-primary" />
-            <span>Weekly Athlete Activity</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {weeklyActivity.map((stat, index) => (
-              <div key={stat.day} className="flex items-center space-x-3 group">
-                <span className="text-sm font-semibold w-10 text-foreground">{stat.day}</span>
-                <div className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-4 overflow-hidden shadow-inner">
-                  <div 
-                    className={`h-full rounded-full transition-all duration-500 bg-gradient-to-r ${
-                      stat.value >= 90 ? 'from-green-400 to-green-600' :
-                      stat.value >= 80 ? 'from-blue-400 to-blue-600' :
-                      stat.value >= 70 ? 'from-yellow-400 to-yellow-600' :
-                      'from-orange-400 to-orange-600'
-                    } shadow-md group-hover:shadow-lg`}
-                    style={{ width: `${stat.value}%` }}
-                  />
-                </div>
-                <span className="text-sm font-bold w-10 text-right text-foreground">{stat.value}%</span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Challenge Distribution */}
-      <Card className="card-elevated">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center">
-            <Target className="w-5 h-5 mr-2 text-primary" />
-            Challenge Distribution
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {challengeDistribution.map((item) => (
-              <div key={item.domain} className={`flex items-center justify-between p-4 rounded-xl ${item.color} shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.02]`}>
-                <div className="flex items-center space-x-3">
-                  <div className={`w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center`}>
-                    <Target className={`w-5 h-5 text-white`} />
-                  </div>
-                  <span className={`font-semibold ${item.textColor}`}>{item.domain}</span>
-                </div>
-                <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm">{item.count} completed</Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 
@@ -320,25 +243,6 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
             </Button>
           </div>
         )}
-
-        {/* Filters */}
-        <div className="flex flex-wrap gap-2">
-          {filterTags.map((tag) => (
-            <Button
-              key={tag}
-              variant={selectedFilter === tag ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedFilter(selectedFilter === tag ? null : tag)}
-              className={`rounded-full h-9 text-xs font-medium transition-all duration-300 ${
-                selectedFilter === tag 
-                  ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-md hover:shadow-lg scale-105' 
-                  : 'bg-white text-foreground border-2 border-primary/20 hover:border-primary hover:bg-primary/5'
-              }`}
-            >
-              {tag}
-            </Button>
-          ))}
-        </div>
 
         {/* Real Athletes with Workouts */}
         {athleteWorkouts.length > 0 ? (
@@ -434,203 +338,12 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
     );
   };
 
-  const renderChallengesContent = () => (
-    <div className="space-y-6">
-      {/* Add Challenge Button */}
-      <Button className="w-full bg-gradient-to-r from-primary via-primary/90 to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]" size="lg">
-        <Plus className="w-5 h-5 mr-2" />
-        Create New Challenge
-      </Button>
-
-      {/* Content Library */}
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <BookOpen className="w-5 h-5 text-primary" />
-            <span>Content Library</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" className="h-24 flex flex-col items-center justify-center border-2 border-blue-200 hover:bg-blue-50 hover:border-blue-400 transition-all duration-300 hover:scale-105">
-              <div className="text-3xl mb-2">🎥</div>
-              <span className="text-xs font-medium text-blue-600">Exercise Videos</span>
-            </Button>
-            <Button variant="outline" className="h-24 flex flex-col items-center justify-center border-2 border-green-200 hover:bg-green-50 hover:border-green-400 transition-all duration-300 hover:scale-105">
-              <div className="text-3xl mb-2">📋</div>
-              <span className="text-xs font-medium text-green-600">Workout Plans</span>
-            </Button>
-            <Button variant="outline" className="h-24 flex flex-col items-center justify-center border-2 border-purple-200 hover:bg-purple-50 hover:border-purple-400 transition-all duration-300 hover:scale-105">
-              <div className="text-3xl mb-2">📊</div>
-              <span className="text-xs font-medium text-purple-600">Progress Templates</span>
-            </Button>
-            <Button variant="outline" className="h-24 flex flex-col items-center justify-center border-2 border-orange-200 hover:bg-orange-50 hover:border-orange-400 transition-all duration-300 hover:scale-105">
-              <div className="text-3xl mb-2">📚</div>
-              <span className="text-xs font-medium text-orange-600">Training Guides</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Challenges */}
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Calendar className="w-5 h-5 mr-2 text-primary" />
-            Recent Challenges
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[
-              { name: 'Upper Body Strength', count: 12, color: 'from-blue-500 to-blue-600' },
-              { name: 'Cardio Endurance', count: 10, color: 'from-green-500 to-green-600' },
-              { name: 'Flexibility Focus', count: 8, color: 'from-purple-500 to-purple-600' }
-            ].map((challenge) => (
-              <div key={challenge.name} className={`flex items-center justify-between p-4 rounded-xl bg-gradient-to-r ${challenge.color} shadow-md hover:shadow-lg transition-all duration-300`}>
-                <div>
-                  <h4 className="font-semibold text-white">{challenge.name}</h4>
-                  <p className="text-sm text-white/80">{challenge.count} athletes assigned</p>
-                </div>
-                <Button size="sm" className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm">Edit</Button>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderReportsContent = () => (
-    <div className="space-y-6">
-      {/* Export Options */}
-      <div className="grid grid-cols-2 gap-3">
-        <Button variant="outline" size="lg" className="border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-all duration-300">
-          <Download className="w-4 h-4 mr-2" />
-          Export CSV
-        </Button>
-        <Button variant="outline" size="lg" className="border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-400 transition-all duration-300">
-          <Download className="w-4 h-4 mr-2" />
-          Export PDF
-        </Button>
-      </div>
-
-      {/* Performance Overview */}
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Trophy className="w-5 h-5 mr-2 text-primary" />
-            Performance Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-6 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                <div className="text-3xl font-bold text-white mb-1">87%</div>
-                <p className="text-sm text-white/90 font-medium">Avg Completion Rate</p>
-              </div>
-              <div className="text-center p-6 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                <div className="text-3xl font-bold text-white mb-1">6.2</div>
-                <p className="text-sm text-white/90 font-medium">Avg Level</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Domain Strengths */}
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Activity className="w-5 h-5 mr-2 text-primary" />
-            Domain Analysis
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {challengeDistribution.map((domain) => (
-              <div key={domain.domain} className="space-y-2">
-                <div className="flex justify-between text-sm font-medium">
-                  <span className="flex items-center space-x-2">
-                    <div className={`w-3 h-3 rounded-full ${domain.color}`} />
-                    <span>{domain.domain}</span>
-                  </span>
-                  <span className="font-bold">{Math.round((domain.count / 156) * 100)}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
-                  <div 
-                    className={`h-full rounded-full ${domain.color} shadow-md transition-all duration-500`}
-                    style={{ width: `${(domain.count / 156) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderNotificationsContent = () => (
-    <div className="space-y-6">
-      {/* Send Announcement */}
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <MessageSquare className="w-5 h-5 text-primary" />
-            <span>Send Announcement</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input placeholder="Announcement title..." />
-          <textarea 
-            className="w-full p-3 border rounded-lg resize-none h-24"
-            placeholder="Write your message to athletes..."
-          />
-          <Button className="w-full btn-hero">
-            <Send className="w-4 h-4 mr-2" />
-            Send to All Athletes
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Recent Announcements */}
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle>Recent Announcements</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[
-              { title: 'New Challenge Available', date: '2 hours ago', recipients: 24 },
-              { title: 'Weekly Progress Update', date: '1 day ago', recipients: 24 },
-              { title: 'Training Schedule Change', date: '3 days ago', recipients: 18 }
-            ].map((announcement, index) => (
-              <div key={index} className="p-3 rounded-lg bg-secondary/30">
-                <h4 className="font-medium">{announcement.title}</h4>
-                <div className="flex justify-between text-sm text-muted-foreground mt-1">
-                  <span>{announcement.date}</span>
-                  <span>{announcement.recipients} recipients</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
   const getTabContent = () => {
     switch (activeTab) {
       case 'training':
         return renderDashboardContent();
       case 'discover':
         return renderAthletesContent();
-      case 'report':
-        return renderReportsContent();
-      case 'roadmap':
-        return renderChallengesContent();
       default:
         return renderDashboardContent();
     }
@@ -642,10 +355,6 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
         return 'Dashboard';
       case 'discover':
         return 'Athletes';
-      case 'report':
-        return 'Reports';
-      case 'roadmap':
-        return 'Challenges';
       default:
         return 'Dashboard';
     }
@@ -716,9 +425,7 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
           <div className="flex justify-around">
             {[
               { id: 'training', label: 'Dashboard', icon: Zap, color: 'text-blue-600' },
-              { id: 'discover', label: 'Athletes', icon: Users, color: 'text-green-600' },
-              { id: 'report', label: 'Reports', icon: Target, color: 'text-purple-600' },
-              { id: 'roadmap', label: 'Challenges', icon: Calendar, color: 'text-orange-600' }
+              { id: 'discover', label: 'Athletes', icon: Users, color: 'text-green-600' }
             ].map(({ id, label, icon: Icon, color }) => (
               <Button
                 key={id}
