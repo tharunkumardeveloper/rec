@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, Clock, Download, Home, Play, Pause, TrendingUp, Award, Target } from 'lucide-react';
 import { PushupRepData } from '@/services/workoutDetectors/PushupLiveDetector';
 import { useState, useRef, useEffect } from 'react';
+import jsPDF from 'jspdf';
 
 interface WorkoutResultsScreenLightProps {
   activityName: string;
@@ -28,6 +29,7 @@ const WorkoutResultsScreenLight = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   useEffect(() => {
@@ -90,6 +92,153 @@ const WorkoutResultsScreenLight = ({
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+    }
+  };
+
+  const generatePDF = async () => {
+    setIsGeneratingPDF(true);
+
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      const userName = localStorage.getItem('user_name') || 'Athlete';
+      const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      // Header
+      pdf.setFillColor(59, 130, 246);
+      pdf.rect(0, 0, pageWidth, 40, 'F');
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Workout Report', pageWidth / 2, 20, { align: 'center' });
+      
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(activityName, pageWidth / 2, 30, { align: 'center' });
+
+      // Profile
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Athlete Profile', 20, 55);
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Name: ${userName}`, 20, 65);
+      pdf.text(`Date: ${currentDate}`, 20, 72);
+      pdf.text(`Workout Type: ${activityName}`, 20, 79);
+
+      // Metrics
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Key Metrics', 20, 95);
+
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Total Reps: ${totalReps}`, 20, 105);
+      pdf.text(`Correct Reps: ${correctReps}`, 20, 112);
+      pdf.text(`Incorrect Reps: ${incorrectReps}`, 20, 119);
+      pdf.text(`Duration: ${formatTime(duration)}`, 20, 126);
+      pdf.text(`Accuracy: ${accuracy}%`, 20, 133);
+      pdf.text(`Form Score: ${formScore}`, 20, 140);
+
+      // Performance Chart
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Performance Breakdown', 20, 160);
+
+      const barY = 170;
+      const barHeight = 8;
+      const maxBarWidth = 170;
+
+      pdf.setFillColor(34, 197, 94);
+      const correctWidth = totalReps > 0 ? (correctReps / totalReps) * maxBarWidth : 0;
+      pdf.rect(20, barY, correctWidth, barHeight, 'F');
+      pdf.setFontSize(10);
+      pdf.text(`Correct: ${correctReps}`, 20, barY - 2);
+
+      pdf.setFillColor(239, 68, 68);
+      const incorrectWidth = totalReps > 0 ? (incorrectReps / totalReps) * maxBarWidth : 0;
+      pdf.rect(20, barY + 15, incorrectWidth, barHeight, 'F');
+      pdf.text(`Incorrect: ${incorrectReps}`, 20, barY + 13);
+
+      // Rep Details
+      if (repDetails.length > 0) {
+        pdf.addPage();
+        pdf.setFillColor(59, 130, 246);
+        pdf.rect(0, 0, pageWidth, 30, 'F');
+        
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(20);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Rep-by-Rep Analysis', pageWidth / 2, 18, { align: 'center' });
+
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+
+        let yPos = 45;
+        repDetails.slice(0, 20).forEach((rep: any, index: number) => {
+          if (yPos > pageHeight - 30) {
+            pdf.addPage();
+            yPos = 20;
+          }
+
+          const status = rep.correct ? '✓' : '✗';
+          const color: [number, number, number] = rep.correct ? [34, 197, 94] : [239, 68, 68];
+          
+          pdf.setTextColor(color[0], color[1], color[2]);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(`${status} Rep ${rep.rep || index + 1}`, 20, yPos);
+          
+          pdf.setTextColor(0, 0, 0);
+          pdf.setFont('helvetica', 'normal');
+          
+          if (rep.min_elbow !== undefined) {
+            pdf.text(`Elbow: ${rep.min_elbow}°`, 60, yPos);
+          }
+          if (rep.plank_angle !== undefined) {
+            pdf.text(`Plank: ${rep.plank_angle}°`, 100, yPos);
+          }
+          if (rep.angle !== undefined) {
+            pdf.text(`Angle: ${rep.angle}°`, 60, yPos);
+          }
+          if (rep.knee_angle !== undefined) {
+            pdf.text(`Knee: ${rep.knee_angle}°`, 60, yPos);
+          }
+
+          yPos += 8;
+        });
+      }
+
+      // Footer
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(128, 128, 128);
+        pdf.text(
+          `Generated by Talent Track - Page ${i} of ${totalPages}`,
+          pageWidth / 2,
+          pageHeight - 10,
+          { align: 'center' }
+        );
+      }
+
+      pdf.save(`${activityName.replace(/\s+/g, '_')}_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+      
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -379,12 +528,21 @@ const WorkoutResultsScreenLight = ({
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="pt-4">
+        {/* Action Buttons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+          <Button
+            onClick={generatePDF}
+            disabled={isGeneratingPDF}
+            size="lg"
+            className="bg-green-600 hover:bg-green-700 text-white py-6 text-lg font-semibold rounded-xl shadow-lg"
+          >
+            <Download className="w-5 h-5 mr-2" />
+            {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF Report'}
+          </Button>
           <Button
             onClick={onHome}
             size="lg"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg font-semibold rounded-xl shadow-lg"
+            className="bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg font-semibold rounded-xl shadow-lg"
           >
             <Home className="w-5 h-5 mr-2" />
             Back to Home
