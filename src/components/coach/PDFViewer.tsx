@@ -182,10 +182,34 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
 
         {/* Footer hint */}
         {!error && !loading && isCloudinaryRaw && (
-          <div className="p-3 bg-blue-50 border-t border-blue-200 text-center">
-            <p className="text-sm text-blue-800">
-              💡 Viewing via Google Docs Viewer. For best quality, download the PDF.
-            </p>
+          <div className="p-3 bg-blue-50 border-t border-blue-200">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-blue-800">
+                💡 Viewing via Google Docs Viewer. For best quality, download the PDF.
+              </p>
+              <div className="flex space-x-2">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => {
+                    console.log('🔗 Testing direct PDF access...');
+                    window.open(pdfUrl, '_blank');
+                  }}
+                >
+                  Open Direct Link
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => {
+                    console.log('🔗 Testing Google Viewer in new tab...');
+                    window.open(viewerUrl, '_blank');
+                  }}
+                >
+                  Open Viewer in New Tab
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>
