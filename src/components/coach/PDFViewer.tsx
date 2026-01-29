@@ -31,7 +31,16 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
   // Check if it's a Cloudinary URL or base64
   const isCloudinaryUrl = pdfUrl.includes('cloudinary.com');
   const isCloudinaryRaw = pdfUrl.includes('/raw/upload/');
+  const isCloudinaryImage = pdfUrl.includes('/image/upload/'); // Old incorrect uploads
   const isBase64 = pdfUrl.startsWith('data:');
+
+  // For old incorrect Cloudinary URLs, convert to raw URL
+  let correctedPdfUrl = pdfUrl;
+  if (isCloudinaryImage && pdfUrl.includes('.pdf')) {
+    // Try to convert /image/upload/ to /raw/upload/
+    correctedPdfUrl = pdfUrl.replace('/image/upload/', '/raw/upload/');
+    console.log('🔧 Correcting PDF URL from image to raw:', correctedPdfUrl);
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
@@ -54,7 +63,13 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
                 </Button>
               </>
             )}
-            <Button size="sm" variant="outline" onClick={handleDownload}>
+            <Button size="sm" variant="outline" onClick={() => {
+              const link = document.createElement('a');
+              link.href = correctedPdfUrl;
+              link.download = `${athleteName}_${activityName}_Report.pdf`;
+              link.target = '_blank';
+              link.click();
+            }}>
               <Download className="w-4 h-4 mr-2" />
               Download
             </Button>
@@ -66,8 +81,8 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
 
         {/* PDF Content */}
         <div className="flex-1 overflow-auto bg-gray-100 p-4">
-          {isCloudinaryRaw ? (
-            // For Cloudinary raw files, show direct download (raw files can't be embedded)
+          {(isCloudinaryRaw || isCloudinaryImage) ? (
+            // For Cloudinary raw files or old image URLs, show direct download
             <div className="flex flex-col items-center justify-center h-full space-y-4">
               <div className="text-center">
                 <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -76,20 +91,32 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold mb-2">PDF Report Ready</h3>
-                <p className="text-gray-600 mb-2">Cloudinary raw files require download to view</p>
+                <p className="text-gray-600 mb-2">
+                  {isCloudinaryImage ? 'Legacy PDF format detected' : 'Cloudinary raw file'}
+                </p>
                 <p className="text-sm text-gray-500 mb-6">Click the button below to download and open the report</p>
-                <Button onClick={handleDownload} size="lg" className="bg-blue-600 hover:bg-blue-700">
+                <Button 
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = correctedPdfUrl;
+                    link.download = `${athleteName}_${activityName}_Report.pdf`;
+                    link.target = '_blank';
+                    link.click();
+                  }} 
+                  size="lg" 
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
                   <Download className="w-5 h-5 mr-2" />
                   Download PDF Report
                 </Button>
               </div>
             </div>
-          ) : isCloudinaryUrl && !isCloudinaryRaw ? (
+          ) : isCloudinaryUrl ? (
             // For other Cloudinary URLs, try iframe
             <div className="h-full flex flex-col">
               <div className="bg-white shadow-lg mx-auto w-full h-full">
                 <iframe
-                  src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+                  src={`${correctedPdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
                   className="w-full h-full border-0"
                   title="PDF Report"
                 />
