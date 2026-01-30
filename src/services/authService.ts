@@ -22,6 +22,7 @@ interface LoginData {
 class AuthService {
   private readonly BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://rec-backend-yi7u.onrender.com';
   private readonly SESSION_KEY = 'auth_session';
+  private readonly RECENT_USERS_KEY = 'recent_users';
 
   /**
    * Sign up a new user
@@ -187,6 +188,42 @@ class AuthService {
    */
   private saveSession(profile: UserProfile): void {
     localStorage.setItem(this.SESSION_KEY, JSON.stringify(profile));
+    this.addToRecentUsers(profile);
+  }
+
+  /**
+   * Add user to recent users list (max 3)
+   */
+  private addToRecentUsers(profile: UserProfile): void {
+    try {
+      const recentUsersStr = localStorage.getItem(this.RECENT_USERS_KEY);
+      let recentUsers: UserProfile[] = recentUsersStr ? JSON.parse(recentUsersStr) : [];
+      
+      // Remove if already exists
+      recentUsers = recentUsers.filter(u => u.userId !== profile.userId);
+      
+      // Add to front
+      recentUsers.unshift(profile);
+      
+      // Keep only last 3
+      recentUsers = recentUsers.slice(0, 3);
+      
+      localStorage.setItem(this.RECENT_USERS_KEY, JSON.stringify(recentUsers));
+    } catch (error) {
+      console.error('Error saving recent users:', error);
+    }
+  }
+
+  /**
+   * Get recent users
+   */
+  public getRecentUsers(): UserProfile[] {
+    try {
+      const recentUsersStr = localStorage.getItem(this.RECENT_USERS_KEY);
+      return recentUsersStr ? JSON.parse(recentUsersStr) : [];
+    } catch (error) {
+      return [];
+    }
   }
 
   /**

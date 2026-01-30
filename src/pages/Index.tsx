@@ -140,10 +140,14 @@ const Index = () => {
 
   const handleLoadingComplete = () => {
     scrollToTopInstant();
-    // If returning user, skip to home
-    if (!isFirstTime) {
+    
+    // Check if user has valid session
+    const session = authService.getSession();
+    if (session && !isFirstTime) {
+      console.log('✅ Auto-login: User has valid session');
       setAppState('home');
     } else {
+      console.log('⚠️ No valid session, showing login');
       setAppState('auth');
     }
   };

@@ -25,15 +25,13 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
   const [phone, setPhone] = useState('');
   const [profilePic, setProfilePic] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  const [recentUser, setRecentUser] = useState<UserProfile | null>(null);
+  const [recentUsers, setRecentUsers] = useState<UserProfile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check for recent user on mount
+  // Check for recent users on mount
   useEffect(() => {
-    const session = authService.getSession();
-    if (session) {
-      setRecentUser(session);
-    }
+    const users = authService.getRecentUsers();
+    setRecentUsers(users);
   }, []);
 
   const roles = [
@@ -160,30 +158,35 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
             <CardContent className="p-6">
               <h2 className="text-xl font-bold text-white mb-4 text-center">Choose Your Role</h2>
               
-              {/* Continue as recent user */}
-              {recentUser && (
-                <div className="mb-4 p-4 bg-white/20 rounded-lg border-2 border-white/30">
+              {/* Continue as recent users */}
+              {recentUsers.length > 0 && (
+                <div className="mb-4">
                   <p className="text-white/80 text-sm mb-2">Continue as:</p>
-                  <Button
-                    onClick={() => onSuccess(recentUser)}
-                    className="w-full bg-white text-purple-900 hover:bg-white/90 font-semibold flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      {recentUser.profilePic ? (
-                        <img src={recentUser.profilePic} alt={recentUser.name} className="w-8 h-8 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-purple-900 text-white flex items-center justify-center font-bold">
-                          {recentUser.name.split(' ').map(n => n[0]).join('')}
+                  <div className="space-y-2">
+                    {recentUsers.map((user) => (
+                      <button
+                        key={user.userId}
+                        onClick={() => onSuccess(user)}
+                        className="w-full p-3 bg-white/20 hover:bg-white/30 rounded-lg border-2 border-white/30 hover:border-white/50 transition-all flex items-center justify-between group"
+                      >
+                        <div className="flex items-center gap-3">
+                          {user.profilePic ? (
+                            <img src={user.profilePic} alt={user.name} className="w-10 h-10 rounded-full object-cover border-2 border-white/30" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center font-bold border-2 border-white/30">
+                              {user.name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                          )}
+                          <div className="text-left">
+                            <div className="font-semibold text-white">{user.name}</div>
+                            <div className="text-xs text-white/70">{user.role.replace('_', ' ')}</div>
+                          </div>
                         </div>
-                      )}
-                      <div className="text-left">
-                        <div className="font-semibold">{recentUser.name}</div>
-                        <div className="text-xs opacity-80">{recentUser.role.replace('_', ' ')}</div>
-                      </div>
-                    </div>
-                    <span>→</span>
-                  </Button>
-                  <p className="text-white/60 text-xs mt-2 text-center">or login with a different account:</p>
+                        <span className="text-white/70 group-hover:text-white transition-colors">→</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-white/60 text-xs mt-3 text-center">or login with a different account:</p>
                 </div>
               )}
               
