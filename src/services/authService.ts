@@ -190,13 +190,12 @@ class AuthService {
   }
 
   /**
-   * Clear all demo/fake data
+   * Clear all demo/fake data (but keep auth session)
    */
   public clearDemoData(): void {
-    console.log('🧹 Clearing demo data...');
-    localStorage.removeItem('talenttrack_user');
-    localStorage.removeItem('user_profile');
-    localStorage.removeItem(this.SESSION_KEY);
+    console.log('🧹 Clearing old demo data...');
+    localStorage.removeItem('talenttrack_user'); // Old demo data
+    // Don't remove auth_session or user_profile - these are real user data
   }
 }
 

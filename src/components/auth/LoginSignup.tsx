@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,16 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
   const [phone, setPhone] = useState('');
   const [profilePic, setProfilePic] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [recentUser, setRecentUser] = useState<UserProfile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check for recent user on mount
+  useEffect(() => {
+    const session = authService.getSession();
+    if (session) {
+      setRecentUser(session);
+    }
+  }, []);
 
   const roles = [
     { value: 'ATHLETE' as Role, label: 'Athlete', icon: '🏃', description: 'Track your fitness journey' },
@@ -150,6 +159,34 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
           <Card className="backdrop-blur-sm bg-white/10 border-2 border-white/20 animate-slide-up">
             <CardContent className="p-6">
               <h2 className="text-xl font-bold text-white mb-4 text-center">Choose Your Role</h2>
+              
+              {/* Continue as recent user */}
+              {recentUser && (
+                <div className="mb-4 p-4 bg-white/20 rounded-lg border-2 border-white/30">
+                  <p className="text-white/80 text-sm mb-2">Continue as:</p>
+                  <Button
+                    onClick={() => onSuccess(recentUser)}
+                    className="w-full bg-white text-purple-900 hover:bg-white/90 font-semibold flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      {recentUser.profilePic ? (
+                        <img src={recentUser.profilePic} alt={recentUser.name} className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-purple-900 text-white flex items-center justify-center font-bold">
+                          {recentUser.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                      )}
+                      <div className="text-left">
+                        <div className="font-semibold">{recentUser.name}</div>
+                        <div className="text-xs opacity-80">{recentUser.role.replace('_', ' ')}</div>
+                      </div>
+                    </div>
+                    <span>→</span>
+                  </Button>
+                  <p className="text-white/60 text-xs mt-2 text-center">or login with a different account:</p>
+                </div>
+              )}
+              
               <div className="space-y-3">
                 {roles.map((role) => (
                   <button
