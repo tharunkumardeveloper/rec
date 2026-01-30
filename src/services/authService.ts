@@ -20,7 +20,7 @@ interface LoginData {
 }
 
 class AuthService {
-  private readonly BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+  private readonly BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://rec-backend-yi7u.onrender.com';
   private readonly SESSION_KEY = 'auth_session';
 
   /**
