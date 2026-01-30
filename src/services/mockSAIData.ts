@@ -26,7 +26,7 @@ export const MOCK_COACHES: MockCoach[] = [
   {
     id: 'coach-1',
     name: 'Gautham Vasudev Menon',
-    profilePic: '/ppl/sundar kumar.jpg',
+    profilePic: '/ppl/sundar%20kumar.jpg',
     athleteCount: 0, // Will be calculated dynamically
     totalWorkouts: 0
   },
@@ -40,7 +40,7 @@ export const MOCK_COACHES: MockCoach[] = [
   {
     id: 'coach-3',
     name: 'Manish Paul',
-    profilePic: '/ppl/manish paul.jpg',
+    profilePic: '/ppl/manish%20paul.jpg',
     athleteCount: 2,
     totalWorkouts: 8
   }
@@ -60,7 +60,7 @@ export const MOCK_ATHLETES: MockAthlete[] = [
   {
     id: 'athlete-2',
     name: 'Dev Patel',
-    profilePic: '/ppl/dev patel.jpg',
+    profilePic: '/ppl/dev%20patel.jpg',
     coachName: 'Rahul Dravid',
     workoutCount: 4,
     lastWorkout: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() // 5 hours ago
@@ -68,7 +68,7 @@ export const MOCK_ATHLETES: MockAthlete[] = [
   {
     id: 'athlete-3',
     name: 'Umesh Yadav',
-    profilePic: '/ppl/umesh yadav.jpeg',
+    profilePic: '/ppl/umesh%20yadav.jpeg',
     coachName: 'Rahul Dravid',
     workoutCount: 3,
     lastWorkout: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // 1 day ago
