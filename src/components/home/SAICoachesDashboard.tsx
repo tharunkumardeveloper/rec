@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import workoutStorageService from '@/services/workoutStorageService';
-import { getMockCoachesWithRealData, type MockCoach } from '@/services/mockSAIData';
+import { getMockCoachesWithRealData, getMockAthletesWithRealData, type MockCoach } from '@/services/mockSAIData';
+import CoachDashboard from '@/components/home/CoachDashboard';
 import { Users, Activity, Trophy, Eye, ArrowLeft } from 'lucide-react';
 
 interface SAICoachesDashboardProps {
@@ -36,38 +37,14 @@ const SAICoachesDashboard = ({ onBack }: SAICoachesDashboardProps) => {
           Back to Coaches
         </Button>
         
-        <Card className="card-elevated">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4 mb-6">
-              <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-primary/30">
-                <img src={selectedCoach.profilePic} alt={selectedCoach.name} className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold">{selectedCoach.name}</h2>
-                <p className="text-muted-foreground">Head Coach</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-primary">{selectedCoach.athleteCount}</div>
-                <div className="text-sm text-muted-foreground">Athletes</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-success">{selectedCoach.totalWorkouts}</div>
-                <div className="text-sm text-muted-foreground">Workouts</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-warning">
-                  {selectedCoach.athleteCount > 0 
-                    ? Math.round(selectedCoach.totalWorkouts / selectedCoach.athleteCount) 
-                    : 0}
-                </div>
-                <div className="text-sm text-muted-foreground">Avg/Athlete</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Show full coach dashboard for selected coach */}
+        <CoachDashboard 
+          userName={selectedCoach.name}
+          userRole="COACH"
+          onTabChange={() => {}}
+          activeTab="training"
+          isSAIAdminView={true}
+        />
       </div>
     );
   }

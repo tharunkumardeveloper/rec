@@ -31,13 +31,15 @@ import {
 
 interface CoachDashboardProps {
   userName: string;
+  userRole?: string;
   onTabChange: (tab: string) => void;
   activeTab: string;
   onProfileOpen?: () => void;
   onSettingsOpen?: () => void;
+  isSAIAdminView?: boolean; // When SAI admin is viewing a coach's dashboard
 }
 
-const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSettingsOpen }: CoachDashboardProps) => {
+const CoachDashboard = ({ userName, userRole, onTabChange, activeTab, onProfileOpen, onSettingsOpen, isSAIAdminView = false }: CoachDashboardProps) => {
   const [searchFocus, setSearchFocus] = useState(false);
   const [athleteWorkouts, setAthleteWorkouts] = useState<Array<{ name: string; workoutCount: number; lastWorkout: string; workouts: StoredWorkout[] }>>([]);
   const [selectedAthlete, setSelectedAthlete] = useState<string | null>(null);
