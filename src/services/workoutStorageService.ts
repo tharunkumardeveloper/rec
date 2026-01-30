@@ -5,6 +5,7 @@
 
 export interface StoredWorkout {
   id: string;
+  sessionId?: string; // MongoDB session ID
   athleteName: string;
   athleteProfilePic?: string;
   activityName: string;
@@ -26,6 +27,7 @@ export interface StoredWorkout {
 class WorkoutStorageService {
   private readonly STORAGE_KEY = 'athlete_workouts';
   private readonly MAX_WORKOUTS = 50; // Keep last 50 workouts
+  private readonly BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://rec-backend-yi7u.onrender.com';
 
   /**
    * Save a workout with video and PDF
@@ -194,6 +196,7 @@ class WorkoutStorageService {
       
       return workouts.map((workout: any) => ({
         id: workout._id || workout.id,
+        sessionId: workout._id || workout.id, // MongoDB session ID for deletion
         athleteName: workout.athleteName,
         athleteProfilePic: workout.athleteProfilePic,
         activityName: workout.activityName,
@@ -226,17 +229,31 @@ class WorkoutStorageService {
   }
 
   /**
-   * Delete a workout
+   * Delete a workout session from MongoDB
    */
-  public deleteWorkout(id: string): boolean {
-    const workouts = this.getAllWorkouts();
-    const filtered = workouts.filter(w => w.id !== id);
-    
-    if (filtered.length < workouts.length) {
-      this.saveToStorage(filtered);
+  public async deleteWorkout(sessionId: string): Promise<boolean> {
+    try {
+      console.log('🗑️ Deleting workout:', sessionId);
+
+      const response = await fetch(`${this.BACKEND_URL}/api/sessions/${sessionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete workout: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ Workout deleted:', result);
+
       return true;
+    } catch (error) {
+      console.error('❌ Error deleting workout:', error);
+      throw error;
     }
-    return false;
   }
 
   /**
@@ -351,7 +368,7 @@ class WorkoutStorageService {
   }
 
   private generateId(): string {
-    return `workout_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `workout_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 }
 

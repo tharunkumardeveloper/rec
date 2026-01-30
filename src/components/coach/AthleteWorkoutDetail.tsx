@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Play, FileText, Image as ImageIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { toast } from '@/components/ui/sonner';
+import { ArrowLeft, Play, FileText, Image as ImageIcon, X, ChevronLeft, ChevronRight, Trash2, Loader2 } from 'lucide-react';
 import { StoredWorkout } from '@/services/workoutStorageService';
+import workoutStorageService from '@/services/workoutStorageService';
 import PDFViewer from './PDFViewer';
 
 interface AthleteWorkoutDetailProps {
@@ -27,6 +29,7 @@ const AthleteWorkoutDetail = ({
 }: AthleteWorkoutDetailProps) => {
   const [showPDFViewer, setShowPDFViewer] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const screenshots = selectedWorkout.screenshots || [];
 
@@ -89,6 +92,27 @@ const AthleteWorkoutDetail = ({
       setSelectedImageIndex(selectedImageIndex > 0 ? selectedImageIndex - 1 : screenshots.length - 1);
     } else {
       setSelectedImageIndex(selectedImageIndex < screenshots.length - 1 ? selectedImageIndex + 1 : 0);
+    }
+  };
+
+  const handleDeleteWorkout = async () => {
+    if (!confirm(`Are you sure you want to delete this workout?\n\nAthlete: ${athleteName}\nWorkout: ${selectedWorkout.activityName}\nDate: ${formatDate(selectedWorkout.timestamp)}\n\nThis action cannot be undone and will delete the workout for all users.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await workoutStorageService.deleteWorkout(selectedWorkout.sessionId);
+      toast.success('Workout deleted successfully');
+      
+      // Go back to list and refresh
+      onBack();
+      window.location.reload(); // Refresh to update the list
+    } catch (error: any) {
+      console.error('Error deleting workout:', error);
+      toast.error(error.message || 'Failed to delete workout');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -226,7 +250,7 @@ const AthleteWorkoutDetail = ({
         {/* PDF Report */}
         {(selectedWorkout.pdfUrl || selectedWorkout.pdfDataUrl) && (
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-4 space-y-2">
               <Button 
                 onClick={() => setShowPDFViewer(true)}
                 className="w-full"
@@ -234,6 +258,26 @@ const AthleteWorkoutDetail = ({
               >
                 <FileText className="w-4 h-4 mr-2" />
                 View PDF Report
+              </Button>
+              
+              {/* Delete Workout Button */}
+              <Button 
+                onClick={handleDeleteWorkout}
+                disabled={isDeleting}
+                className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                variant="destructive"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Workout
+                  </>
+                )}
               </Button>
             </CardContent>
           </Card>
