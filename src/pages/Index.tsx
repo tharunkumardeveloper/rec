@@ -519,13 +519,7 @@ const Index = () => {
                     onClick={handleProfileOpen}
                     className="w-full flex items-center space-x-2 px-3 py-2 text-sm rounded-lg hover:bg-secondary transition-colors"
                   >
-                    <div className="w-5 h-5 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      {userProfilePic ? (
-                        <img src={userProfilePic} alt={userName} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-xs">👤</span>
-                      )}
-                    </div>
+                    <span>👤</span>
                     <span>Profile</span>
                   </button>
                   <button
@@ -564,27 +558,9 @@ const Index = () => {
                 <div className="sticky top-0 z-50 bg-primary border-b border-primary-dark safe-top lg:hidden">
                   <div className="px-4 py-4">
                     <div className="flex items-center justify-between max-w-7xl mx-auto">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold overflow-hidden border-2 border-white/30">
-                          {(() => {
-                            console.log('🎨 Rendering header with userProfilePic:', userProfilePic ? 'YES (' + userProfilePic.substring(0, 50) + '...)' : 'NO');
-                            return userProfilePic ? (
-                              <img 
-                                src={userProfilePic} 
-                                alt={userName} 
-                                className="w-full h-full object-cover"
-                                onError={() => console.error('❌ Header: Failed to load profile image')}
-                                onLoad={() => console.log('✅ Header: Profile image loaded')}
-                              />
-                            ) : (
-                              <span className="text-white">{userName.split(' ').map(n => n[0]).join('')}</span>
-                            );
-                          })()}
-                        </div>
-                        <div>
-                          <h1 className="text-lg font-semibold text-white">Welcome, {userName}</h1>
-                          <p className="text-sm text-white/80 capitalize">{userRole}</p>
-                        </div>
+                      <div>
+                        <h1 className="text-lg font-semibold text-white">Welcome, {userName}</h1>
+                        <p className="text-sm text-white/80 capitalize">{userRole}</p>
                       </div>
                       <div className="flex items-center space-x-3">
                         <button
