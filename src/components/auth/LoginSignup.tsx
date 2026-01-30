@@ -40,6 +40,13 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
     { value: 'SAI_ADMIN' as Role, label: 'SAI Admin', icon: '🛡️', description: 'Oversee all operations' }
   ];
 
+  const handleRecentUserClick = (user: UserProfile) => {
+    // Pre-fill email and go to login
+    setEmail(user.email || '');
+    setSelectedRole(user.role);
+    setStep('login');
+  };
+
   const handleRoleSelect = (role: Role) => {
     setSelectedRole(role);
     setStep('choice');
@@ -161,12 +168,12 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
               {/* Continue as recent users */}
               {recentUsers.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-white/80 text-sm mb-2">Continue as:</p>
+                  <p className="text-white/80 text-sm mb-2">Recent accounts:</p>
                   <div className="space-y-2">
                     {recentUsers.map((user) => (
                       <button
                         key={user.userId}
-                        onClick={() => onSuccess(user)}
+                        onClick={() => handleRecentUserClick(user)}
                         className="w-full p-3 bg-white/20 hover:bg-white/30 rounded-lg border-2 border-white/30 hover:border-white/50 transition-all flex items-center justify-between group"
                       >
                         <div className="flex items-center gap-3">
@@ -186,7 +193,7 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
                       </button>
                     ))}
                   </div>
-                  <p className="text-white/60 text-xs mt-3 text-center">or login with a different account:</p>
+                  <p className="text-white/60 text-xs mt-3 text-center">Click to login with password</p>
                 </div>
               )}
               
@@ -255,9 +262,31 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
               </button>
               
               <div className="text-center mb-6">
-                <div className="text-4xl mb-3">{selectedRoleData?.icon}</div>
-                <h2 className="text-xl font-bold text-white mb-1">Login as {selectedRoleData?.label}</h2>
-                <p className="text-white/70 text-sm">Enter your credentials</p>
+                {/* Show user profile pic if coming from recent users */}
+                {email && recentUsers.find(u => u.email === email) ? (
+                  <div className="mb-3">
+                    {recentUsers.find(u => u.email === email)?.profilePic ? (
+                      <img 
+                        src={recentUsers.find(u => u.email === email)?.profilePic} 
+                        alt="Profile" 
+                        className="w-20 h-20 rounded-full object-cover mx-auto border-4 border-white/30"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-2xl mx-auto border-4 border-white/30">
+                        {recentUsers.find(u => u.email === email)?.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-4xl mb-3">{selectedRoleData?.icon}</div>
+                )}
+                <h2 className="text-xl font-bold text-white mb-1">
+                  {email && recentUsers.find(u => u.email === email) 
+                    ? `Welcome back, ${recentUsers.find(u => u.email === email)?.name}!`
+                    : `Login as ${selectedRoleData?.label}`
+                  }
+                </h2>
+                <p className="text-white/70 text-sm">Enter your password</p>
               </div>
 
               <div className="space-y-4">
