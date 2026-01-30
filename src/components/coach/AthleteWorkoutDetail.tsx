@@ -171,6 +171,46 @@ const AthleteWorkoutDetail = ({
           </div>
         </div>
 
+        {/* Workout Selector - Show all workouts */}
+        {workouts.length > 1 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">All Workouts ({workouts.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3">
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {workouts.map((workout, index) => (
+                  <button
+                    key={workout.id || index}
+                    onClick={() => onWorkoutSelect(workout)}
+                    className={`w-full text-left p-3 rounded-lg transition-all ${
+                      workout.id === selectedWorkout.id || workout.timestamp === selectedWorkout.timestamp
+                        ? 'bg-primary text-primary-foreground shadow-md'
+                        : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">{workout.activityName}</p>
+                        <p className="text-xs opacity-80">{formatDate(workout.timestamp)}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`${
+                          workout.accuracy >= 80 ? 'bg-green-500' : 
+                          workout.accuracy >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                        } text-white text-xs`}>
+                          {workout.accuracy}%
+                        </Badge>
+                        <span className="text-sm font-bold">{workout.totalReps} reps</span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Performance Metrics */}
         <div className="grid grid-cols-2 gap-3">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
