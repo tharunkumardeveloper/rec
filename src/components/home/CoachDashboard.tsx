@@ -454,18 +454,9 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
       <div className="sticky top-0 z-50 bg-primary border-b border-primary-dark safe-top lg:hidden">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold overflow-hidden border-2 border-white/30">
-                {userProfilePic ? (
-                  <img src={userProfilePic} alt={userName} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-white">{userName.split(' ').map(n => n[0]).join('')}</span>
-                )}
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-white">Welcome, {userName}</h1>
-                <p className="text-sm text-white/80">Coach</p>
-              </div>
+            <div>
+              <h1 className="text-lg font-semibold text-white">Welcome, {userName}</h1>
+              <p className="text-sm text-white/80">Coach</p>
             </div>
             <div className="flex items-center space-x-3">
               <button
