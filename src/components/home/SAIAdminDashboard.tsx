@@ -48,6 +48,7 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
   const [selectedAthlete, setSelectedAthlete] = useState<string | null>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<StoredWorkout | null>(null);
   const [userProfilePic, setUserProfilePic] = useState<string>('');
+  const [coaches, setCoaches] = useState<MockCoach[]>([]);
 
   // Load user profile photo
   useEffect(() => {
@@ -74,6 +75,10 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
       
       // Get mock athletes merged with real data
       const allMockAthletes = getMockAthletesWithRealData(realAthletes);
+      
+      // Get coaches with real data
+      const coachesData = getMockCoachesWithRealData(realAthletes);
+      setCoaches(coachesData);
       
       // Load workouts for each athlete
       const athleteData = await Promise.all(
@@ -188,6 +193,46 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
           </CardContent>
         </Card>
       </div>
+
+      {/* Coaches Preview Section */}
+      {coaches.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Coaches</h3>
+            <Button onClick={() => onTabChange('coaches')} variant="outline" size="sm">
+              <Eye className="w-4 h-4 mr-2" />
+              View All
+            </Button>
+          </div>
+          
+          <div className="space-y-2">
+            {coaches.slice(0, 3).map((coach) => (
+              <Card key={coach.id} className="card-elevated hover:shadow-md transition-all border-l-4 border-l-success">
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-success/30 flex-shrink-0">
+                      <img src={coach.profilePic} alt={coach.name} className="w-full h-full object-cover" />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-sm truncate">{coach.name}</h4>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{coach.athleteCount} athletes</span>
+                        <span>•</span>
+                        <span>{coach.totalWorkouts} workouts</span>
+                      </div>
+                    </div>
+                    
+                    <Badge className="bg-success text-white text-xs flex-shrink-0">
+                      {coach.athleteCount > 0 ? Math.round(coach.totalWorkouts / coach.athleteCount) : 0} avg
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 
