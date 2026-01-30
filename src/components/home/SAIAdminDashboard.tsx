@@ -5,18 +5,26 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import workoutStorageService, { StoredWorkout } from '@/services/workoutStorageService';
 import AthleteWorkoutDetail from '@/components/coach/AthleteWorkoutDetail';
+import SAICoachesDashboard from './SAICoachesDashboard';
 import { userProfileService } from '@/services/userProfileService';
+import { 
+  getMockCoachesWithRealData, 
+  getMockAthletesWithRealData, 
+  getMockWorkoutsForAthlete,
+  isMockAthlete,
+  type MockCoach
+} from '@/services/mockSAIData';
 import { 
   Search, 
   Settings, 
-  User, 
   Target, 
   Trophy, 
   Zap, 
   Users, 
   Activity, 
   Eye,
-  UserCheck
+  UserCheck,
+  GraduationCap
 } from 'lucide-react';
 
 interface SAIAdminDashboardProps {
@@ -29,7 +37,14 @@ interface SAIAdminDashboardProps {
 
 const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSettingsOpen }: SAIAdminDashboardProps) => {
   const [searchFocus, setSearchFocus] = useState(false);
-  const [athleteWorkouts, setAthleteWorkouts] = useState<Array<{ name: string; workoutCount: number; lastWorkout: string; workouts: StoredWorkout[]; coach?: string }>>([]);
+  const [athleteWorkouts, setAthleteWorkouts] = useState<Array<{ 
+    name: string; 
+    workoutCount: number; 
+    lastWorkout: string; 
+    workouts: StoredWorkout[]; 
+    coach?: string;
+    profilePic?: string;
+  }>>([]);
   const [selectedAthlete, setSelectedAthlete] = useState<string | null>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<StoredWorkout | null>(null);
   const [userProfilePic, setUserProfilePic] = useState<string>('');
@@ -54,22 +69,34 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
 
   const loadAthleteData = async () => {
     try {
-      const athletes = await workoutStorageService.getAllAthletes();
-      if (!athletes || athletes.length === 0) {
-        setAthleteWorkouts([]);
-        return;
-      }
+      // Get real athletes from MongoDB
+      const realAthletes = await workoutStorageService.getAllAthletes();
       
+      // Get mock athletes merged with real data
+      const allMockAthletes = getMockAthletesWithRealData(realAthletes);
+      
+      // Load workouts for each athlete
       const athleteData = await Promise.all(
-        athletes.map(async (athlete) => {
+        allMockAthletes.map(async (athlete) => {
           try {
-            const workouts = await workoutStorageService.getWorkoutsByAthlete(athlete.name);
+            let workouts: StoredWorkout[];
+            
+            // Check if this is a mock athlete or real athlete
+            if (isMockAthlete(athlete.name)) {
+              // Mock athlete - use mock workouts
+              workouts = getMockWorkoutsForAthlete(athlete.name) as StoredWorkout[];
+            } else {
+              // Real athlete - fetch from MongoDB
+              workouts = await workoutStorageService.getWorkoutsByAthlete(athlete.name);
+            }
+            
             return {
               name: athlete.name,
               workoutCount: athlete.workoutCount,
               lastWorkout: athlete.lastWorkout,
               workouts,
-              coach: 'Assigned Coach'
+              coach: athlete.coachName,
+              profilePic: athlete.profilePic
             };
           } catch (error) {
             return {
@@ -77,7 +104,8 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
               workoutCount: 0,
               lastWorkout: athlete.lastWorkout,
               workouts: [],
-              coach: 'Assigned Coach'
+              coach: athlete.coachName,
+              profilePic: athlete.profilePic
             };
           }
         })
@@ -105,7 +133,7 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
 
   const overviewStats = {
     totalAthletes: athleteWorkouts.length,
-    totalCoaches: 5,
+    totalCoaches: 3, // Gautham Vasudev Menon, Rahul Dravid, Manish Paul
     totalWorkouts: athleteWorkouts.reduce((sum, a) => sum + a.workoutCount, 0),
     avgAccuracy: athleteWorkouts.length > 0 
       ? Math.round(
@@ -208,8 +236,14 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
                   <CardContent className="p-3 sm:p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold text-sm">
-                          {athlete.name ? athlete.name.split(' ').map(n => n[0]).join('') : '?'}
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-full overflow-hidden border-2 border-primary/30">
+                          {athlete.profilePic ? (
+                            <img src={athlete.profilePic} alt={athlete.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold text-sm">
+                              {athlete.name ? athlete.name.split(' ').map(n => n[0]).join('') : '?'}
+                            </div>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-sm sm:text-base truncate">{athlete.name}</h3>
@@ -268,6 +302,8 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
         return renderDashboardContent();
       case 'discover':
         return renderAthletesContent();
+      case 'coaches':
+        return <SAICoachesDashboard onBack={() => onTabChange('training')} />;
       default:
         return renderDashboardContent();
     }
@@ -279,6 +315,8 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
         return 'Dashboard';
       case 'discover':
         return 'Athletes';
+      case 'coaches':
+        return 'Coaches';
       default:
         return 'Dashboard';
     }
@@ -347,7 +385,8 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
           <div className="flex justify-around">
             {[
               { id: 'training', label: 'Dashboard', icon: Zap, color: 'text-blue-600' },
-              { id: 'discover', label: 'Athletes', icon: Users, color: 'text-green-600' }
+              { id: 'discover', label: 'Athletes', icon: Users, color: 'text-green-600' },
+              { id: 'coaches', label: 'Coaches', icon: GraduationCap, color: 'text-purple-600' }
             ].map(({ id, label, icon: Icon, color }) => (
               <Button
                 key={id}
