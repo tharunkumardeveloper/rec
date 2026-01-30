@@ -428,39 +428,44 @@ const WorkoutResultsScreenLight = ({
       // Save PDF locally
       pdf.save(filename);
 
-      // Save to local storage for coach dashboard
-      try {
-        const pdfBlob = pdf.output('blob');
-        const pdfDataUrl = await workoutStorageService.blobToDataUrl(pdfBlob);
-        const videoDataUrl = videoBlob ? await workoutStorageService.blobToDataUrl(videoBlob) : undefined;
+      // Save to local storage for coach dashboard (only if not already auto-saved)
+      if (!autoSaved) {
+        try {
+          const pdfBlob = pdf.output('blob');
+          const pdfDataUrl = await workoutStorageService.blobToDataUrl(pdfBlob);
+          const videoDataUrl = videoBlob ? await workoutStorageService.blobToDataUrl(videoBlob) : undefined;
 
-        const workoutId = await workoutStorageService.saveWorkout({
-          athleteName: userName,
-          athleteProfilePic: userProfilePic || undefined,
-          activityName,
-          totalReps,
-          correctReps,
-          incorrectReps,
-          duration,
-          accuracy,
-          formScore,
-          repDetails,
-          timestamp: new Date().toISOString(),
-          videoDataUrl,
-          pdfDataUrl,
-          screenshots: workoutScreenshots
-        });
+          const workoutId = await workoutStorageService.saveWorkout({
+            athleteName: userName,
+            athleteProfilePic: userProfilePic || undefined,
+            activityName,
+            totalReps,
+            correctReps,
+            incorrectReps,
+            duration,
+            accuracy,
+            formScore,
+            repDetails,
+            timestamp: new Date().toISOString(),
+            videoDataUrl,
+            pdfDataUrl,
+            screenshots: workoutScreenshots
+          });
 
-        console.log('✅ Workout saved successfully! ID:', workoutId);
-        console.log('📊 Athlete:', userName);
-        console.log('🏋️ Activity:', activityName);
-        console.log('💾 Storage size:', workoutStorageService.getStorageSize().toFixed(2), 'MB');
-        
-        // Show success message
-        alert(`✅ Workout saved! Coach can now view this workout in the Athletes tab.`);
-      } catch (storageError) {
-        console.error('❌ Failed to save workout locally:', storageError);
-        alert(`⚠️ Warning: Workout may not be visible to coach. Error: ${storageError}`);
+          setAutoSaved(true);
+          console.log('✅ Workout saved successfully! ID:', workoutId);
+          console.log('📊 Athlete:', userName);
+          console.log('🏋️ Activity:', activityName);
+          console.log('💾 Storage size:', workoutStorageService.getStorageSize().toFixed(2), 'MB');
+          
+          // Show success message
+          alert(`✅ Workout saved! Coach can now view this workout in the Athletes tab.`);
+        } catch (storageError) {
+          console.error('❌ Failed to save workout locally:', storageError);
+          alert(`⚠️ Warning: Workout may not be visible to coach. Error: ${storageError}`);
+        }
+      } else {
+        console.log('ℹ️ Workout already auto-saved, skipping duplicate save');
       }
 
       // Auto-submit to coach dashboard (if configured)
