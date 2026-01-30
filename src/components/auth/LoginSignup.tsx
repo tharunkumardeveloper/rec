@@ -28,9 +28,9 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const roles = [
-    { value: 'ATHLETE' as Role, label: 'Athlete', icon: '🏃', description: 'Track your fitness journey', gradient: 'from-blue-600 to-blue-800' },
-    { value: 'COACH' as Role, label: 'Coach', icon: '👨‍🏫', description: 'Manage and guide athletes', gradient: 'from-green-600 to-green-800' },
-    { value: 'SAI_ADMIN' as Role, label: 'SAI Admin', icon: '🛡️', description: 'Oversee all operations', gradient: 'from-purple-600 to-purple-800' }
+    { value: 'ATHLETE' as Role, label: 'Athlete', icon: '🏃', description: 'Track your fitness journey' },
+    { value: 'COACH' as Role, label: 'Coach', icon: '👨‍🏫', description: 'Manage and guide athletes' },
+    { value: 'SAI_ADMIN' as Role, label: 'SAI Admin', icon: '🛡️', description: 'Oversee all operations' }
   ];
 
   const handleRoleSelect = (role: Role) => {
@@ -155,7 +155,7 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
                   <button
                     key={role.value}
                     onClick={() => handleRoleSelect(role.value)}
-                    className={`w-full p-4 rounded-lg bg-gradient-to-r ${role.gradient} hover:opacity-90 border-2 border-white/20 transition-all duration-200 text-left group shadow-lg`}
+                    className="w-full p-4 rounded-lg bg-white/10 hover:bg-white/20 border-2 border-white/20 hover:border-white/40 transition-all duration-200 text-left group"
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">{role.icon}</span>

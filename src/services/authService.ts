@@ -20,7 +20,7 @@ interface LoginData {
 }
 
 class AuthService {
-  private readonly BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://rec-backend-yi7u.onrender.com';
+  private readonly BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
   private readonly SESSION_KEY = 'auth_session';
 
   /**
@@ -37,6 +37,14 @@ class AuthService {
         },
         body: JSON.stringify(data)
       });
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('❌ Non-JSON response:', text);
+        throw new Error('Server error: Expected JSON response but got HTML. Make sure the backend server is running on port 3001.');
+      }
 
       const result = await response.json();
 
@@ -82,6 +90,14 @@ class AuthService {
         },
         body: JSON.stringify(data)
       });
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('❌ Non-JSON response:', text);
+        throw new Error('Server error: Expected JSON response but got HTML. Make sure the backend server is running on port 3001.');
+      }
 
       const result = await response.json();
 
