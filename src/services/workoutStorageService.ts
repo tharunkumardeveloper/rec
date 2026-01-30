@@ -31,46 +31,40 @@ class WorkoutStorageService {
 
   /**
    * Save a workout with video and PDF
-   * Keeps only the LATEST workout per athlete (deletes old ones)
-   * Also saves to MongoDB if backend is available
+   * Saves ALL workouts to MongoDB (keeps history)
+   * localStorage only keeps recent workouts for quick access
    */
   public async saveWorkout(workout: Omit<StoredWorkout, 'id'>): Promise<string> {
     console.log(`💾 Saving workout for athlete: ${workout.athleteName}`);
-    const workouts = this.getAllWorkouts();
-    console.log(`📊 Current workouts in storage: ${workouts.length}`);
-    
-    // Remove ALL previous workouts from this athlete
-    const filteredWorkouts = workouts.filter(w => w.athleteName !== workout.athleteName);
-    console.log(`🗑️ After filtering old workouts: ${filteredWorkouts.length}`);
     
     const newWorkout: StoredWorkout = {
       ...workout,
       id: this.generateId()
     };
 
-    // Add new workout at the beginning
-    filteredWorkouts.unshift(newWorkout);
-    console.log(`➕ After adding new workout: ${filteredWorkouts.length}`);
-
-    // Keep only last MAX_WORKOUTS total (across all athletes)
-    if (filteredWorkouts.length > this.MAX_WORKOUTS) {
-      filteredWorkouts.splice(this.MAX_WORKOUTS);
-    }
-
-    this.saveToStorage(filteredWorkouts);
-    console.log(`✅ Saved workout for ${workout.athleteName}, removed old workouts`);
-    console.log(`🔑 Storage key: "${this.STORAGE_KEY}"`);
-    
-    // Verify it was saved
-    const verification = localStorage.getItem(this.STORAGE_KEY);
-    console.log(`✔️ Verification - Data exists: ${!!verification}, Length: ${verification?.length || 0}`);
-    
-    // Also save to MongoDB backend
+    // Save to MongoDB backend (keeps ALL workouts)
     try {
       await this.saveToMongoDB(newWorkout);
+      console.log(`✅ Saved workout to MongoDB for ${workout.athleteName}`);
     } catch (error) {
-      console.warn('⚠️ MongoDB save failed, data saved to localStorage only:', error);
+      console.warn('⚠️ MongoDB save failed:', error);
     }
+    
+    // Also save to localStorage for offline access (limited history)
+    const workouts = this.getAllWorkouts();
+    console.log(`📊 Current workouts in localStorage: ${workouts.length}`);
+    
+    // Add new workout at the beginning
+    workouts.unshift(newWorkout);
+    console.log(`➕ After adding new workout: ${workouts.length}`);
+
+    // Keep only last MAX_WORKOUTS total in localStorage (across all athletes)
+    if (workouts.length > this.MAX_WORKOUTS) {
+      workouts.splice(this.MAX_WORKOUTS);
+    }
+
+    this.saveToStorage(workouts);
+    console.log(`✅ Saved workout to localStorage`);
     
     return newWorkout.id;
   }

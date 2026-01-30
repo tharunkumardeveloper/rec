@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import coachDashboardService from '@/services/coachDashboardService';
 import workoutStorageService from '@/services/workoutStorageService';
+import { userProfileService } from '@/services/userProfileService';
 
 interface WorkoutResultsScreenProProps {
   activityName: string;
@@ -60,7 +61,8 @@ const WorkoutResultsScreenPro = ({
     try {
       console.log('🔄 Starting auto-save (Pro)...');
       const userName = localStorage.getItem('user_name') || 'Athlete';
-      const userProfilePic = localStorage.getItem('user_profile_pic');
+      const profile = userProfileService.getProfile();
+      const userProfilePic = profile?.profilePic;
       const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
       const formScore = accuracy >= 80 ? 'Excellent' : accuracy >= 60 ? 'Good' : 'Needs Work';
 
@@ -158,7 +160,8 @@ const WorkoutResultsScreenPro = ({
       const pageHeight = pdf.internal.pageSize.getHeight();
       
       const userName = localStorage.getItem('user_name') || 'Athlete';
-      const userProfilePic = localStorage.getItem('user_profile_pic');
+      const profile = userProfileService.getProfile();
+      const userProfilePic = profile?.profilePic;
       const currentDate = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
