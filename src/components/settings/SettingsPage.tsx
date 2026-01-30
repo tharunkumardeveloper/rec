@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import TTSSettings from './TTSSettings';
 import ProfileSettings from './ProfileSettings';
 import { useNavigate } from 'react-router-dom';
+import { userProfileService } from '@/services/userProfileService';
 import { 
   ArrowLeft, 
   Bell, 
@@ -24,6 +25,7 @@ interface SettingsPageProps {
 
 const SettingsPage = ({ onBack, userName = 'User', userRole = 'athlete' }: SettingsPageProps) => {
   const navigate = useNavigate();
+  const [userProfilePic, setUserProfilePic] = useState<string>('');
   const [settings, setSettings] = useState({
     notifications: true,
     darkMode: false,
@@ -31,6 +33,14 @@ const SettingsPage = ({ onBack, userName = 'User', userRole = 'athlete' }: Setti
     workoutReminders: true,
     achievementAlerts: true
   });
+
+  // Load user profile photo
+  useEffect(() => {
+    const profile = userProfileService.getProfile();
+    if (profile?.profilePic) {
+      setUserProfilePic(profile.profilePic);
+    }
+  }, []);
 
   const toggleSetting = (key: keyof typeof settings) => {
     setSettings(prev => ({ ...prev, [key]: !prev[key] }));
@@ -58,8 +68,12 @@ const SettingsPage = ({ onBack, userName = 'User', userRole = 'athlete' }: Setti
         <Card className="card-elevated mb-6">
           <CardContent className="p-6">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold">
-                {userName.split(' ').map(n => n[0]).join('')}
+              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold overflow-hidden border-2 border-primary/20">
+                {userProfilePic ? (
+                  <img src={userProfilePic} alt={userName} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{userName.split(' ').map(n => n[0]).join('')}</span>
+                )}
               </div>
               <div className="flex-1">
                 <h2 className="text-xl font-bold">{userName}</h2>

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import workoutStorageService, { StoredWorkout } from '@/services/workoutStorageService';
 import AthleteWorkoutDetail from '@/components/coach/AthleteWorkoutDetail';
+import { userProfileService } from '@/services/userProfileService';
 import { 
   Search, 
   Settings, 
@@ -41,7 +42,16 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
   const [athleteWorkouts, setAthleteWorkouts] = useState<Array<{ name: string; workoutCount: number; lastWorkout: string; workouts: StoredWorkout[] }>>([]);
   const [selectedAthlete, setSelectedAthlete] = useState<string | null>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<StoredWorkout | null>(null);
+  const [userProfilePic, setUserProfilePic] = useState<string>('');
   const navigate = useNavigate();
+
+  // Load user profile photo
+  useEffect(() => {
+    const profile = userProfileService.getProfile();
+    if (profile?.profilePic) {
+      setUserProfilePic(profile.profilePic);
+    }
+  }, []);
 
   // Load athlete workout data
   useEffect(() => {
@@ -444,9 +454,18 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
       <div className="sticky top-0 z-50 bg-primary border-b border-primary-dark safe-top lg:hidden">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold text-white">Welcome, {userName}</h1>
-              <p className="text-sm text-white/80">Coach</p>
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold overflow-hidden border-2 border-white/30">
+                {userProfilePic ? (
+                  <img src={userProfilePic} alt={userName} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white">{userName.split(' ').map(n => n[0]).join('')}</span>
+                )}
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold text-white">Welcome, {userName}</h1>
+                <p className="text-sm text-white/80">Coach</p>
+              </div>
             </div>
             <div className="flex items-center space-x-3">
               <button
@@ -457,9 +476,15 @@ const CoachDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSet
               </button>
               <button
                 onClick={onProfileOpen}
-                className="tap-target p-2 rounded-lg hover:bg-white/20 transition-colors text-white"
+                className="tap-target rounded-full hover:bg-white/20 transition-colors overflow-hidden border-2 border-white/30"
               >
-                <User className="w-5 h-5" />
+                {userProfilePic ? (
+                  <img src={userProfilePic} alt={userName} className="w-10 h-10 object-cover" />
+                ) : (
+                  <div className="w-10 h-10 flex items-center justify-center bg-white/20 text-white font-bold">
+                    {userName.split(' ').map(n => n[0]).join('')}
+                  </div>
+                )}
               </button>
             </div>
           </div>

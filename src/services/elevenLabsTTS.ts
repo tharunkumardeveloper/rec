@@ -372,8 +372,23 @@ class ElevenLabsTTSService {
   }
   
   private getUserName(): string {
-    const saved = localStorage.getItem('user_name');
-    return saved || '';
+    // Get name from auth session or user profile
+    try {
+      const authSession = localStorage.getItem('auth_session');
+      if (authSession) {
+        const session = JSON.parse(authSession);
+        return session.name || '';
+      }
+      
+      const userProfile = localStorage.getItem('user_profile');
+      if (userProfile) {
+        const profile = JSON.parse(userProfile);
+        return profile.name || '';
+      }
+    } catch (error) {
+      console.error('Error getting user name for TTS:', error);
+    }
+    return '';
   }
   
   private personalize(message: string, userName: string): string {

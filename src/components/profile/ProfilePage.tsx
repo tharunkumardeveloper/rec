@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { userProfileService } from '@/services/userProfileService';
+import { authService } from '@/services/authService';
 import { 
   ArrowLeft, 
   Camera, 
@@ -28,6 +30,9 @@ interface ProfilePageProps {
 }
 
 const ProfilePage = ({ userName, userEmail = "user@example.com", userRole = 'athlete', onBack, onLogout }: ProfilePageProps) => {
+  const [userProfilePic, setUserProfilePic] = useState<string>('');
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
   const [profileData, setProfileData] = useState({
     name: userName,
     email: userEmail,
@@ -36,6 +41,57 @@ const ProfilePage = ({ userName, userEmail = "user@example.com", userRole = 'ath
     weight: "70 kg",
     bmi: "22.9"
   });
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        console.log('📄 ProfilePage: Loading profile...');
+        const profile = userProfileService.getProfile();
+        console.log('📄 ProfilePage: Profile from localStorage:', profile);
+        
+        if (profile) {
+          // Set profile picture
+          if (profile.profilePic) {
+            console.log('📄 ProfilePage: Setting profile pic:', profile.profilePic?.substring(0, 50) + '...');
+            setUserProfilePic(profile.profilePic);
+          }
+          
+          // Try to sync from MongoDB if we have a userId
+          if (profile.userId) {
+            console.log('📄 ProfilePage: Syncing from MongoDB...');
+            const syncedProfile = await userProfileService.syncFromMongoDB(profile.userId);
+            if (syncedProfile) {
+              console.log('📄 ProfilePage: Synced profile:', syncedProfile);
+              console.log('📄 ProfilePage: Synced profile pic:', syncedProfile.profilePic?.substring(0, 50) + '...');
+              setUserProfilePic(syncedProfile.profilePic || '');
+              setProfileData(prev => ({
+                ...prev,
+                name: syncedProfile.name || prev.name,
+                email: syncedProfile.email || prev.email,
+                mobile: syncedProfile.phone || prev.mobile
+              }));
+            }
+          } else {
+            // Use local profile data
+            setProfileData(prev => ({
+              ...prev,
+              name: profile.name || prev.name,
+              email: profile.email || prev.email,
+              mobile: profile.phone || prev.mobile
+            }));
+          }
+        } else {
+          console.log('📄 ProfilePage: No profile found');
+        }
+      } catch (error) {
+        console.error('📄 ProfilePage: Error loading profile:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    loadProfile();
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setProfileData(prev => ({ ...prev, [field]: value }));
@@ -79,19 +135,24 @@ const ProfilePage = ({ userName, userEmail = "user@example.com", userRole = 'ath
             <Card className="card-elevated">
           <CardContent className="p-6 text-center">
             <div className="relative mb-4">
-              <Avatar className="w-24 h-24 mx-auto">
-                <AvatarImage src="/placeholder-avatar.jpg" />
-                <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                  {userName.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <Button 
-                size="sm" 
-                className="absolute -bottom-2 -right-2 rounded-full w-10 h-10 p-0"
-                variant="outline"
-              >
-                <Camera className="w-4 h-4" />
-              </Button>
+              <div className="w-24 h-24 mx-auto rounded-full border-4 border-primary/20 overflow-hidden bg-primary/10 flex items-center justify-center">
+                {userProfilePic ? (
+                  <img 
+                    src={userProfilePic} 
+                    alt={userName} 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.error('📄 ProfilePage: Failed to load image');
+                      e.currentTarget.style.display = 'none';
+                    }}
+                    onLoad={() => console.log('📄 ProfilePage: Image loaded successfully')}
+                  />
+                ) : (
+                  <div className="text-2xl font-bold text-primary">
+                    {userName.split(' ').map(n => n[0]).join('')}
+                  </div>
+                )}
+              </div>
             </div>
             <h2 className="text-xl font-bold">{profileData.name}</h2>
             <p className="text-sm text-muted-foreground">{profileData.email}</p>
@@ -317,9 +378,8 @@ const ProfilePage = ({ userName, userEmail = "user@example.com", userRole = 'ath
             size="lg" 
             className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
             onClick={() => {
-              // Clear any stored user data/session
-              localStorage.clear();
-              sessionStorage.clear();
+              // Use auth service to logout
+              authService.logout();
               // Redirect to auth flow
               onLogout ? onLogout() : onBack();
             }}

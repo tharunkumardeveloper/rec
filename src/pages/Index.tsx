@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Trophy, Coins } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import LoadingScreen from '@/components/LoadingScreen';
-import AuthFlow from '@/components/auth/AuthFlow';
+import LoginSignup from '@/components/auth/LoginSignup';
 import SetupFlow from '@/components/setup/SetupFlow';
 import WelcomeDialog from '@/components/onboarding/WelcomeDialog';
 import HomeScreen from '@/components/home/HomeScreen';
@@ -28,7 +28,8 @@ import SettingsPage from '@/components/settings/SettingsPage';
 import BadgesScreen from '@/components/badges/BadgesScreen';
 import { preloadAllAssets } from '@/utils/imagePreloader';
 import { scrollToTop, scrollToTopInstant } from '@/utils/scrollToTop';
-import { userProfileService } from '@/services/userProfileService';
+import { userProfileService, UserProfile } from '@/services/userProfileService';
+import { authService } from '@/services/authService';
 
 type AppState = 'loading' | 'auth' | 'setup' | 'home' | 'profile' | 'settings' | 'badges' | 'challenges' | 'challenge-detail' | 'ghost-mode' | 'ghost-workout-detail' | 'test-mode' | 'test-workout-detail' | 'test-workout-interface';
 type UserRole = 'athlete' | 'coach' | 'admin';
@@ -37,7 +38,7 @@ const Index = () => {
   const [appState, setAppState] = useState<AppState>('loading');
   const [userRole, setUserRole] = useState<UserRole>('athlete');
   const [userName, setUserName] = useState('');
-  const [userProfilePic, setUserProfilePic] = useState('');
+  const [userProfilePic, setUserProfilePic] = useState<string>('');
   const [activeTab, setActiveTab] = useState('training');
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const [showWorkout, setShowWorkout] = useState(false);
@@ -51,10 +52,14 @@ const Index = () => {
   // Load user profile data
   useEffect(() => {
     const loadUserProfile = async () => {
-      const profile = userProfileService.getProfile();
-      if (profile) {
-        setUserName(profile.name || 'User');
-        setUserProfilePic(profile.profilePic || '');
+      console.log('🔄 Loading user profile...');
+      
+      // Check if user is logged in via auth service
+      const session = authService.getSession();
+      if (session) {
+        console.log('✅ Found active session:', session.userId);
+        setUserName(session.name || 'User');
+        setUserProfilePic(session.profilePic || '');
         
         // Map profile role to app role
         const roleMap: { [key: string]: UserRole } = {
@@ -62,16 +67,21 @@ const Index = () => {
           'COACH': 'coach',
           'SAI_ADMIN': 'admin'
         };
-        setUserRole(roleMap[profile.role] || 'athlete');
+        setUserRole(roleMap[session.role] || 'athlete');
         
         // Try to sync from MongoDB
-        if (profile.userId) {
-          const synced = await userProfileService.syncFromMongoDB(profile.userId);
+        if (session.userId) {
+          console.log('🔄 Syncing from MongoDB for userId:', session.userId);
+          const synced = await userProfileService.syncFromMongoDB(session.userId);
           if (synced) {
+            console.log('✅ Synced profile from MongoDB:', synced);
+            console.log('🖼️ Profile pic from MongoDB:', synced.profilePic);
             setUserName(synced.name || 'User');
             setUserProfilePic(synced.profilePic || '');
           }
         }
+      } else {
+        console.log('⚠️ No active session found');
       }
     };
 
@@ -80,15 +90,28 @@ const Index = () => {
 
   // Simulate checking for returning user and preload assets
   useEffect(() => {
-    const isReturningUser = localStorage.getItem('talenttrack_user');
-    if (isReturningUser) {
-      const userData = JSON.parse(isReturningUser);
-      setUserRole(userData.role);
-      setUserName(userData.name);
+    // Clear old demo data
+    authService.clearDemoData();
+    
+    // Check if user is logged in
+    const session = authService.getSession();
+    if (session) {
+      console.log('✅ User is logged in:', session.userId);
       setIsFirstTime(false);
+      
+      // Map role
+      const roleMap: { [key: string]: UserRole } = {
+        'ATHLETE': 'athlete',
+        'COACH': 'coach',
+        'SAI_ADMIN': 'admin'
+      };
+      setUserRole(roleMap[session.role] || 'athlete');
+      setUserName(session.name);
+      setUserProfilePic(session.profilePic || '');
+    } else {
+      console.log('⚠️ No user logged in');
+      setIsFirstTime(true);
     }
-
-
 
     // Register service worker for offline support
     if ('serviceWorker' in navigator) {
@@ -125,31 +148,26 @@ const Index = () => {
     }
   };
 
-  const handleLogin = (role: UserRole) => {
+  const handleLogin = (profile: UserProfile) => {
     scrollToTopInstant();
-    setUserRole(role);
-    // Set demo names based on role
-    const names = {
-      athlete: 'Athlete',
-      coach: 'Rajesh Menon',
-      admin: 'Arjun Krishnan'
+    
+    // Map role
+    const roleMap: { [key: string]: UserRole } = {
+      'ATHLETE': 'athlete',
+      'COACH': 'coach',
+      'SAI_ADMIN': 'admin'
     };
-    setUserName(names[role]);
+    const mappedRole = roleMap[profile.role] || 'athlete';
+    
+    setUserRole(mappedRole);
+    setUserName(profile.name);
+    setUserProfilePic(profile.profilePic || '');
 
     // Only athletes need setup flow - coaches and admins skip directly to home
-    if (isFirstTime && role === 'athlete') {
+    if (isFirstTime && mappedRole === 'athlete') {
       setAppState('setup');
     } else {
-      // For coaches/admins or returning users, go directly to home
-      if (role !== 'athlete') {
-        // Mark as not first time for coaches/admins
-        localStorage.setItem('talenttrack_user', JSON.stringify({
-          role: role,
-          name: names[role],
-          setupComplete: true
-        }));
-        setIsFirstTime(false);
-      }
+      setIsFirstTime(false);
       setAppState('home');
     }
   };
@@ -158,12 +176,6 @@ const Index = () => {
     scrollToTopInstant();
     // Save user data
     setUserSetupData(userData);
-    localStorage.setItem('talenttrack_user', JSON.stringify({
-      role: userRole,
-      name: userName,
-      setupComplete: true,
-      ...userData
-    }));
     setIsFirstTime(false);
     setAppState('home');
   };
@@ -445,7 +457,7 @@ const Index = () => {
       return <LoadingScreen onComplete={handleLoadingComplete} />;
 
     case 'auth':
-      return <AuthFlow onLogin={handleLogin} />;
+      return <LoginSignup onSuccess={handleLogin} />;
 
     case 'setup':
       return <SetupFlow onComplete={handleSetupComplete} onSkip={() => setAppState('home')} />;
@@ -490,8 +502,12 @@ const Index = () => {
               {/* User Section */}
               <div className="p-4 border-t">
                 <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                    {userName.split(' ').map(n => n[0]).join('')}
+                  <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold overflow-hidden border-2 border-primary/20">
+                    {userProfilePic ? (
+                      <img src={userProfilePic} alt={userName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{userName.split(' ').map(n => n[0]).join('')}</span>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{userName}</p>
@@ -503,7 +519,13 @@ const Index = () => {
                     onClick={handleProfileOpen}
                     className="w-full flex items-center space-x-2 px-3 py-2 text-sm rounded-lg hover:bg-secondary transition-colors"
                   >
-                    <span>👤</span>
+                    <div className="w-5 h-5 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      {userProfilePic ? (
+                        <img src={userProfilePic} alt={userName} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs">👤</span>
+                      )}
+                    </div>
                     <span>Profile</span>
                   </button>
                   <button
@@ -542,9 +564,27 @@ const Index = () => {
                 <div className="sticky top-0 z-50 bg-primary border-b border-primary-dark safe-top lg:hidden">
                   <div className="px-4 py-4">
                     <div className="flex items-center justify-between max-w-7xl mx-auto">
-                      <div>
-                        <h1 className="text-lg font-semibold text-white">Welcome, {userName}</h1>
-                        <p className="text-sm text-white/80 capitalize">{userRole}</p>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold overflow-hidden border-2 border-white/30">
+                          {(() => {
+                            console.log('🎨 Rendering header with userProfilePic:', userProfilePic ? 'YES (' + userProfilePic.substring(0, 50) + '...)' : 'NO');
+                            return userProfilePic ? (
+                              <img 
+                                src={userProfilePic} 
+                                alt={userName} 
+                                className="w-full h-full object-cover"
+                                onError={() => console.error('❌ Header: Failed to load profile image')}
+                                onLoad={() => console.log('✅ Header: Profile image loaded')}
+                              />
+                            ) : (
+                              <span className="text-white">{userName.split(' ').map(n => n[0]).join('')}</span>
+                            );
+                          })()}
+                        </div>
+                        <div>
+                          <h1 className="text-lg font-semibold text-white">Welcome, {userName}</h1>
+                          <p className="text-sm text-white/80 capitalize">{userRole}</p>
+                        </div>
                       </div>
                       <div className="flex items-center space-x-3">
                         <button
@@ -555,9 +595,21 @@ const Index = () => {
                         </button>
                         <button
                           onClick={handleProfileOpen}
-                          className="tap-target p-2 rounded-lg hover:bg-white/20 transition-colors text-white text-lg"
+                          className="tap-target rounded-full hover:bg-white/20 transition-colors overflow-hidden border-2 border-white/30"
                         >
-                          👤
+                          {userProfilePic ? (
+                            <img 
+                              src={userProfilePic} 
+                              alt={userName} 
+                              className="w-10 h-10 object-cover"
+                              onError={() => console.error('❌ Profile Button: Failed to load image')}
+                              onLoad={() => console.log('✅ Profile Button: Image loaded')}
+                            />
+                          ) : (
+                            <div className="w-10 h-10 flex items-center justify-center bg-white/20 text-white font-bold">
+                              {userName.split(' ').map(n => n[0]).join('')}
+                            </div>
+                          )}
                         </button>
                       </div>
                     </div>
