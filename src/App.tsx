@@ -9,6 +9,8 @@ import CoachWorkoutsPage from "./components/coach/CoachDashboard";
 import AthleteDetailPage from "./components/coach/AthleteDetailPage";
 import SAIWorkoutsDashboard from "./components/home/SAIWorkoutsDashboard";
 import SAIAthleteDetailPage from "./components/home/SAIAthleteDetailPage";
+import ConnectionsPageNew from "./components/social/ConnectionsPageNew";
+import EnhancedProfilePageNew from "./components/social/EnhancedProfilePageNew";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +22,10 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/connections" element={<ConnectionsPageNew />} />
+          <Route path="/profile/:userId" element={<EnhancedProfilePageNew />} />
+          <Route path="/challenges" element={<Index />} />
+          <Route path="/profile" element={<Index />} />
           <Route path="/coach-workouts" element={<CoachWorkoutsPage />} />
           <Route path="/coach-workouts/athlete/:athleteName" element={<AthleteDetailPage />} />
           <Route path="/sai-workouts" element={<SAIWorkoutsDashboard />} />
