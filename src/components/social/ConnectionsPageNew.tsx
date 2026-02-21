@@ -281,7 +281,7 @@ function UserCard({ user }: { user: typeof MOCK_USERS[0] }) {
         <div className="flex gap-4">
           {/* Avatar */}
           <Avatar className="w-16 h-16 flex-shrink-0">
-            <AvatarImage src={user.profilePic} alt={user.name} />
+            <AvatarImage src={user.profilePic} alt={user.name} className="object-cover" />
             <AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
               {user.name.charAt(0)}
             </AvatarFallback>
