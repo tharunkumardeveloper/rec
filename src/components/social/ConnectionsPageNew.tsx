@@ -151,22 +151,22 @@ export default function ConnectionsPageNew() {
   const discoverUsers = filteredUsers.filter(u => !u.isConnected);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-white pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-purple-200 via-purple-100 to-white pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-purple-200 shadow-sm">
+      <div className="sticky top-0 z-50 bg-gradient-to-r from-purple-600 to-purple-500 border-b border-purple-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Button
-              onClick={() => navigate('/')}
+              onClick={() => navigate(-1)}
               variant="ghost"
               size="sm"
-              className="text-gray-700 hover:bg-purple-50 p-2 rounded-lg"
+              className="text-white hover:bg-purple-700 p-2 rounded-lg"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">Professional Network</h1>
-              <p className="text-sm text-gray-600">Connect with athletes & coaches</p>
+              <h1 className="text-2xl font-bold text-white">Professional Network</h1>
+              <p className="text-sm text-purple-100">Connect with athletes & coaches</p>
             </div>
           </div>
         </div>
@@ -175,36 +175,36 @@ export default function ConnectionsPageNew() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-white border border-purple-200 mb-6 p-1 rounded-xl shadow-sm">
+          <TabsList className="grid w-full grid-cols-2 bg-purple-100 border-2 border-purple-300 mb-6 p-1 rounded-xl shadow-md">
             <TabsTrigger 
               value="discover" 
-              className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-700 rounded-lg font-medium"
+              className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-purple-800 rounded-lg font-semibold"
             >
               Discover
-              <Badge className="ml-2 bg-purple-100 text-purple-700 border-0">{discoverUsers.length}</Badge>
+              <Badge className="ml-2 bg-purple-300 text-purple-900 border-0">{discoverUsers.length}</Badge>
             </TabsTrigger>
             <TabsTrigger 
               value="connections" 
-              className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-700 rounded-lg font-medium"
+              className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-purple-800 rounded-lg font-semibold"
             >
               Connected
-              <Badge className="ml-2 bg-green-100 text-green-700 border-0">{connectedUsers.length}</Badge>
+              <Badge className="ml-2 bg-green-200 text-green-800 border-0">{connectedUsers.length}</Badge>
             </TabsTrigger>
           </TabsList>
 
           {/* Discover Tab */}
           <TabsContent value="discover" className="space-y-4">
             {/* Search and Filter */}
-            <Card className="bg-white border border-purple-100 shadow-sm">
+            <Card className="bg-white border-2 border-purple-300 shadow-md">
               <CardContent className="p-4">
                 <div className="space-y-3">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-600" />
                     <Input
                       placeholder="Search by name, location, or bio..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 bg-gray-50 border-purple-200 text-gray-900 h-11 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="pl-10 bg-purple-50 border-2 border-purple-300 text-gray-900 h-11 rounded-lg focus:ring-2 focus:ring-purple-600"
                     />
                   </div>
                   <div className="flex gap-2">
@@ -215,7 +215,7 @@ export default function ConnectionsPageNew() {
                       className={`flex-1 h-9 rounded-lg font-medium ${
                         filterRole === 'all' 
                           ? 'bg-purple-600 text-white hover:bg-purple-700' 
-                          : 'border-purple-200 text-gray-700 hover:bg-purple-50'
+                          : 'border-purple-300 text-purple-700 hover:bg-purple-100'
                       }`}
                     >
                       All ({MOCK_USERS.length})
@@ -227,7 +227,7 @@ export default function ConnectionsPageNew() {
                       className={`flex-1 h-9 rounded-lg font-medium ${
                         filterRole === 'ATHLETE' 
                           ? 'bg-purple-600 text-white hover:bg-purple-700' 
-                          : 'border-purple-200 text-gray-700 hover:bg-purple-50'
+                          : 'border-purple-300 text-purple-700 hover:bg-purple-100'
                       }`}
                     >
                       Athletes ({MOCK_USERS.filter(u => u.role === 'ATHLETE').length})
@@ -239,7 +239,7 @@ export default function ConnectionsPageNew() {
                       className={`flex-1 h-9 rounded-lg font-medium ${
                         filterRole === 'COACH' 
                           ? 'bg-purple-600 text-white hover:bg-purple-700' 
-                          : 'border-purple-200 text-gray-700 hover:bg-purple-50'
+                          : 'border-purple-300 text-purple-700 hover:bg-purple-100'
                       }`}
                     >
                       Coaches ({MOCK_USERS.filter(u => u.role === 'COACH').length})
@@ -260,14 +260,14 @@ export default function ConnectionsPageNew() {
           {/* Connections Tab */}
           <TabsContent value="connections" className="space-y-3">
             {connectedUsers.length === 0 ? (
-              <Card className="bg-white border border-purple-100 shadow-sm">
+              <Card className="bg-white border-2 border-purple-300 shadow-md">
                 <CardContent className="p-12 text-center">
-                  <Users className="w-16 h-16 text-purple-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">No connections yet</h3>
-                  <p className="text-gray-600 mb-6">Start connecting with professionals</p>
+                  <Users className="w-16 h-16 text-purple-500 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-purple-900 mb-2">No connections yet</h3>
+                  <p className="text-purple-700 mb-6">Start connecting with professionals</p>
                   <Button 
                     onClick={() => setActiveTab('discover')} 
-                    className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-6"
+                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg px-6 font-semibold shadow-md"
                   >
                     Discover People
                   </Button>
@@ -293,13 +293,13 @@ function UserCard({ user, isConnected = false }: any) {
   const [connected, setConnected] = useState(isConnected);
 
   return (
-    <Card className="bg-white border border-purple-100 hover:border-purple-300 hover:shadow-md transition-all">
+    <Card className="bg-white border-2 border-purple-200 hover:border-purple-400 hover:shadow-lg transition-all">
       <CardContent className="p-5">
         <div className="flex gap-4">
           {/* Avatar */}
-          <Avatar className="w-20 h-20 border-3 border-purple-200 flex-shrink-0 shadow-sm">
-            <AvatarImage src={user.profilePic} />
-            <AvatarFallback className="bg-purple-100 text-purple-700 text-xl font-semibold">
+          <Avatar className="w-20 h-20 border-4 border-purple-300 flex-shrink-0 shadow-md">
+            <AvatarImage src={user.profilePic} alt={user.name} />
+            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-purple-700 text-white text-xl font-bold">
               {user.name.charAt(0)}
             </AvatarFallback>
           </Avatar>
@@ -311,10 +311,10 @@ function UserCard({ user, isConnected = false }: any) {
                 <h3 className="text-lg font-bold text-gray-900 truncate">{user.name}</h3>
                 <div className="flex items-center gap-2 flex-wrap mt-1">
                   <Badge 
-                    className={`text-xs font-medium ${
+                    className={`text-xs font-semibold border-2 ${
                       user.role === 'COACH' 
-                        ? 'bg-orange-100 text-orange-700 border-orange-200' 
-                        : 'bg-blue-100 text-blue-700 border-blue-200'
+                        ? 'bg-purple-100 text-purple-800 border-purple-300' 
+                        : 'bg-blue-100 text-blue-800 border-blue-300'
                     }`}
                   >
                     {user.role}
@@ -341,72 +341,72 @@ function UserCard({ user, isConnected = false }: any) {
             {/* Stats Grid */}
             {user.role === 'ATHLETE' ? (
               <div className="grid grid-cols-4 gap-2 mb-4">
-                <div className="bg-purple-50 border border-purple-100 rounded-lg p-2 text-center">
-                  <Activity className="w-4 h-4 text-purple-600 mx-auto mb-1" />
-                  <p className="text-sm text-gray-900 font-bold">{user.stats.workouts}</p>
-                  <p className="text-xs text-gray-600">Workouts</p>
+                <div className="bg-purple-100 border-2 border-purple-300 rounded-lg p-2 text-center">
+                  <Activity className="w-4 h-4 text-purple-700 mx-auto mb-1" />
+                  <p className="text-sm text-purple-900 font-bold">{user.stats.workouts}</p>
+                  <p className="text-xs text-gray-700">Workouts</p>
                 </div>
-                <div className="bg-green-50 border border-green-100 rounded-lg p-2 text-center">
-                  <TrendingUp className="w-4 h-4 text-green-600 mx-auto mb-1" />
-                  <p className="text-sm text-gray-900 font-bold">{user.stats.avgAccuracy}%</p>
-                  <p className="text-xs text-gray-600">Accuracy</p>
+                <div className="bg-green-100 border-2 border-green-300 rounded-lg p-2 text-center">
+                  <TrendingUp className="w-4 h-4 text-green-700 mx-auto mb-1" />
+                  <p className="text-sm text-green-900 font-bold">{user.stats.avgAccuracy}%</p>
+                  <p className="text-xs text-gray-700">Accuracy</p>
                 </div>
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-2 text-center">
-                  <Award className="w-4 h-4 text-blue-600 mx-auto mb-1" />
-                  <p className="text-sm text-gray-900 font-bold">{user.stats.bestReps}</p>
-                  <p className="text-xs text-gray-600">Best</p>
+                <div className="bg-blue-100 border-2 border-blue-300 rounded-lg p-2 text-center">
+                  <Award className="w-4 h-4 text-blue-700 mx-auto mb-1" />
+                  <p className="text-sm text-blue-900 font-bold">{user.stats.bestReps}</p>
+                  <p className="text-xs text-gray-700">Best</p>
                 </div>
-                <div className="bg-orange-50 border border-orange-100 rounded-lg p-2 text-center">
-                  <Trophy className="w-4 h-4 text-orange-600 mx-auto mb-1" />
-                  <p className="text-sm text-gray-900 font-bold">{user.stats.streak}</p>
-                  <p className="text-xs text-gray-600">Streak</p>
+                <div className="bg-orange-100 border-2 border-orange-300 rounded-lg p-2 text-center">
+                  <Trophy className="w-4 h-4 text-orange-700 mx-auto mb-1" />
+                  <p className="text-sm text-orange-900 font-bold">{user.stats.streak}</p>
+                  <p className="text-xs text-gray-700">Streak</p>
                 </div>
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-2 mb-4">
-                <div className="bg-purple-50 border border-purple-100 rounded-lg p-2 text-center">
-                  <Users className="w-4 h-4 text-purple-600 mx-auto mb-1" />
-                  <p className="text-sm text-gray-900 font-bold">{user.stats.athletes}</p>
-                  <p className="text-xs text-gray-600">Athletes</p>
+                <div className="bg-purple-100 border-2 border-purple-300 rounded-lg p-2 text-center">
+                  <Users className="w-4 h-4 text-purple-700 mx-auto mb-1" />
+                  <p className="text-sm text-purple-900 font-bold">{user.stats.athletes}</p>
+                  <p className="text-xs text-gray-700">Athletes</p>
                 </div>
-                <div className="bg-green-50 border border-green-100 rounded-lg p-2 text-center">
-                  <Activity className="w-4 h-4 text-green-600 mx-auto mb-1" />
-                  <p className="text-sm text-gray-900 font-bold">{user.stats.totalWorkouts}</p>
-                  <p className="text-xs text-gray-600">Sessions</p>
+                <div className="bg-green-100 border-2 border-green-300 rounded-lg p-2 text-center">
+                  <Activity className="w-4 h-4 text-green-700 mx-auto mb-1" />
+                  <p className="text-sm text-green-900 font-bold">{user.stats.totalWorkouts}</p>
+                  <p className="text-xs text-gray-700">Sessions</p>
                 </div>
-                <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-2 text-center">
-                  <Star className="w-4 h-4 text-yellow-600 mx-auto mb-1 fill-yellow-400" />
-                  <p className="text-sm text-gray-900 font-bold">{user.stats.rating}</p>
-                  <p className="text-xs text-gray-600">Rating</p>
+                <div className="bg-yellow-100 border-2 border-yellow-300 rounded-lg p-2 text-center">
+                  <Star className="w-4 h-4 text-yellow-700 mx-auto mb-1 fill-yellow-400" />
+                  <p className="text-sm text-yellow-900 font-bold">{user.stats.rating}</p>
+                  <p className="text-xs text-gray-700">Rating</p>
                 </div>
               </div>
             )}
 
             {/* Expanded Details */}
             {expanded && (
-              <div className="space-y-3 mb-4 p-3 bg-purple-50 border border-purple-100 rounded-lg">
+              <div className="space-y-3 mb-4 p-3 bg-purple-100 border-2 border-purple-300 rounded-lg">
                 <div>
-                  <p className="text-sm text-gray-700 font-semibold mb-2">Skills</p>
+                  <p className="text-sm text-purple-900 font-bold mb-2">Skills</p>
                   <div className="flex flex-wrap gap-1.5">
                     {user.skills.map((skill: string, idx: number) => (
-                      <Badge key={idx} className="text-xs bg-white border-purple-200 text-gray-700">
+                      <Badge key={idx} className="text-xs bg-white border-2 border-purple-300 text-purple-800 font-medium">
                         {skill}
                       </Badge>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-700 font-semibold mb-2">Achievements</p>
+                  <p className="text-sm text-purple-900 font-bold mb-2">Achievements</p>
                   <div className="flex flex-wrap gap-1.5">
                     {user.achievements.map((achievement: string, idx: number) => (
-                      <Badge key={idx} className="text-xs bg-yellow-50 border-yellow-200 text-yellow-700">
+                      <Badge key={idx} className="text-xs bg-yellow-100 border-2 border-yellow-300 text-yellow-800 font-medium">
                         <Trophy className="w-3 h-3 mr-1" />
                         {achievement}
                       </Badge>
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                <div className="flex items-center gap-1.5 text-sm text-purple-800 font-medium">
                   <Calendar className="w-4 h-4" />
                   Joined {user.joined}
                 </div>
@@ -419,7 +419,7 @@ function UserCard({ user, isConnected = false }: any) {
                 onClick={() => setExpanded(!expanded)}
                 variant="outline"
                 size="sm"
-                className="flex-1 border-purple-200 text-gray-700 hover:bg-purple-50 h-10 rounded-lg font-medium"
+                className="flex-1 border-2 border-purple-300 text-purple-800 hover:bg-purple-100 h-10 rounded-lg font-semibold"
               >
                 {expanded ? 'Show Less' : 'View Details'}
               </Button>
@@ -427,7 +427,7 @@ function UserCard({ user, isConnected = false }: any) {
                 <Button
                   onClick={() => setConnected(true)}
                   size="sm"
-                  className="bg-purple-600 hover:bg-purple-700 text-white h-10 px-6 rounded-lg font-medium shadow-sm"
+                  className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white h-10 px-6 rounded-lg font-semibold shadow-md"
                 >
                   <UserPlus className="w-4 h-4 mr-2" />
                   Connect
@@ -436,7 +436,7 @@ function UserCard({ user, isConnected = false }: any) {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-green-200 bg-green-50 text-green-700 h-10 px-6 rounded-lg font-medium"
+                  className="border-2 border-green-300 bg-green-100 text-green-800 h-10 px-6 rounded-lg font-semibold"
                   disabled
                 >
                   <UserCheck className="w-4 h-4 mr-2" />
