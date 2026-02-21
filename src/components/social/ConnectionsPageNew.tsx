@@ -1,15 +1,13 @@
 import { useState } from 'react';
-import { Users, UserPlus, UserCheck, Search, MapPin, ArrowLeft, Activity, TrendingUp, Award, Star, Calendar, Trophy } from 'lucide-react';
+import { Users, Search, MapPin, Activity, TrendingUp, Award, Trophy, Star, Calendar, UserPlus, UserCheck, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import BottomNav from '@/components/navigation/BottomNav';
 
-// Comprehensive mock data with detailed profiles
+// Mock data with detailed profiles
 const MOCK_USERS = [
   // Athletes
   {
@@ -121,7 +119,7 @@ const MOCK_USERS = [
 
 export default function ConnectionsPageNew() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('discover');
+  const [activeTab, setActiveTab] = useState<'discover' | 'connections'>('discover');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'ATHLETE' | 'COACH'>('all');
 
@@ -147,139 +145,125 @@ export default function ConnectionsPageNew() {
     return matchesSearch && matchesRole;
   });
 
-  const connectedUsers = MOCK_USERS.filter(u => u.isConnected);
+  const connectedUsers = filteredUsers.filter(u => u.isConnected);
   const discoverUsers = filteredUsers.filter(u => !u.isConnected);
 
+  const displayUsers = activeTab === 'connections' ? connectedUsers : discoverUsers;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-200 via-purple-100 to-white pb-20">
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-gradient-to-r from-purple-600 to-purple-500 border-b border-purple-700 shadow-lg">
+    <div className="min-h-screen bg-background pb-20">
+      {/* Simple Header - matching HomeScreen style */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Button
-              onClick={() => navigate(-1)}
               variant="ghost"
               size="sm"
-              className="text-white hover:bg-purple-700 p-2 rounded-lg"
+              onClick={() => navigate('/')}
+              className="p-2"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-white">Professional Network</h1>
-              <p className="text-sm text-purple-100">Connect with athletes & coaches</p>
+              <h1 className="text-xl font-bold">Connections</h1>
+              <p className="text-sm text-muted-foreground">Connect with athletes & coaches</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-purple-100 border-2 border-purple-300 mb-6 p-1 rounded-xl shadow-md">
-            <TabsTrigger 
-              value="discover" 
-              className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-purple-800 rounded-lg font-semibold"
-            >
-              Discover
-              <Badge className="ml-2 bg-purple-300 text-purple-900 border-0">{discoverUsers.length}</Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="connections" 
-              className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-purple-800 rounded-lg font-semibold"
-            >
-              Connected
-              <Badge className="ml-2 bg-green-200 text-green-800 border-0">{connectedUsers.length}</Badge>
-            </TabsTrigger>
-          </TabsList>
+        {/* Tabs - Simple buttons like HomeScreen */}
+        <div className="flex gap-2 mb-6">
+          <Button
+            variant={activeTab === 'discover' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('discover')}
+            className="flex-1"
+          >
+            Discover
+            <Badge className="ml-2" variant="secondary">{discoverUsers.length}</Badge>
+          </Button>
+          <Button
+            variant={activeTab === 'connections' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('connections')}
+            className="flex-1"
+          >
+            Connected
+            <Badge className="ml-2" variant="secondary">{connectedUsers.length}</Badge>
+          </Button>
+        </div>
 
-          {/* Discover Tab */}
-          <TabsContent value="discover" className="space-y-4">
-            {/* Search and Filter */}
-            <Card className="bg-white border-2 border-purple-300 shadow-md">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-600" />
-                    <Input
-                      placeholder="Search by name, location, or bio..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 bg-purple-50 border-2 border-purple-300 text-gray-900 h-11 rounded-lg focus:ring-2 focus:ring-purple-600"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={filterRole === 'all' ? 'default' : 'outline'}
-                      onClick={() => setFilterRole('all')}
-                      size="sm"
-                      className={`flex-1 h-9 rounded-lg font-medium ${
-                        filterRole === 'all' 
-                          ? 'bg-purple-600 text-white hover:bg-purple-700' 
-                          : 'border-purple-300 text-purple-700 hover:bg-purple-100'
-                      }`}
-                    >
-                      All ({MOCK_USERS.length})
-                    </Button>
-                    <Button
-                      variant={filterRole === 'ATHLETE' ? 'default' : 'outline'}
-                      onClick={() => setFilterRole('ATHLETE')}
-                      size="sm"
-                      className={`flex-1 h-9 rounded-lg font-medium ${
-                        filterRole === 'ATHLETE' 
-                          ? 'bg-purple-600 text-white hover:bg-purple-700' 
-                          : 'border-purple-300 text-purple-700 hover:bg-purple-100'
-                      }`}
-                    >
-                      Athletes ({MOCK_USERS.filter(u => u.role === 'ATHLETE').length})
-                    </Button>
-                    <Button
-                      variant={filterRole === 'COACH' ? 'default' : 'outline'}
-                      onClick={() => setFilterRole('COACH')}
-                      size="sm"
-                      className={`flex-1 h-9 rounded-lg font-medium ${
-                        filterRole === 'COACH' 
-                          ? 'bg-purple-600 text-white hover:bg-purple-700' 
-                          : 'border-purple-300 text-purple-700 hover:bg-purple-100'
-                      }`}
-                    >
-                      Coaches ({MOCK_USERS.filter(u => u.role === 'COACH').length})
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* User List */}
+        {/* Search and Filter */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
             <div className="space-y-3">
-              {discoverUsers.map(user => (
-                <UserCard key={user.id} user={user} />
-              ))}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search by name, location..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={filterRole === 'all' ? 'default' : 'outline'}
+                  onClick={() => setFilterRole('all')}
+                  size="sm"
+                  className="flex-1"
+                >
+                  All
+                </Button>
+                <Button
+                  variant={filterRole === 'ATHLETE' ? 'default' : 'outline'}
+                  onClick={() => setFilterRole('ATHLETE')}
+                  size="sm"
+                  className="flex-1"
+                >
+                  Athletes
+                </Button>
+                <Button
+                  variant={filterRole === 'COACH' ? 'default' : 'outline'}
+                  onClick={() => setFilterRole('COACH')}
+                  size="sm"
+                  className="flex-1"
+                >
+                  Coaches
+                </Button>
+              </div>
             </div>
-          </TabsContent>
+          </CardContent>
+        </Card>
 
-          {/* Connections Tab */}
-          <TabsContent value="connections" className="space-y-3">
-            {connectedUsers.length === 0 ? (
-              <Card className="bg-white border-2 border-purple-300 shadow-md">
-                <CardContent className="p-12 text-center">
-                  <Users className="w-16 h-16 text-purple-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-purple-900 mb-2">No connections yet</h3>
-                  <p className="text-purple-700 mb-6">Start connecting with professionals</p>
-                  <Button 
-                    onClick={() => setActiveTab('discover')} 
-                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg px-6 font-semibold shadow-md"
-                  >
-                    Discover People
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              connectedUsers.map(user => (
-                <UserCard key={user.id} user={user} isConnected />
-              ))
-            )}
-          </TabsContent>
-        </Tabs>
+        {/* User List */}
+        {displayUsers.length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                {activeTab === 'connections' ? 'No connections yet' : 'No users found'}
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                {activeTab === 'connections' 
+                  ? 'Start connecting with professionals' 
+                  : 'Try adjusting your search or filters'}
+              </p>
+              {activeTab === 'connections' && (
+                <Button onClick={() => setActiveTab('discover')}>
+                  Discover People
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {displayUsers.map((user) => (
+              <UserCard key={user.id} user={user} />
+            ))}
+          </div>
+        )}
       </div>
 
       {isAthlete && <BottomNav />}
@@ -287,19 +271,18 @@ export default function ConnectionsPageNew() {
   );
 }
 
-
-function UserCard({ user, isConnected = false }: any) {
+function UserCard({ user }: { user: typeof MOCK_USERS[0] }) {
   const [expanded, setExpanded] = useState(false);
-  const [connected, setConnected] = useState(isConnected);
+  const [connected, setConnected] = useState(user.isConnected);
 
   return (
-    <Card className="bg-white border-2 border-purple-200 hover:border-purple-400 hover:shadow-lg transition-all">
-      <CardContent className="p-5">
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
         <div className="flex gap-4">
           {/* Avatar */}
-          <Avatar className="w-20 h-20 border-4 border-purple-300 flex-shrink-0 shadow-md">
+          <Avatar className="w-16 h-16 flex-shrink-0">
             <AvatarImage src={user.profilePic} alt={user.name} />
-            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-purple-700 text-white text-xl font-bold">
+            <AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
               {user.name.charAt(0)}
             </AvatarFallback>
           </Avatar>
@@ -308,20 +291,14 @@ function UserCard({ user, isConnected = false }: any) {
             {/* Header */}
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-bold text-gray-900 truncate">{user.name}</h3>
+                <h3 className="font-bold text-base truncate">{user.name}</h3>
                 <div className="flex items-center gap-2 flex-wrap mt-1">
-                  <Badge 
-                    className={`text-xs font-semibold border-2 ${
-                      user.role === 'COACH' 
-                        ? 'bg-purple-100 text-purple-800 border-purple-300' 
-                        : 'bg-blue-100 text-blue-800 border-blue-300'
-                    }`}
-                  >
+                  <Badge variant={user.role === 'COACH' ? 'default' : 'secondary'} className="text-xs">
                     {user.role}
                   </Badge>
                   {user.achievements.slice(0, 1).map((achievement, idx) => (
-                    <Badge key={idx} className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
-                      <Star className="w-3 h-3 mr-1 fill-yellow-400" />
+                    <Badge key={idx} variant="outline" className="text-xs">
+                      <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
                       {achievement}
                     </Badge>
                   ))}
@@ -330,83 +307,83 @@ function UserCard({ user, isConnected = false }: any) {
             </div>
 
             {/* Location & Bio */}
-            <div className="space-y-1.5 mb-3">
-              <p className="text-sm text-gray-600 flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-purple-500" />
+            <div className="space-y-1 mb-3">
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
                 {user.district}
               </p>
-              <p className="text-sm text-gray-700 line-clamp-2">{user.bio}</p>
+              <p className="text-sm line-clamp-2">{user.bio}</p>
             </div>
 
             {/* Stats Grid */}
             {user.role === 'ATHLETE' ? (
-              <div className="grid grid-cols-4 gap-2 mb-4">
-                <div className="bg-purple-100 border-2 border-purple-300 rounded-lg p-2 text-center">
-                  <Activity className="w-4 h-4 text-purple-700 mx-auto mb-1" />
-                  <p className="text-sm text-purple-900 font-bold">{user.stats.workouts}</p>
-                  <p className="text-xs text-gray-700">Workouts</p>
+              <div className="grid grid-cols-4 gap-2 mb-3">
+                <div className="bg-muted rounded-lg p-2 text-center">
+                  <Activity className="w-4 h-4 text-primary mx-auto mb-1" />
+                  <p className="text-sm font-bold">{user.stats.workouts}</p>
+                  <p className="text-xs text-muted-foreground">Workouts</p>
                 </div>
-                <div className="bg-green-100 border-2 border-green-300 rounded-lg p-2 text-center">
-                  <TrendingUp className="w-4 h-4 text-green-700 mx-auto mb-1" />
-                  <p className="text-sm text-green-900 font-bold">{user.stats.avgAccuracy}%</p>
-                  <p className="text-xs text-gray-700">Accuracy</p>
+                <div className="bg-muted rounded-lg p-2 text-center">
+                  <TrendingUp className="w-4 h-4 text-success mx-auto mb-1" />
+                  <p className="text-sm font-bold">{user.stats.avgAccuracy}%</p>
+                  <p className="text-xs text-muted-foreground">Accuracy</p>
                 </div>
-                <div className="bg-blue-100 border-2 border-blue-300 rounded-lg p-2 text-center">
-                  <Award className="w-4 h-4 text-blue-700 mx-auto mb-1" />
-                  <p className="text-sm text-blue-900 font-bold">{user.stats.bestReps}</p>
-                  <p className="text-xs text-gray-700">Best</p>
+                <div className="bg-muted rounded-lg p-2 text-center">
+                  <Award className="w-4 h-4 text-info mx-auto mb-1" />
+                  <p className="text-sm font-bold">{user.stats.bestReps}</p>
+                  <p className="text-xs text-muted-foreground">Best</p>
                 </div>
-                <div className="bg-orange-100 border-2 border-orange-300 rounded-lg p-2 text-center">
-                  <Trophy className="w-4 h-4 text-orange-700 mx-auto mb-1" />
-                  <p className="text-sm text-orange-900 font-bold">{user.stats.streak}</p>
-                  <p className="text-xs text-gray-700">Streak</p>
+                <div className="bg-muted rounded-lg p-2 text-center">
+                  <Trophy className="w-4 h-4 text-warning mx-auto mb-1" />
+                  <p className="text-sm font-bold">{user.stats.streak}</p>
+                  <p className="text-xs text-muted-foreground">Streak</p>
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                <div className="bg-purple-100 border-2 border-purple-300 rounded-lg p-2 text-center">
-                  <Users className="w-4 h-4 text-purple-700 mx-auto mb-1" />
-                  <p className="text-sm text-purple-900 font-bold">{user.stats.athletes}</p>
-                  <p className="text-xs text-gray-700">Athletes</p>
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                <div className="bg-muted rounded-lg p-2 text-center">
+                  <Users className="w-4 h-4 text-primary mx-auto mb-1" />
+                  <p className="text-sm font-bold">{user.stats.athletes}</p>
+                  <p className="text-xs text-muted-foreground">Athletes</p>
                 </div>
-                <div className="bg-green-100 border-2 border-green-300 rounded-lg p-2 text-center">
-                  <Activity className="w-4 h-4 text-green-700 mx-auto mb-1" />
-                  <p className="text-sm text-green-900 font-bold">{user.stats.totalWorkouts}</p>
-                  <p className="text-xs text-gray-700">Sessions</p>
+                <div className="bg-muted rounded-lg p-2 text-center">
+                  <Activity className="w-4 h-4 text-success mx-auto mb-1" />
+                  <p className="text-sm font-bold">{user.stats.totalWorkouts}</p>
+                  <p className="text-xs text-muted-foreground">Sessions</p>
                 </div>
-                <div className="bg-yellow-100 border-2 border-yellow-300 rounded-lg p-2 text-center">
-                  <Star className="w-4 h-4 text-yellow-700 mx-auto mb-1 fill-yellow-400" />
-                  <p className="text-sm text-yellow-900 font-bold">{user.stats.rating}</p>
-                  <p className="text-xs text-gray-700">Rating</p>
+                <div className="bg-muted rounded-lg p-2 text-center">
+                  <Star className="w-4 h-4 text-warning mx-auto mb-1 fill-yellow-400" />
+                  <p className="text-sm font-bold">{user.stats.rating}</p>
+                  <p className="text-xs text-muted-foreground">Rating</p>
                 </div>
               </div>
             )}
 
             {/* Expanded Details */}
             {expanded && (
-              <div className="space-y-3 mb-4 p-3 bg-purple-100 border-2 border-purple-300 rounded-lg">
+              <div className="space-y-3 mb-3 p-3 bg-muted rounded-lg">
                 <div>
-                  <p className="text-sm text-purple-900 font-bold mb-2">Skills</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {user.skills.map((skill: string, idx: number) => (
-                      <Badge key={idx} className="text-xs bg-white border-2 border-purple-300 text-purple-800 font-medium">
+                  <p className="text-sm font-semibold mb-2">Skills</p>
+                  <div className="flex flex-wrap gap-1">
+                    {user.skills.map((skill, idx) => (
+                      <Badge key={idx} variant="outline" className="text-xs">
                         {skill}
                       </Badge>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-purple-900 font-bold mb-2">Achievements</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {user.achievements.map((achievement: string, idx: number) => (
-                      <Badge key={idx} className="text-xs bg-yellow-100 border-2 border-yellow-300 text-yellow-800 font-medium">
+                  <p className="text-sm font-semibold mb-2">Achievements</p>
+                  <div className="flex flex-wrap gap-1">
+                    {user.achievements.map((achievement, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
                         <Trophy className="w-3 h-3 mr-1" />
                         {achievement}
                       </Badge>
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-sm text-purple-800 font-medium">
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Calendar className="w-4 h-4" />
                   Joined {user.joined}
                 </div>
@@ -419,7 +396,7 @@ function UserCard({ user, isConnected = false }: any) {
                 onClick={() => setExpanded(!expanded)}
                 variant="outline"
                 size="sm"
-                className="flex-1 border-2 border-purple-300 text-purple-800 hover:bg-purple-100 h-10 rounded-lg font-semibold"
+                className="flex-1"
               >
                 {expanded ? 'Show Less' : 'View Details'}
               </Button>
@@ -427,7 +404,7 @@ function UserCard({ user, isConnected = false }: any) {
                 <Button
                   onClick={() => setConnected(true)}
                   size="sm"
-                  className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white h-10 px-6 rounded-lg font-semibold shadow-md"
+                  className="px-4"
                 >
                   <UserPlus className="w-4 h-4 mr-2" />
                   Connect
@@ -436,7 +413,7 @@ function UserCard({ user, isConnected = false }: any) {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-2 border-green-300 bg-green-100 text-green-800 h-10 px-6 rounded-lg font-semibold"
+                  className="px-4"
                   disabled
                 >
                   <UserCheck className="w-4 h-4 mr-2" />
