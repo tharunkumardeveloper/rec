@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
 
+// Social connections routes - Updated 2026-02-21
+// Handles user discovery, connection requests, and relationship management
+
 // Debug endpoint - Get all users
 router.get('/users/all', async (req, res) => {
   try {
