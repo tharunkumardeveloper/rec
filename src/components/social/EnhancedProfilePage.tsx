@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  User, MapPin, Award, TrendingUp, Calendar, Video, 
-  FileText, UserPlus, UserCheck, MessageCircle, ArrowLeft,
+  MapPin, Award, TrendingUp, Calendar, Video, 
+  UserPlus, UserCheck, ArrowLeft,
   Trophy, Target, Activity
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -18,7 +18,7 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
   const [profile, setProfile] = useState<any>(null);
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'none' | 'pending' | 'connected'>('none');
   const [loading, setLoading] = useState(true);
 
   // Get userId from auth session
@@ -71,7 +71,17 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
       // Handle both array and object response formats
       setWorkouts(Array.isArray(workoutsData) ? workoutsData : (workoutsData.workouts || []));
       setStats(statsData);
-      setIsConnected(connectionData?.connected || false);
+      
+      // Set connection status
+      if (connectionData) {
+        if (connectionData.connected) {
+          setConnectionStatus('connected');
+        } else if (connectionData.status === 'pending') {
+          setConnectionStatus('pending');
+        } else {
+          setConnectionStatus('none');
+        }
+      }
     } catch (error) {
       console.error('Error loading profile:', error);
       setWorkouts([]); // Set empty array on error
@@ -81,12 +91,22 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
 
   const sendConnectionRequest = async () => {
     try {
-      await fetch(`${API_URL}/api/connections/request`, {
+      const response = await fetch(`${API_URL}/api/connections/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fromUserId: currentUserId, toUserId: profileUserId })
       });
-      loadProfile();
+      
+      if (response.ok) {
+        setConnectionStatus('pending');
+      } else {
+        const error = await response.json();
+        console.error('Connection request failed:', error);
+        // If already exists, reload to get current status
+        if (error.error?.includes('already exists')) {
+          loadProfile();
+        }
+      }
     } catch (error) {
       console.error('Error sending request:', error);
     }
@@ -172,7 +192,7 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
               {/* Action Buttons */}
               {!isOwnProfile && (
                 <div className="flex gap-3 justify-center md:justify-start">
-                  {!isConnected ? (
+                  {connectionStatus === 'none' && (
                     <Button
                       onClick={sendConnectionRequest}
                       className="bg-violet-600 hover:bg-violet-700"
@@ -180,16 +200,19 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
                       <UserPlus className="w-4 h-4 mr-2" />
                       Connect
                     </Button>
-                  ) : (
+                  )}
+                  {connectionStatus === 'pending' && (
+                    <Button variant="outline" disabled>
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Request Pending
+                    </Button>
+                  )}
+                  {connectionStatus === 'connected' && (
                     <Button variant="outline" disabled>
                       <UserCheck className="w-4 h-4 mr-2" />
                       Connected
                     </Button>
                   )}
-                  <Button variant="outline">
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Message
-                  </Button>
                 </div>
               )}
             </div>
@@ -229,23 +252,40 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
 
           {/* Workouts Tab */}
           <TabsContent value="workouts" className="space-y-4 mt-6">
-            {isConnected || isOwnProfile ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {workouts.map(workout => (
-                  <WorkoutCard key={workout._id} workout={workout} />
-                ))}
-              </div>
+            {connectionStatus === 'connected' || isOwnProfile ? (
+              workouts.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {workouts.map(workout => (
+                    <WorkoutCard key={workout._id} workout={workout} />
+                  ))}
+                </div>
+              ) : (
+                <Card className="bg-black/40 backdrop-blur-xl border-violet-500/30 p-12 text-center">
+                  <Activity className="w-16 h-16 text-violet-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-white mb-2">No Workouts Yet</h3>
+                  <p className="text-violet-300">
+                    This {profile.role.toLowerCase()} hasn't recorded any workouts yet.
+                  </p>
+                </Card>
+              )
             ) : (
               <Card className="bg-black/40 backdrop-blur-xl border-violet-500/30 p-12 text-center">
                 <UserPlus className="w-16 h-16 text-violet-400 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">Connect to View Workouts</h3>
+                <h3 className="text-xl font-bold text-white mb-2">
+                  {connectionStatus === 'pending' ? 'Connection Request Pending' : 'Connect to View Workouts'}
+                </h3>
                 <p className="text-violet-300 mb-6">
-                  Send a connection request to view this {profile.role.toLowerCase()}'s workout history
+                  {connectionStatus === 'pending' 
+                    ? 'Your connection request is pending approval'
+                    : `Send a connection request to view this ${profile.role.toLowerCase()}'s workout history`
+                  }
                 </p>
-                <Button onClick={sendConnectionRequest} className="bg-violet-600 hover:bg-violet-700">
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Send Connection Request
-                </Button>
+                {connectionStatus === 'none' && (
+                  <Button onClick={sendConnectionRequest} className="bg-violet-600 hover:bg-violet-700">
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Send Connection Request
+                  </Button>
+                )}
               </Card>
             )}
           </TabsContent>
