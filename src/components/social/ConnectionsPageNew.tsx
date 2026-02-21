@@ -5,7 +5,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import BottomNav from '@/components/navigation/BottomNav';
 
 // Mock data with detailed profiles
 const MOCK_USERS = [
@@ -122,20 +121,6 @@ export default function ConnectionsPageNew() {
   const [activeTab, setActiveTab] = useState<'discover' | 'connections'>('discover');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'ATHLETE' | 'COACH'>('all');
-
-  const getSessionUserRole = () => {
-    try {
-      const sessionStr = localStorage.getItem('auth_session');
-      if (sessionStr) {
-        const session = JSON.parse(sessionStr);
-        return session.role || 'ATHLETE';
-      }
-    } catch (error) {
-      return 'ATHLETE';
-    }
-  };
-
-  const isAthlete = getSessionUserRole() === 'ATHLETE';
 
   const filteredUsers = MOCK_USERS.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -265,8 +250,6 @@ export default function ConnectionsPageNew() {
           </div>
         )}
       </div>
-
-      {isAthlete && <BottomNav />}
     </div>
   );
 }
