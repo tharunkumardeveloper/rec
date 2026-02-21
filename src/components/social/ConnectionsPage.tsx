@@ -323,7 +323,6 @@ export default function ConnectionsPage({ onBack, onViewProfile }: ConnectionsPa
                                     <UserCard
                                         key={user._id || user.userId}
                                         user={user}
-                                        onConnect={() => sendConnectionRequest(user.userId)}
                                         onViewProfile={() => onViewProfile?.(user.userId)}
                                     />
                                 ))}
@@ -449,29 +448,17 @@ function UserCard({ user, isConnected, onConnect, onViewProfile }: any) {
                     )}
 
                     <div className="flex gap-2 w-full pt-2">
-                        {onViewProfile && (
-                            <Button
-                                onClick={onViewProfile}
-                                variant="outline"
-                                className="flex-1 border-violet-500/50 hover:bg-violet-600/20"
-                                size="sm"
-                            >
-                                View Profile
-                            </Button>
-                        )}
-                        {!isConnected && onConnect && (
-                            <Button
-                                onClick={onConnect}
-                                className="flex-1 bg-violet-600 hover:bg-violet-700"
-                                size="sm"
-                            >
-                                <UserPlus className="w-4 h-4 mr-1" />
-                                Connect
-                            </Button>
-                        )}
+                        <Button
+                            onClick={onViewProfile}
+                            variant="outline"
+                            className="w-full border-violet-500/50 hover:bg-violet-600/20"
+                            size="sm"
+                        >
+                            View Profile
+                        </Button>
                         {isConnected && (
-                            <Badge variant="outline" className="flex-1 py-2 border-green-500/50 text-green-400">
-                                <UserCheck className="w-4 h-4 mr-1" />
+                            <Badge variant="outline" className="absolute top-2 right-2 border-green-500/50 text-green-400">
+                                <UserCheck className="w-3 h-3 mr-1" />
                                 Connected
                             </Badge>
                         )}

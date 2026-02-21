@@ -16,6 +16,7 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
   const { userId: paramUserId } = useParams();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [connectionStatus, setConnectionStatus] = useState<'none' | 'pending' | 'connected'>('none');
@@ -38,6 +39,8 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
   const currentUserId = getSessionUserId();
   const profileUserId = userId || paramUserId || currentUserId;
   const isOwnProfile = profileUserId === currentUserId;
+  const isCoach = currentUserProfile?.role === 'COACH';
+  const canViewWorkouts = isOwnProfile || isCoach || connectionStatus === 'connected';
   const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || 'https://rec-backend-yi7u.onrender.com';
 
   const handleBack = () => {
@@ -49,8 +52,21 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
   };
 
   useEffect(() => {
+    loadCurrentUserProfile();
     loadProfile();
   }, [profileUserId]);
+
+  const loadCurrentUserProfile = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/users/${currentUserId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentUserProfile(data);
+      }
+    } catch (error) {
+      console.error('Error loading current user profile:', error);
+    }
+  };
 
   const loadProfile = async () => {
     try {
@@ -252,7 +268,7 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
 
           {/* Workouts Tab */}
           <TabsContent value="workouts" className="space-y-4 mt-6">
-            {connectionStatus === 'connected' || isOwnProfile ? (
+            {canViewWorkouts ? (
               workouts.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {workouts.map(workout => (
