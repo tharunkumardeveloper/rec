@@ -287,10 +287,11 @@ const AthleteWorkoutDetail = ({
           </Card>
         )}
 
-        {/* PDF Report */}
-        {(selectedWorkout.pdfUrl || selectedWorkout.pdfDataUrl) && (
-          <Card>
-            <CardContent className="p-4 space-y-2">
+        {/* Action Buttons */}
+        <Card>
+          <CardContent className="p-4 space-y-2">
+            {/* PDF Report Button */}
+            {(selectedWorkout.pdfUrl || selectedWorkout.pdfDataUrl) && (
               <Button 
                 onClick={() => setShowPDFViewer(true)}
                 className="w-full"
@@ -299,29 +300,29 @@ const AthleteWorkoutDetail = ({
                 <FileText className="w-4 h-4 mr-2" />
                 View PDF Report
               </Button>
-              
-              {/* Delete Workout Button */}
-              <Button 
-                onClick={handleDeleteWorkout}
-                disabled={isDeleting}
-                className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                variant="destructive"
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Workout
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+            )}
+            
+            {/* Delete Workout Button - Always visible for coaches */}
+            <Button 
+              onClick={handleDeleteWorkout}
+              disabled={isDeleting}
+              className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              variant="destructive"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Workout
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Screenshots Gallery */}
         {screenshots.length > 0 && (
