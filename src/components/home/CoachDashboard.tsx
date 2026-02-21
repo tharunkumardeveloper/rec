@@ -7,12 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import workoutStorageService, { StoredWorkout } from '@/services/workoutStorageService';
 import AthleteWorkoutDetail from '@/components/coach/AthleteWorkoutDetail';
 import { userProfileService } from '@/services/userProfileService';
-import { 
-  Search, 
-  Settings, 
-  User, 
-  Target, 
-  Trophy, 
+import {
+  Search,
+  Settings,
+  User,
+  Target,
+  Trophy,
   Calendar,
   Zap,
   Star,
@@ -73,13 +73,13 @@ const CoachDashboard = ({ userName, userRole, onTabChange, activeTab, onProfileO
     try {
       const athletes = await workoutStorageService.getAllAthletes();
       console.log('📊 Found athletes:', athletes);
-      
+
       if (!athletes || athletes.length === 0) {
         console.log('⚠️ No athletes found');
         setAthleteWorkouts([]);
         return;
       }
-      
+
       const athleteData = await Promise.all(
         athletes.map(async (athlete) => {
           try {
@@ -101,10 +101,10 @@ const CoachDashboard = ({ userName, userRole, onTabChange, activeTab, onProfileO
           }
         })
       );
-      
+
       setAthleteWorkouts(athleteData);
       console.log('✅ Loaded', athleteData.length, 'athletes with workouts');
-      
+
       if (athleteData.length > 0) {
         console.log('✅ Athletes:', athleteData.map(a => a.name).join(', '));
       }
@@ -138,7 +138,7 @@ const CoachDashboard = ({ userName, userRole, onTabChange, activeTab, onProfileO
     if (diffMins < 60) return `${diffMins} min ago`;
     if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
     if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    
+
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -161,13 +161,13 @@ const CoachDashboard = ({ userName, userRole, onTabChange, activeTab, onProfileO
       const today = new Date();
       return lastWorkoutDate.toDateString() === today.toDateString();
     }).length,
-    avgAccuracy: athleteWorkouts.length > 0 
+    avgAccuracy: athleteWorkouts.length > 0
       ? Math.round(
-          athleteWorkouts.reduce((sum, a) => {
-            const avgAcc = a.workouts.reduce((s, w) => s + w.accuracy, 0) / (a.workouts.length || 1);
-            return sum + avgAcc;
-          }, 0) / athleteWorkouts.length
-        )
+        athleteWorkouts.reduce((sum, a) => {
+          const avgAcc = a.workouts.reduce((s, w) => s + w.accuracy, 0) / (a.workouts.length || 1);
+          return sum + avgAcc;
+        }, 0) / athleteWorkouts.length
+      )
       : 0
   };
 
@@ -316,7 +316,7 @@ const CoachDashboard = ({ userName, userRole, onTabChange, activeTab, onProfileO
             <h3 className="text-lg font-semibold">
               {athleteWorkouts.length} Athlete{athleteWorkouts.length !== 1 ? 's' : ''}
             </h3>
-            <Button 
+            <Button
               onClick={loadAthleteData}
               variant="outline"
               size="sm"
@@ -362,8 +362,8 @@ const CoachDashboard = ({ userName, userRole, onTabChange, activeTab, onProfileO
                           </div>
                         </div>
                       </div>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 flex-shrink-0"
                         onClick={() => handleViewWorkouts(athlete.name)}
                       >
@@ -384,7 +384,7 @@ const CoachDashboard = ({ userName, userRole, onTabChange, activeTab, onProfileO
               <p className="text-sm text-muted-foreground">
                 Athlete workout data will appear here after they complete workouts and click "Download PDF Report".
               </p>
-              <Button 
+              <Button
                 onClick={loadAthleteData}
                 variant="outline"
                 size="sm"
@@ -393,7 +393,7 @@ const CoachDashboard = ({ userName, userRole, onTabChange, activeTab, onProfileO
                 <Activity className="w-4 h-4 mr-2" />
                 Refresh Data
               </Button>
-              <Button 
+              <Button
                 onClick={() => {
                   const data = localStorage.getItem('athlete_workouts');
                   if (data) {
@@ -488,9 +488,8 @@ const CoachDashboard = ({ userName, userRole, onTabChange, activeTab, onProfileO
       <div className="px-4 pb-20 lg:pb-8 max-w-2xl lg:max-w-7xl mx-auto pt-6">
         {/* Search Bar */}
         <div className="mb-6 relative">
-          <div className={`relative transition-all duration-300 ${
-            searchFocus ? 'transform scale-105' : ''
-          }`}>
+          <div className={`relative transition-all duration-300 ${searchFocus ? 'transform scale-105' : ''
+            }`}>
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 lg:w-5 lg:h-5" />
             <Input
               placeholder="Search athletes, challenges..."
@@ -528,15 +527,13 @@ const CoachDashboard = ({ userName, userRole, onTabChange, activeTab, onProfileO
                 variant="ghost"
                 size="sm"
                 onClick={() => onTabChange(id)}
-                className={`flex flex-col items-center space-y-1 tap-target transition-all duration-300 ${
-                  activeTab === id 
-                    ? `${color} scale-110 font-semibold` 
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className={`flex flex-col items-center space-y-1 tap-target transition-all duration-300 ${activeTab === id
+                  ? `${color} scale-110 font-semibold`
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
               >
-                <div className={`p-2 rounded-xl transition-all duration-300 ${
-                  activeTab === id ? 'bg-gradient-to-br from-primary/20 to-primary/10 shadow-md' : ''
-                }`}>
+                <div className={`p-2 rounded-xl transition-all duration-300 ${activeTab === id ? 'bg-gradient-to-br from-primary/20 to-primary/10 shadow-md' : ''
+                  }`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 <span className="text-xs">{label}</span>

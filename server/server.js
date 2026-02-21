@@ -642,6 +642,7 @@ const sessionsRouter = require('./routes/sessions');
 const usersRouter = require('./routes/users');
 const authRouter = require('./routes/auth');
 const verificationRouter = require('./routes/verification');
+const connectionsRouter = require('./routes/connections');
 const dbUtilsRouter = require('./db-utils');
 
 // Root endpoint
@@ -672,6 +673,7 @@ app.use('/api/sessions', sessionsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/auth', authRouter);
 app.use('/api', verificationRouter);
+app.use('/api', connectionsRouter);
 app.use('/api/db', dbUtilsRouter);
 
 // Legacy endpoint for backward compatibility

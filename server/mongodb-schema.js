@@ -37,6 +37,11 @@ async function setupDatabase() {
               email: { bsonType: 'string', description: 'User email' },
               profilePic: { bsonType: 'string', description: 'Profile picture URL/base64' },
               profileImage: { bsonType: 'string', description: 'Face verification reference image (base64)' },
+              skills: { 
+                bsonType: 'array',
+                items: { bsonType: 'string' },
+                description: 'User skills/specializations'
+              },
               createdAt: { bsonType: 'date', description: 'Account creation date' }
             }
           }
@@ -161,20 +166,65 @@ async function setupDatabase() {
     }
 
     // ============================================
-    // 4. DISPLAY CURRENT STATS
+    // 4. CONNECTIONS COLLECTION (NEW - Social Features)
+    // ============================================
+    console.log('\n📋 Setting up connections collection...');
+    
+    const connectionsExists = await db.listCollections({ name: 'connections' }).hasNext();
+    if (!connectionsExists) {
+      await db.createCollection('connections', {
+        validator: {
+          $jsonSchema: {
+            bsonType: 'object',
+            required: ['fromUserId', 'toUserId', 'status'],
+            properties: {
+              fromUserId: { bsonType: 'string', description: 'User who sent the request' },
+              toUserId: { bsonType: 'string', description: 'User who received the request' },
+              status: { 
+                enum: ['pending', 'accepted', 'rejected'],
+                description: 'Connection status'
+              },
+              createdAt: { bsonType: 'date', description: 'Request creation time' },
+              acceptedAt: { bsonType: 'date', description: 'Request acceptance time' },
+              rejectedAt: { bsonType: 'date', description: 'Request rejection time' }
+            }
+          }
+        }
+      });
+      console.log('✅ Connections collection created');
+    }
+
+    // Create indexes for connections (production-safe)
+    try {
+      await db.collection('connections').createIndex({ fromUserId: 1, toUserId: 1 }, { unique: true, background: true });
+      await db.collection('connections').createIndex({ fromUserId: 1, status: 1 }, { background: true });
+      await db.collection('connections').createIndex({ toUserId: 1, status: 1 }, { background: true });
+      console.log('✅ Connections indexes created');
+    } catch (indexErr) {
+      if (!indexErr.message.includes('already exists')) {
+        console.warn('⚠️ Connections index warning:', indexErr.message);
+      } else {
+        console.log('✅ Connections indexes already exist');
+      }
+    }
+
+    // ============================================
+    // 5. DISPLAY CURRENT STATS
     // ============================================
     console.log('\n📊 Database Statistics:');
     
     const usersCount = await db.collection('users').countDocuments();
     const sessionsCount = await db.collection('workout_sessions').countDocuments();
     const repsCount = await db.collection('rep_images').countDocuments();
+    const connectionsCount = await db.collection('connections').countDocuments();
     
     console.log(`   Users: ${usersCount}`);
     console.log(`   Workout Sessions: ${sessionsCount}`);
     console.log(`   Rep Images: ${repsCount}`);
+    console.log(`   Connections: ${connectionsCount}`);
 
     // ============================================
-    // 5. SAMPLE DATA (Optional)
+    // 6. SAMPLE DATA (Optional)
     // ============================================
     console.log('\n💡 Sample queries you can run:');
     console.log('   - Get all athletes: db.users.find({ role: "ATHLETE" })');
