@@ -503,14 +503,20 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
             {[
               { id: 'training', label: 'Training', emoji: '⚡' },
               { id: 'discover', label: 'Discover', emoji: '🔍' },
-              { id: 'report', label: 'Report', emoji: '📊' },
-              { id: 'roadmap', label: 'Roadmap', emoji: '🗺️' }
+              { id: 'connections', label: 'Connect', emoji: '👥' },
+              { id: 'report', label: 'Report', emoji: '📊' }
             ].map(({ id, label, emoji }) => (
               <Button
                 key={id}
                 variant="ghost"
                 size="sm"
-                onClick={() => onTabChange(id)}
+                onClick={() => {
+                  if (id === 'connections') {
+                    window.location.href = '/connections';
+                  } else {
+                    onTabChange(id);
+                  }
+                }}
                 className={`flex flex-col items-center space-y-1 tap-target transition-all duration-200 ${activeTab === id
                   ? 'scale-110 font-semibold'
                   : 'opacity-60 hover:opacity-100'
