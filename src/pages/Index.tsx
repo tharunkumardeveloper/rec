@@ -24,8 +24,8 @@ import ChallengeDetail from '@/components/challenges/ChallengeDetail';
 import ActivityDetail from '@/components/activities/ActivityDetail';
 import WorkoutInterface from '@/components/workout/WorkoutInterface';
 import ProfilePage from '@/components/profile/ProfilePage';
-import EnhancedProfilePage from '@/components/social/EnhancedProfilePage';
-import ConnectionsPage from '@/components/social/ConnectionsPage';
+import EnhancedProfilePageNew from '@/components/social/EnhancedProfilePageNew';
+import ConnectionsPageNew from '@/components/social/ConnectionsPageNew';
 import SettingsPage from '@/components/settings/SettingsPage';
 import BadgesScreen from '@/components/badges/BadgesScreen';
 import { preloadAllAssets } from '@/utils/imagePreloader';
@@ -299,7 +299,7 @@ const Index = () => {
   // Show special pages first (before activity detail check)
   if (appState === 'connections') {
     return (
-      <ConnectionsPage
+      <ConnectionsPageNew
         onBack={handleBackToHome}
         onViewProfile={(userId) => {
           setViewingUserId(userId);
@@ -310,7 +310,7 @@ const Index = () => {
   }
 
   if (appState === 'user-profile' && viewingUserId) {
-    return <EnhancedProfilePage userId={viewingUserId} onBack={handleBackToHome} />;
+    return <EnhancedProfilePageNew userId={viewingUserId} onBack={handleBackToHome} />;
   }
 
   if (appState === 'profile') {
