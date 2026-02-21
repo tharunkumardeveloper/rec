@@ -37,7 +37,21 @@ export default function ConnectionsPage({ onBack, onViewProfile }: ConnectionsPa
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const currentUserId = localStorage.getItem('userId') || '';
+    // Get userId from auth session
+    const getSessionUserId = () => {
+        try {
+            const sessionStr = localStorage.getItem('auth_session');
+            if (sessionStr) {
+                const session = JSON.parse(sessionStr);
+                return session.userId || '';
+            }
+        } catch (error) {
+            console.error('Error reading session:', error);
+        }
+        return '';
+    };
+
+    const currentUserId = getSessionUserId();
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
     // Log when component mounts
@@ -78,7 +92,7 @@ export default function ConnectionsPage({ onBack, onViewProfile }: ConnectionsPa
         try {
             console.log('🔍 Loading discover users for:', currentUserId);
             console.log('🌐 Fetching from:', `${API_URL}/api/users/discover?userId=${currentUserId}`);
-            
+
             const response = await fetch(`${API_URL}/api/users/discover?userId=${currentUserId}`);
             console.log('📡 Response status:', response.status, response.statusText);
 
@@ -87,7 +101,7 @@ export default function ConnectionsPage({ onBack, onViewProfile }: ConnectionsPa
                 // Fallback: Get all users
                 const fallbackResponse = await fetch(`${API_URL}/api/users/all`);
                 console.log('📡 Fallback response status:', fallbackResponse.status);
-                
+
                 if (fallbackResponse.ok) {
                     const allUsers = await fallbackResponse.json();
                     console.log('📊 All users from fallback:', allUsers.length);
