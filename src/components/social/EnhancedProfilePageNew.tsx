@@ -385,8 +385,16 @@ function StatCard({ icon: Icon, label, value }: any) {
 }
 
 function WorkoutCard({ workout }: any) {
+  const navigate = useNavigate();
+  
   return (
-    <Card className="bg-black/40 backdrop-blur-xl border-purple-500/20 hover:border-purple-400 transition-all">
+    <Card 
+      className="bg-black/40 backdrop-blur-xl border-purple-500/20 hover:border-purple-400 transition-all cursor-pointer"
+      onClick={() => {
+        console.log('🎯 Workout card clicked:', workout._id);
+        navigate(`/workout/${workout._id}`);
+      }}
+    >
       <CardContent className="p-4">
         <div className="space-y-3">
           {/* Workout Header */}
