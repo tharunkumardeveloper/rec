@@ -3,10 +3,12 @@ import { Search, Play, Eye, Heart, BookOpen, TrendingUp, Filter } from 'lucide-r
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import VideoPlayerPage from '@/components/discover/VideoPlayerPage';
 
 export default function DiscoverTabEnhanced() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'videos' | 'articles' | 'courses'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
 
   // Mock video tutorials data
   const content = [
@@ -96,6 +98,16 @@ export default function DiscoverTabEnhanced() {
     return matchesFilter && matchesSearch;
   });
 
+  // Show video player if a video is selected
+  if (selectedVideoId) {
+    return (
+      <VideoPlayerPage
+        videoId={selectedVideoId}
+        onBack={() => setSelectedVideoId(null)}
+      />
+    );
+  }
+
   return (
     <div className="px-4 pb-20 max-w-7xl mx-auto pt-6">
       {/* Header */}
@@ -151,7 +163,15 @@ export default function DiscoverTabEnhanced() {
       {/* Content Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredContent.map((item) => (
-          <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group">
+          <Card
+            key={item.id}
+            className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
+            onClick={() => {
+              if (item.type === 'video') {
+                setSelectedVideoId(item.id.toString());
+              }
+            }}
+          >
             {/* Thumbnail */}
             <div className="relative aspect-video bg-cover bg-center" style={{ backgroundImage: `url(${item.thumbnail})` }}>
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -240,7 +260,15 @@ export default function DiscoverTabEnhanced() {
         </div>
         <div className="space-y-3">
           {content.slice(0, 3).map((item, idx) => (
-            <Card key={item.id} className="hover:shadow-md transition-shadow cursor-pointer">
+            <Card
+              key={item.id}
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => {
+                if (item.type === 'video') {
+                  setSelectedVideoId(item.id.toString());
+                }
+              }}
+            >
               <CardContent className="p-3">
                 <div className="flex gap-3">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
