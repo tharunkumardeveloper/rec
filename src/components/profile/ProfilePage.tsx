@@ -1,0 +1,397 @@
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { userProfileService } from '@/services/userProfileService';
+import { authService } from '@/services/authService';
+import { 
+  ArrowLeft, 
+  Camera, 
+  Mail, 
+  Phone, 
+  Lock, 
+  Trophy, 
+  Coins,
+  Scale,
+  Ruler,
+  Target,
+  Shield
+} from 'lucide-react';
+
+interface ProfilePageProps {
+  userName: string;
+  userEmail?: string;
+  userRole?: 'athlete' | 'coach' | 'admin';
+  onBack: () => void;
+  onLogout?: () => void;
+}
+
+const ProfilePage = ({ userName, userEmail = "user@example.com", userRole = 'athlete', onBack, onLogout }: ProfilePageProps) => {
+  const [userProfilePic, setUserProfilePic] = useState<string>('');
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  const [profileData, setProfileData] = useState({
+    name: userName,
+    email: userEmail,
+    mobile: "+1 (555) 123-4567",
+    height: "175 cm",
+    weight: "70 kg",
+    bmi: "22.9"
+  });
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        console.log('📄 ProfilePage: Loading profile...');
+        const profile = userProfileService.getProfile();
+        console.log('📄 ProfilePage: Profile from localStorage:', profile);
+        
+        if (profile) {
+          // Set profile picture
+          if (profile.profilePic) {
+            console.log('📄 ProfilePage: Setting profile pic:', profile.profilePic?.substring(0, 50) + '...');
+            setUserProfilePic(profile.profilePic);
+          }
+          
+          // Try to sync from MongoDB if we have a userId
+          if (profile.userId) {
+            console.log('📄 ProfilePage: Syncing from MongoDB...');
+            const syncedProfile = await userProfileService.syncFromMongoDB(profile.userId);
+            if (syncedProfile) {
+              console.log('📄 ProfilePage: Synced profile:', syncedProfile);
+              console.log('📄 ProfilePage: Synced profile pic:', syncedProfile.profilePic?.substring(0, 50) + '...');
+              setUserProfilePic(syncedProfile.profilePic || '');
+              setProfileData(prev => ({
+                ...prev,
+                name: syncedProfile.name || prev.name,
+                email: syncedProfile.email || prev.email,
+                mobile: syncedProfile.phone || prev.mobile
+              }));
+            }
+          } else {
+            // Use local profile data
+            setProfileData(prev => ({
+              ...prev,
+              name: profile.name || prev.name,
+              email: profile.email || prev.email,
+              mobile: profile.phone || prev.mobile
+            }));
+          }
+        } else {
+          console.log('📄 ProfilePage: No profile found');
+        }
+      } catch (error) {
+        console.error('📄 ProfilePage: Error loading profile:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
+  const handleInputChange = (field: string, value: string) => {
+    setProfileData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const achievements = {
+    badges: 12,
+    coins: 1250
+  };
+
+  const userLevel = {
+    level: 8,
+    progress: 73,
+    xp: 3650,
+    nextLevelXp: 5000
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-primary border-b border-primary-dark safe-top">
+        <div className="px-4 py-4">
+          <div className="flex items-center max-w-md mx-auto">
+            <Button variant="ghost" size="sm" onClick={() => {
+              window.scrollTo(0, 0);
+              onBack();
+            }} className="mr-3 text-white hover:bg-white/20">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-lg font-semibold text-white">Profile</h1>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 pb-8 max-w-4xl mx-auto pt-6">
+        {/* Two Column Layout on Desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Profile Photo and Quick Stats */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Profile Photo */}
+            <Card className="card-elevated">
+          <CardContent className="p-6 text-center">
+            <div className="relative mb-4">
+              <div className="w-24 h-24 mx-auto rounded-full border-4 border-primary/20 overflow-hidden bg-primary/10 flex items-center justify-center">
+                {userProfilePic ? (
+                  <img 
+                    src={userProfilePic} 
+                    alt={userName} 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.error('📄 ProfilePage: Failed to load image');
+                      e.currentTarget.style.display = 'none';
+                    }}
+                    onLoad={() => console.log('📄 ProfilePage: Image loaded successfully')}
+                  />
+                ) : (
+                  <div className="text-2xl font-bold text-primary">
+                    {userName.split(' ').map(n => n[0]).join('')}
+                  </div>
+                )}
+              </div>
+            </div>
+            <h2 className="text-xl font-bold">{profileData.name}</h2>
+            <p className="text-sm text-muted-foreground">{profileData.email}</p>
+            </CardContent>
+          </Card>
+
+          {/* Level Progress - Only for Athletes */}
+          {userRole === 'athlete' && (
+            <Card className="card-elevated">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Target className="w-5 h-5 mr-2 text-primary" />
+                  Level Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-semibold">Level {userLevel.level}</span>
+                    <span className="text-sm text-muted-foreground">{userLevel.progress}%</span>
+                  </div>
+                  <div className="w-full bg-secondary rounded-full h-3">
+                    <div 
+                      className="bg-primary h-3 rounded-full transition-all duration-300"
+                      style={{ width: `${userLevel.progress}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>{userLevel.xp} XP</span>
+                    <span>{userLevel.nextLevelXp} XP</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Achievements Summary - Only for Athletes */}
+          {userRole === 'athlete' && (
+            <Card className="card-elevated">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Trophy className="w-5 h-5 mr-2 text-warning" />
+                  Achievements
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 rounded-lg bg-warning/10">
+                    <Badge className="w-8 h-8 rounded-full bg-warning text-warning-foreground p-0 flex items-center justify-center mb-2">
+                      <Trophy className="w-4 h-4" />
+                    </Badge>
+                    <div className="text-2xl font-bold text-warning">{achievements.badges}</div>
+                    <div className="text-xs text-muted-foreground">Badges</div>
+                  </div>
+                  <div className="text-center p-4 rounded-lg bg-primary/10">
+                    <Badge className="w-8 h-8 rounded-full bg-primary text-primary-foreground p-0 flex items-center justify-center mb-2">
+                      <Coins className="w-4 h-4" />
+                    </Badge>
+                    <div className="text-2xl font-bold text-primary">{achievements.coins}</div>
+                    <div className="text-xs text-muted-foreground">Coins</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Right Column - Forms and Settings */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Personal Information */}
+          <Card className="card-elevated">
+          <CardHeader>
+            <CardTitle>Personal Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                value={profileData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email Address</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={profileData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className="pl-10 mt-1"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="mobile">Mobile Number</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="mobile"
+                  type="tel"
+                  value={profileData.mobile}
+                  onChange={(e) => handleInputChange('mobile', e.target.value)}
+                  className="pl-10 mt-1"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Account Security */}
+        <Card className="card-elevated">
+          <CardHeader>
+            <CardTitle>Account Security</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button variant="outline" className="w-full justify-start">
+              <Lock className="w-4 h-4 mr-3" />
+              Change Password
+            </Button>
+            <Button variant="outline" className="w-full justify-start">
+              <Mail className="w-4 h-4 mr-3" />
+              Change Email
+            </Button>
+            </CardContent>
+          </Card>
+
+          {/* Fitness Stats - Only for Athletes */}
+          {userRole === 'athlete' && (
+            <Card className="card-elevated">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Target className="w-5 h-5 mr-2 text-success" />
+                  Fitness Stats
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="height">Height</Label>
+                    <div className="relative">
+                      <Ruler className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="height"
+                        value={profileData.height}
+                        onChange={(e) => handleInputChange('height', e.target.value)}
+                        className="pl-10 mt-1"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="weight">Weight</Label>
+                    <div className="relative">
+                      <Scale className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="weight"
+                        value={profileData.weight}
+                        onChange={(e) => handleInputChange('weight', e.target.value)}
+                        className="pl-10 mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 bg-info/10 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Current BMI</span>
+                    <span className="text-lg font-bold text-info">{profileData.bmi}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Normal Weight</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Role Information - For Coaches and Admins */}
+          {(userRole === 'coach' || userRole === 'admin') && (
+            <Card className="card-elevated">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Shield className="w-5 h-5 mr-2 text-primary" />
+                  Role Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="p-4 bg-primary/10 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">Role</span>
+                    <span className="text-lg font-bold text-primary capitalize">{userRole}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {userRole === 'coach' 
+                      ? 'Manage athletes and create training programs' 
+                      : 'System administration and oversight'}
+                  </p>
+                </div>
+                {userRole === 'coach' && (
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div className="p-3 bg-secondary rounded-lg">
+                      <div className="text-xl font-bold">28</div>
+                      <div className="text-xs text-muted-foreground">Athletes</div>
+                    </div>
+                    <div className="p-3 bg-secondary rounded-lg">
+                      <div className="text-xl font-bold">156</div>
+                      <div className="text-xs text-muted-foreground">Challenges</div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Save Button */}
+          <Button className="w-full" size="lg">
+            Save Changes
+          </Button>
+
+          {/* Logout Button */}
+          <Button 
+            variant="ghost" 
+            size="lg" 
+            className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => {
+              // Use auth service to logout
+              authService.logout();
+              // Redirect to auth flow
+              onLogout ? onLogout() : onBack();
+            }}
+          >
+            <Lock className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+      </div>
+    </div>
+    </div>
+  );
+};
+
+export default ProfilePage;

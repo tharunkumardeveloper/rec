@@ -1,0 +1,185 @@
+{
+  "workouts": [
+    {
+      "id": "pushups",
+      "category": "workout",
+      "title": "Push-ups",
+      "content": "Push-ups are a fundamental upper body exercise from the Presidential Fitness Test that targets chest, shoulders, and triceps. Proper form: Start in plank position with hands shoulder-width apart. Lower your body until chest nearly touches ground (elbows at 90°). Push back up to starting position. Keep core tight and body straight throughout - imagine a straight line from head to heels. Common mistakes: Sagging hips (keep core engaged), flaring elbows (keep them at 45° angle), incomplete range of motion (go all the way down and up). The AI counts reps automatically and validates your form in real-time.",
+      "keywords": ["pushup", "push-up", "push up", "chest", "arms", "upper body", "form", "technique", "plank", "elbow angle"]
+    },
+    {
+      "id": "pullups",
+      "category": "workout",
+      "title": "Pull-ups",
+      "content": "Pull-ups are an advanced upper body exercise from the Presidential Fitness Test targeting back and biceps. Proper form: Hang from bar with overhand grip, hands shoulder-width apart. Pull your body up until chin clears the bar. Lower with control to full arm extension. Avoid swinging or kipping - use strict form only. The AI detects when your chin clears the bar and counts valid reps. Modifications for beginners: Assisted pull-ups with resistance bands, negative pull-ups (jump up, lower slowly), or Australian pull-ups (feet on ground, body at angle). Build strength gradually - even one strict pull-up is an achievement!",
+      "keywords": ["pullup", "pull-up", "pull up", "back", "biceps", "upper body", "bar", "chin", "hang", "grip"]
+    },
+    {
+      "id": "situps",
+      "category": "workout",
+      "title": "Sit-ups",
+      "content": "Sit-ups are a core strengthening exercise from the Presidential Fitness Test. Proper form: Lie on your back with knees bent and feet flat on floor. Place hands behind head or crossed on chest. Engage core and lift torso up until it's vertical, then lower back down with control. The AI tracks your torso angle and counts reps when you reach vertical position. Common mistakes: Pulling on neck (use core, not neck muscles), using momentum (controlled movement), not going all the way down (back should touch ground each rep). Keep feet anchored and maintain steady breathing throughout.",
+      "keywords": ["situp", "sit-up", "sit up", "core", "abs", "abdominal", "torso", "crunch", "stomach"]
+    },
+    {
+      "id": "verticaljump",
+      "category": "workout",
+      "title": "Vertical Jump",
+      "content": "Vertical Jump measures explosive leg power from the Presidential Fitness Test. How it works: Stand with feet shoulder-width apart. Bend knees and swing arms back, then explode upward reaching as high as possible. The AI tracks your hip height throughout the jump and calculates your maximum jump height and air time. Tips for better jumps: Use your arms for momentum, bend knees to about 90°, land softly with bent knees to absorb impact. This test measures your power and athleticism - great for basketball, volleyball, and overall fitness!",
+      "keywords": ["vertical jump", "jump", "jumping", "leap", "explosive", "power", "legs", "height", "air time"]
+    },
+    {
+      "id": "shuttlerun",
+      "category": "workout",
+      "title": "Shuttle Run",
+      "content": "Shuttle Run tests speed and agility from the Presidential Fitness Test. How it works: Run back and forth between two lines (typically 30 feet apart), touching the line each time you change direction. The AI tracks your position and counts laps automatically. Tips: Use quick, choppy steps near the lines, plant your foot and push off explosively, maintain low center of gravity for faster direction changes. This test measures your agility, speed, and cardiovascular endurance. Great for sports requiring quick direction changes like soccer, basketball, and tennis!",
+      "keywords": ["shuttle run", "shuttle", "run", "running", "sprint", "agility", "speed", "back and forth", "laps", "endurance"]
+    },
+    {
+      "id": "sitreach",
+      "category": "workout",
+      "title": "Sit and Reach",
+      "content": "Sit and Reach measures flexibility from the Presidential Fitness Test, specifically hamstring and lower back flexibility. How it works: Sit on floor with legs straight out in front. Reach forward as far as possible, sliding hands along a measuring device. The AI tracks how far you can reach beyond your toes. Tips: Warm up first with light stretching, exhale as you reach forward, don't bounce (use slow, controlled movement), keep knees straight. Regular stretching improves flexibility over time. Good flexibility reduces injury risk and improves overall movement quality!",
+      "keywords": ["sit and reach", "sit reach", "flexibility", "stretch", "stretching", "hamstring", "lower back", "reach", "flexible"]
+    },
+    {
+      "id": "broadjump",
+      "category": "workout",
+      "title": "Standing Broad Jump (Vertical Broad Jump)",
+      "content": "Standing Broad Jump measures explosive leg power and coordination from the Presidential Fitness Test. How it works: Stand with feet shoulder-width apart at starting line. Swing arms back, bend knees, then explode forward jumping as far as possible. Land with both feet and maintain balance. The AI measures the horizontal distance from start to landing. Tips: Use arm swing for momentum, bend knees deeply (about 90°), drive forward and up at 45° angle, land with knees bent to absorb impact. This test shows your power and coordination - important for many sports!",
+      "keywords": ["broad jump", "standing broad jump", "vertical broad jump", "long jump", "horizontal jump", "distance", "power", "explosive", "legs"]
+    }
+  ],
+  "features": [
+    {
+      "id": "ghost-mode",
+      "category": "feature",
+      "title": "Ghost Mode",
+      "content": "Ghost Mode is a unique training feature that lets you train alongside a semi-transparent overlay of perfect form demonstration. The ghost performs the exercise in real-time while you follow along, helping you match proper form, timing, and range of motion. It's like having a personal trainer showing you exactly how to do each rep! Access Ghost Mode from the Training tab by clicking the purple Ghost Mode banner with the ghost emoji. Choose your workout, then select whether to upload a video or record live. The ghost overlay will appear during your workout to guide you. Perfect for learning new exercises or improving your form!",
+      "keywords": ["ghost", "ghost mode", "overlay", "demonstration", "follow along", "purple banner", "training", "guide", "form", "perfect form"]
+    },
+    {
+      "id": "test-mode",
+      "category": "feature",
+      "title": "Test Mode",
+      "content": "Test Mode is designed for formal fitness testing and evaluation. It provides a more rigorous analysis with stricter form requirements, perfect for official Presidential Fitness Test assessments. Access Test Mode from the Training tab by clicking the red Test Mode banner with the target emoji. The AI uses optimized processing for faster evaluation while maintaining accuracy. Test Mode is ideal when you want an official score or are preparing for a fitness assessment. Results include detailed metrics and form analysis to help you improve your performance.",
+      "keywords": ["test mode", "test", "evaluation", "assessment", "official", "red banner", "target", "strict", "formal", "score"]
+    },
+    {
+      "id": "challenges",
+      "category": "feature",
+      "title": "Challenges",
+      "content": "Challenges are structured workout programs that help you build strength and skills progressively. Each challenge consists of 5 workouts focused on a specific fitness goal. Available challenges include: Push-up Power (beginner), Pull-up Progression (intermediate), Core Crusher (beginner), Sprint Master (intermediate), Flexibility Foundation (beginner), Jump Power (intermediate), and Adaptive Strength (beginner, para-athlete focused). Complete all workouts in a challenge to earn a badge! Find challenges on the Training tab - scroll down to see all available challenges. Click any challenge to see details and start your journey!",
+      "keywords": ["challenge", "challenges", "program", "workout program", "badge", "earn badge", "push-up power", "pull-up progression", "core crusher", "sprint master", "flexibility", "jump power", "adaptive"]
+    },
+    {
+      "id": "badges",
+      "category": "feature",
+      "title": "Badges and Achievements",
+      "content": "Badges are achievements you earn by completing challenges and reaching milestones. Each badge represents a fitness accomplishment and shows your progress. View all your badges by clicking the Roadmap tab at the bottom navigation, then tap 'View All Badges'. You can also access badges from your profile. Badges include: Challenge completion badges (one for each challenge), Streak badges (for consistent training), Milestone badges (for total workouts completed), and Special badges (for unique achievements). Collect them all and show off your fitness journey!",
+      "keywords": ["badge", "badges", "achievement", "achievements", "earn", "collect", "roadmap", "milestone", "reward", "trophy"]
+    },
+    {
+      "id": "report-tab",
+      "category": "feature",
+      "title": "Report Tab - Progress Tracking",
+      "content": "The Report tab is your fitness dashboard showing all your progress and statistics. Access it from the bottom navigation (📊 icon). Here you'll find: Workout history (all completed workouts with dates and scores), Progress charts (track improvement over time), Weekly stats (workouts this week, calories burned, time spent), Personal records (your best performances), and Form analysis (areas to improve). Use the Report tab to see how far you've come, identify trends, and set new goals. Your data is stored locally on your device for privacy.",
+      "keywords": ["report", "report tab", "progress", "stats", "statistics", "history", "workout history", "tracking", "dashboard", "charts", "data"]
+    },
+    {
+      "id": "roadmap-tab",
+      "category": "feature",
+      "title": "Roadmap Tab - Your Fitness Journey",
+      "content": "The Roadmap tab (🗺️ icon in bottom navigation) shows your fitness journey and goals. It displays: Your current level and progress, Upcoming milestones, Badge collection, Recommended next workouts, Weekly goals and streaks. The Roadmap helps you stay motivated by showing clear progression paths and celebrating your achievements. It's designed to guide you from beginner to advanced fitness levels, following the Presidential Fitness Test standards. Check it regularly to see your next goals!",
+      "keywords": ["roadmap", "roadmap tab", "journey", "goals", "milestones", "level", "progression", "path", "next workout", "recommended"]
+    }
+  ],
+  "navigation": [
+    {
+      "id": "start-workout",
+      "category": "navigation",
+      "title": "Starting a Workout",
+      "content": "To start a workout: 1) Go to the Training tab (⚡ icon in bottom navigation), 2) Browse the Activity Focus section and tap any workout card (like Push-ups, Pull-ups, etc.), 3) You'll see the workout detail screen with description and tips, 4) Choose 'Upload Video' to analyze a pre-recorded video, or 'Live Recording' to record with your camera, 5) Follow the on-screen instructions. The AI will analyze your form and count reps automatically. After processing, you'll see your results with an annotated video showing your form. You can also start workouts from Challenges or Ghost Mode!",
+      "keywords": ["start", "begin", "workout", "training", "how to", "upload", "record", "video", "live", "activity"]
+    },
+    {
+      "id": "navigate-tabs",
+      "category": "navigation",
+      "title": "Navigating Between Tabs",
+      "content": "Talent Track has four main tabs for athletes, accessible from the bottom navigation bar: Training (⚡) - Your main workout hub with activities, challenges, Ghost Mode, and Test Mode. Discover (🔍) - Explore new workouts and training tips. Report (📊) - View your progress, stats, and workout history. Roadmap (🗺️) - See your fitness journey, goals, and badges. Simply tap any icon to switch tabs. On desktop, the navigation is in the left sidebar. Your current tab is highlighted in blue. You can switch tabs anytime without losing your place!",
+      "keywords": ["navigate", "navigation", "tabs", "switch", "training", "discover", "report", "roadmap", "bottom bar", "menu"]
+    },
+    {
+      "id": "ghost-mode-access",
+      "category": "navigation",
+      "title": "Accessing Ghost Mode",
+      "content": "To access Ghost Mode: 1) Go to the Training tab, 2) Scroll down slightly to see the purple Ghost Mode banner (it's right below the Weekly Progress card), 3) Tap the banner that says 'Ghost Mode - Train in the shadows 👻', 4) You'll see all available Ghost Mode workouts, 5) Select a workout to see details and start training with the ghost overlay. Ghost Mode is perfect for learning proper form by following along with a perfect demonstration. The ghost appears as a semi-transparent overlay during your workout!",
+      "keywords": ["ghost mode", "access ghost", "find ghost", "purple banner", "how to ghost", "where is ghost"]
+    },
+    {
+      "id": "test-mode-access",
+      "category": "navigation",
+      "title": "Accessing Test Mode",
+      "content": "To access Test Mode: 1) Go to the Training tab, 2) Scroll down to find the red Test Mode banner (below the Activity Focus section), 3) Tap the banner that says 'Test Mode - Challenge yourself 🎯', 4) You'll see all available test workouts, 5) Select a workout to begin your formal assessment. Test Mode uses stricter form requirements and provides detailed evaluation - perfect for official fitness testing or when you want to measure your true performance against Presidential Fitness Test standards!",
+      "keywords": ["test mode", "access test", "find test", "red banner", "how to test", "where is test", "assessment"]
+    },
+    {
+      "id": "view-profile",
+      "category": "navigation",
+      "title": "Viewing Your Profile",
+      "content": "To view your profile: On mobile, tap the 👤 icon in the top-right corner of the Training tab. On desktop, click the Profile button in the left sidebar. Your profile shows: Personal information (name, role), Workout statistics (total workouts, streak, badges), Recent achievements, Settings access. From your profile, you can also access Settings (⚙️ icon) to customize your experience, manage notifications, and adjust preferences. Your profile data is stored locally for privacy.",
+      "keywords": ["profile", "view profile", "account", "user", "personal", "settings", "top right", "sidebar"]
+    },
+    {
+      "id": "workout-history",
+      "category": "navigation",
+      "title": "Viewing Workout History",
+      "content": "To view your workout history: 1) Tap the Report tab (📊 icon) in the bottom navigation, 2) Your workout history is displayed at the top showing all completed workouts, 3) Each entry shows: Workout name, Date completed, Reps/score, Form quality, 4) Tap any workout to see detailed results including the annotated video and full metrics. You can filter by workout type or date range. Your history helps you track progress over time and identify areas for improvement. All data is stored locally on your device.",
+      "keywords": ["history", "workout history", "past workouts", "completed", "previous", "report", "view history", "results"]
+    }
+  ],
+  "fitness": [
+    {
+      "id": "pushup-form-tips",
+      "category": "fitness",
+      "title": "Push-up Form Tips",
+      "content": "Master push-up form with these tips: Hand placement - Slightly wider than shoulders, fingers pointing forward. Body alignment - Straight line from head to heels, engage core throughout. Elbow position - Keep elbows at 45° angle to body, not flared out. Range of motion - Lower until chest nearly touches ground (90° elbow angle), then push all the way up. Breathing - Inhale going down, exhale pushing up. Common fixes: If hips sag, engage core harder. If it's too hard, try knee push-ups or incline push-ups. Build strength gradually - quality over quantity!",
+      "keywords": ["pushup form", "push-up technique", "how to pushup", "pushup tips", "better pushups", "pushup help"]
+    },
+    {
+      "id": "pullup-progression",
+      "category": "fitness",
+      "title": "Pull-up Progression for Beginners",
+      "content": "Can't do a pull-up yet? Try this progression: Week 1-2: Dead hangs (hang from bar for 10-30 seconds, build grip strength). Week 3-4: Negative pull-ups (jump to top position, lower slowly over 3-5 seconds). Week 5-6: Assisted pull-ups (use resistance band or assisted pull-up machine). Week 7-8: Attempt first strict pull-up! Tips: Focus on back muscles, not just arms. Pull elbows down and back. Keep core tight. Practice 3-4 times per week. Even partial progress is progress - celebrate small wins! Most people need 4-8 weeks to get their first pull-up.",
+      "keywords": ["pullup progression", "learn pullup", "first pullup", "pullup help", "can't do pullup", "pullup beginner"]
+    },
+    {
+      "id": "workout-frequency",
+      "category": "fitness",
+      "title": "Workout Frequency and Recovery",
+      "content": "How often should you train? For Presidential Fitness Test exercises: Beginners - 3 days per week with rest days between. Intermediate - 4-5 days per week, alternating muscle groups. Advanced - 5-6 days per week with strategic rest. Recovery is crucial! Your muscles grow during rest, not during workouts. Signs you need rest: Persistent soreness, decreased performance, fatigue, irritability. Active recovery helps: Light walking, stretching, yoga. Aim for 7-9 hours of sleep. Stay hydrated. Listen to your body - it's okay to take an extra rest day!",
+      "keywords": ["how often", "frequency", "rest", "recovery", "rest day", "how many days", "training schedule"]
+    },
+    {
+      "id": "warmup-importance",
+      "category": "fitness",
+      "title": "Warm-up and Cool-down",
+      "content": "Never skip warm-up and cool-down! Warm-up (5-10 minutes): Increases blood flow, prepares muscles, reduces injury risk. Try: Light jogging, jumping jacks, arm circles, leg swings, dynamic stretching. Cool-down (5-10 minutes): Gradually lowers heart rate, reduces muscle soreness, aids recovery. Try: Light walking, static stretching (hold 20-30 seconds), deep breathing. For Presidential Fitness Test exercises, warm up the specific muscles you'll use. Before push-ups: Arm circles, wall push-ups. Before pull-ups: Dead hangs, shoulder rolls. Before running: Light jog, leg swings. Your body will thank you!",
+      "keywords": ["warmup", "warm up", "cool down", "cooldown", "stretching", "preparation", "before workout", "after workout"]
+    },
+    {
+      "id": "nutrition-basics",
+      "category": "fitness",
+      "title": "Basic Nutrition for Fitness",
+      "content": "Fuel your fitness with good nutrition! Protein - Builds and repairs muscles. Aim for lean meats, fish, eggs, beans, or protein shakes. Eat protein within 2 hours after workouts. Carbohydrates - Provides energy for workouts. Choose whole grains, fruits, vegetables. Eat carbs before workouts for energy. Hydration - Drink water throughout the day, especially before, during, and after workouts. Aim for 8-10 glasses daily. Timing - Eat a light meal 2-3 hours before workouts, or a small snack 30-60 minutes before. Recovery meal within 2 hours after. Remember: You can't out-exercise a bad diet, but you don't need to be perfect - consistency matters most!",
+      "keywords": ["nutrition", "diet", "eating", "food", "protein", "carbs", "hydration", "water", "meal", "what to eat"]
+    },
+    {
+      "id": "presidential-fitness-history",
+      "category": "fitness",
+      "title": "Presidential Fitness Test History",
+      "content": "The Presidential Physical Fitness Test (1966-2012) was a cornerstone of American youth fitness, testing millions of students annually on seven exercises: Push-ups, Pull-ups, Sit-ups, Shuttle Run, Vertical Jump, Sit & Reach, and Broad Jump. Started by President Lyndon B. Johnson to combat declining youth fitness, it motivated generations to stay active. The program ended in 2012, replaced by less engaging alternatives. Talent Track resurrects this iconic program with modern AI technology - bringing the same tests back to life with real-time form analysis, instant feedback, and gamification. We're honoring the legacy while making fitness accessible and engaging for today's digital generation!",
+      "keywords": ["presidential fitness", "history", "1966", "johnson", "heritage", "legacy", "resurrection", "brought back"]
+    }
+  ]
+}
