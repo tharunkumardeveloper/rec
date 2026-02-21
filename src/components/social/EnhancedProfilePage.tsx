@@ -21,9 +21,24 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const currentUserId = localStorage.getItem('userId') || '';
+  // Get userId from auth session
+  const getSessionUserId = () => {
+    try {
+      const sessionStr = localStorage.getItem('auth_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        return session.userId || '';
+      }
+    } catch (error) {
+      console.error('Error reading session:', error);
+    }
+    return '';
+  };
+
+  const currentUserId = getSessionUserId();
   const profileUserId = userId || paramUserId || currentUserId;
   const isOwnProfile = profileUserId === currentUserId;
+  const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || 'https://rec-backend-yi7u.onrender.com';
 
   const handleBack = () => {
     if (onBack) {
@@ -39,11 +54,12 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
 
   const loadProfile = async () => {
     try {
+      console.log('📊 Loading profile for:', profileUserId);
       const [profileRes, workoutsRes, statsRes, connectionRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/users/${profileUserId}`),
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/sessions/user/${profileUserId}`),
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/users/${profileUserId}/stats`),
-        !isOwnProfile ? fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/connections/status/${currentUserId}/${profileUserId}`) : Promise.resolve(null)
+        fetch(`${API_URL}/api/users/${profileUserId}`),
+        fetch(`${API_URL}/api/sessions/user/${profileUserId}`),
+        fetch(`${API_URL}/api/users/${profileUserId}/stats`),
+        !isOwnProfile ? fetch(`${API_URL}/api/connections/status/${currentUserId}/${profileUserId}`) : Promise.resolve(null)
       ]);
 
       const profileData = await profileRes.json();
@@ -63,7 +79,7 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
 
   const sendConnectionRequest = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/connections/request`, {
+      await fetch(`${API_URL}/api/connections/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fromUserId: currentUserId, toUserId: profileUserId })
