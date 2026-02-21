@@ -12,6 +12,8 @@ import SAIAthleteDetailPage from "./components/home/SAIAthleteDetailPage";
 import ConnectionsPageNew from "./components/social/ConnectionsPageNew";
 import EnhancedProfilePageNew from "./components/social/EnhancedProfilePageNew";
 import WorkoutDetailPage from "./components/social/WorkoutDetailPage";
+import CoachContentHub from "./components/coach/CoachContentHub";
+import CreateContent from "./components/coach/CreateContent";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +32,8 @@ const App = () => (
           <Route path="/profile" element={<Index />} />
           <Route path="/coach-workouts" element={<CoachWorkoutsPage />} />
           <Route path="/coach-workouts/athlete/:athleteName" element={<AthleteDetailPage />} />
+          <Route path="/coach/content-hub" element={<CoachContentHub />} />
+          <Route path="/coach/create-content" element={<CreateContent />} />
           <Route path="/sai-workouts" element={<SAIWorkoutsDashboard />} />
           <Route path="/sai-workouts/athlete/:athleteName" element={<SAIAthleteDetailPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
