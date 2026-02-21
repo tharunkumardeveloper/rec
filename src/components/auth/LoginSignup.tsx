@@ -40,21 +40,27 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
       label: 'Athlete', 
       icon: <User className="w-8 h-8" />, 
       description: 'Track your fitness journey',
-      gradient: 'from-blue-500 to-blue-600'
+      gradient: 'from-cyan-500 via-blue-500 to-indigo-600',
+      hoverGradient: 'hover:from-cyan-400 hover:via-blue-400 hover:to-indigo-500',
+      shadow: 'shadow-blue-500/50'
     },
     { 
       value: 'COACH' as Role, 
       label: 'Coach', 
       icon: <Zap className="w-8 h-8" />, 
       description: 'Manage and guide athletes',
-      gradient: 'from-purple-500 to-purple-600'
+      gradient: 'from-purple-500 via-pink-500 to-rose-500',
+      hoverGradient: 'hover:from-purple-400 hover:via-pink-400 hover:to-rose-400',
+      shadow: 'shadow-purple-500/50'
     },
     { 
       value: 'SAI_ADMIN' as Role, 
       label: 'SAI Admin', 
       icon: <Lock className="w-8 h-8" />, 
       description: 'Oversee all operations',
-      gradient: 'from-gray-600 to-gray-700'
+      gradient: 'from-slate-600 via-gray-700 to-slate-800',
+      hoverGradient: 'hover:from-slate-500 hover:via-gray-600 hover:to-slate-700',
+      shadow: 'shadow-slate-500/50'
     }
   ];
 
@@ -166,20 +172,32 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
   const selectedRoleData = roles.find(r => r.value === selectedRole);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 flex items-center justify-center p-4 safe-top safe-bottom">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 safe-top safe-bottom relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
         {/* Header */}
         <div className="text-center mb-8 animate-fade-in">
-          <div className="inline-block mb-4">
-            <Zap className="w-16 h-16 text-white mx-auto" />
+          <div className="inline-block mb-4 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-2xl opacity-50 animate-pulse"></div>
+            <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl p-4 rounded-2xl border border-white/20 shadow-2xl">
+              <Zap className="w-16 h-16 text-white" />
+            </div>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2">TalentTrack</h1>
-          <p className="text-white/80 text-lg">Track. Train. Transform.</p>
+          <h1 className="text-5xl font-bold text-white mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-white">
+            TalentTrack
+          </h1>
+          <p className="text-white/80 text-lg font-medium">Track. Train. Transform.</p>
         </div>
 
         {/* Role Selection */}
         {step === 'role' && (
-          <Card className="backdrop-blur-sm bg-white/10 border-2 border-white/20 animate-slide-up">
+          <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl animate-slide-up">
             <CardContent className="p-6">
               <h2 className="text-xl font-bold text-white mb-4 text-center">Choose Your Role</h2>
               
@@ -220,17 +238,20 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
                   <button
                     key={role.value}
                     onClick={() => handleRoleSelect(role.value)}
-                    className={`w-full p-5 rounded-xl bg-gradient-to-r ${role.gradient} hover:shadow-lg border-2 border-white/20 hover:border-white/40 transition-all duration-200 text-left group`}
+                    className={`w-full p-5 rounded-xl bg-gradient-to-r ${role.gradient} ${role.hoverGradient} hover:shadow-xl ${role.shadow} border border-white/20 hover:border-white/40 transition-all duration-300 text-left group relative overflow-hidden`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-lg bg-white/20 flex items-center justify-center text-white">
+                    {/* Shine effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    
+                    <div className="flex items-center gap-4 relative z-10">
+                      <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
                         {role.icon}
                       </div>
                       <div className="flex-1">
-                        <div className="text-white font-bold text-lg">{role.label}</div>
+                        <div className="text-white font-bold text-lg mb-1">{role.label}</div>
                         <div className="text-white/90 text-sm">{role.description}</div>
                       </div>
-                      <div className="text-white/70 group-hover:text-white transition-colors">
+                      <div className="text-white/70 group-hover:text-white group-hover:translate-x-1 transition-all duration-300">
                         <ArrowLeft className="w-5 h-5 rotate-180" />
                       </div>
                     </div>
@@ -243,7 +264,7 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
 
         {/* Login or Signup Choice */}
         {step === 'choice' && (
-          <Card className="backdrop-blur-sm bg-white/10 border-2 border-white/20 animate-slide-up">
+          <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl animate-slide-up">
             <CardContent className="p-6">
               <button onClick={handleBack} className="text-white/70 hover:text-white mb-4 flex items-center gap-2">
                 <ArrowLeft className="w-4 h-4" />
@@ -251,8 +272,11 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
               </button>
               
               <div className="text-center mb-6">
-                <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${selectedRoleData?.gradient} mx-auto mb-4 flex items-center justify-center text-white shadow-lg`}>
-                  {selectedRoleData?.icon}
+                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-r ${selectedRoleData?.gradient} mx-auto mb-4 flex items-center justify-center text-white shadow-2xl ${selectedRoleData?.shadow} relative overflow-hidden group`}>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                  <div className="relative z-10">
+                    {selectedRoleData?.icon}
+                  </div>
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2">{selectedRoleData?.label}</h2>
                 <p className="text-white/70">Choose an option to continue</p>
@@ -278,7 +302,7 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
 
         {/* Login Form */}
         {step === 'login' && (
-          <Card className="backdrop-blur-sm bg-white/10 border-2 border-white/20 animate-slide-up">
+          <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl animate-slide-up">
             <CardContent className="p-6">
               <button onClick={handleBack} className="text-white/70 hover:text-white mb-4 flex items-center gap-2">
                 <ArrowLeft className="w-4 h-4" />
@@ -302,7 +326,7 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
                     )}
                   </div>
                 ) : (
-                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${selectedRoleData?.gradient} mx-auto mb-4 flex items-center justify-center text-white shadow-lg`}>
+                  <div className={`w-20 h-20 rounded-2xl bg-gradient-to-r ${selectedRoleData?.gradient} mx-auto mb-4 flex items-center justify-center text-white shadow-2xl ${selectedRoleData?.shadow}`}>
                     {selectedRoleData?.icon}
                   </div>
                 )}
@@ -378,7 +402,7 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
 
         {/* Signup Form */}
         {step === 'signup' && (
-          <Card className="backdrop-blur-sm bg-white/10 border-2 border-white/20 animate-slide-up max-h-[85vh] overflow-y-auto">
+          <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto">
             <CardContent className="p-6">
               <button onClick={handleBack} className="text-white/70 hover:text-white mb-4 flex items-center gap-2">
                 <ArrowLeft className="w-4 h-4" />
@@ -386,7 +410,7 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
               </button>
               
               <div className="text-center mb-6">
-                <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${selectedRoleData?.gradient} mx-auto mb-4 flex items-center justify-center text-white shadow-lg`}>
+                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-r ${selectedRoleData?.gradient} mx-auto mb-4 flex items-center justify-center text-white shadow-2xl ${selectedRoleData?.shadow}`}>
                   {selectedRoleData?.icon}
                 </div>
                 <h2 className="text-xl font-bold text-white mb-1">Create {selectedRoleData?.label} Account</h2>
