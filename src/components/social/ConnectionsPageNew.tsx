@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, UserPlus, UserCheck, Search, MapPin, ArrowLeft, Activity, Trophy, TrendingUp } from 'lucide-react';
+import { Users, UserPlus, UserCheck, Search, MapPin, ArrowLeft, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
