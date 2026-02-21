@@ -112,7 +112,7 @@ const ChatWidget = ({ currentTab, userContext, onNavigate }: ChatWidgetProps) =>
       {!isOpen && (
         <Button
           onClick={handleOpen}
-          className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 z-[1000] h-14 w-14 rounded-full shadow-lg bg-gradient-to-br from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300 hover:scale-110 active:scale-95"
+          className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[1000] h-14 w-14 rounded-full shadow-lg bg-gradient-to-br from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300 hover:scale-110 active:scale-95"
           aria-label="Open FitFranken Chat"
         >
           <MessageCircle className="w-6 h-6 text-white" />
@@ -124,7 +124,7 @@ const ChatWidget = ({ currentTab, userContext, onNavigate }: ChatWidgetProps) =>
 
       {/* Chat Interface (Expanded State) */}
       {isOpen && (
-        <div className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 z-[1000] w-[calc(100vw-2rem)] max-w-md h-[70vh] lg:h-[650px] lg:w-[420px] shadow-2xl rounded-lg overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[1000] w-[calc(100vw-2rem)] max-w-md h-[60vh] md:h-[650px] lg:w-[420px] shadow-2xl rounded-lg overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
           <ChatInterface
             messages={messages}
             setMessages={setMessages}

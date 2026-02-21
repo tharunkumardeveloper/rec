@@ -242,7 +242,7 @@ export default function ConnectionsPageNew() {
                 <p className="text-purple-300 mt-4">Loading...</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {filteredUsers.map(user => (
                   <UserCard
                     key={user._id || user.userId}
@@ -336,25 +336,25 @@ export default function ConnectionsPageNew() {
 function UserCard({ user, onViewProfile }: any) {
   return (
     <Card className="bg-black/40 backdrop-blur-xl border-purple-500/20 hover:border-purple-400 transition-all hover:scale-[1.02]">
-      <CardContent className="p-4">
-        <div className="flex flex-col items-center text-center space-y-3">
-          <Avatar className="w-20 h-20 border-2 border-purple-500">
+      <CardContent className="p-3">
+        <div className="flex flex-col items-center text-center space-y-2">
+          <Avatar className="w-16 h-16 border-2 border-purple-500">
             <AvatarImage src={user.profilePic} />
-            <AvatarFallback className="bg-purple-600 text-white text-xl">
+            <AvatarFallback className="bg-purple-600 text-white text-lg">
               {user.name?.charAt(0) || '?'}
             </AvatarFallback>
           </Avatar>
 
           <div className="space-y-1 w-full">
-            <h3 className="text-lg font-bold text-white line-clamp-1">{user.name}</h3>
-            <Badge variant={user.role === 'COACH' ? 'default' : 'secondary'} className="bg-purple-600">
+            <h3 className="text-sm font-bold text-white line-clamp-1">{user.name}</h3>
+            <Badge variant={user.role === 'COACH' ? 'default' : 'secondary'} className="bg-purple-600 text-xs">
               {user.role}
             </Badge>
           </div>
 
           {user.district && (
-            <p className="text-sm text-purple-300 flex items-center gap-1">
-              <MapPin className="w-4 h-4" />
+            <p className="text-xs text-purple-300 flex items-center gap-1 line-clamp-1">
+              <MapPin className="w-3 h-3" />
               {user.district}
             </p>
           )}
@@ -362,8 +362,7 @@ function UserCard({ user, onViewProfile }: any) {
           <Button
             onClick={onViewProfile}
             variant="outline"
-            className="w-full border-purple-500/50 hover:bg-purple-600/20"
-            size="sm"
+            className="w-full border-purple-500/50 hover:bg-purple-600/20 text-xs h-8"
           >
             View Profile
           </Button>

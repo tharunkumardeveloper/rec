@@ -38,8 +38,7 @@ export default function EnhancedProfilePageNew() {
   const currentUserId = getSessionUserId();
   const profileUserId = paramUserId || currentUserId;
   const isOwnProfile = profileUserId === currentUserId;
-  const isCoach = currentUserProfile?.role === 'COACH';
-  const canViewWorkouts = isOwnProfile || isCoach || connectionStatus === 'connected';
+  const canViewWorkouts = true; // Everyone can view workouts now
   const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || 'https://rec-backend-yi7u.onrender.com';
 
   useEffect(() => {
