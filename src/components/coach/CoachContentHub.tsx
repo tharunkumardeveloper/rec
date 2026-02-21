@@ -61,7 +61,9 @@ export default function CoachContentHub() {
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => window.location.href = '/'}
+              onClick={() => {
+                window.location.href = '/';
+              }}
               className="p-2 hover:bg-muted rounded-lg transition-colors -ml-2"
             >
               <ChevronLeft className="w-6 h-6" />

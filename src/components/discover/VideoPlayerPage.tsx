@@ -78,6 +78,11 @@ export default function VideoPlayerPage({ videoId, onBack }: VideoPlayerPageProp
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const handleBack = () => {
+    // Call the onBack callback to return to discover tab
+    onBack();
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -85,7 +90,7 @@ export default function VideoPlayerPage({ videoId, onBack }: VideoPlayerPageProp
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center gap-2">
             <button
-              onClick={onBack}
+              onClick={handleBack}
               className="p-2 hover:bg-muted rounded-lg transition-colors -ml-2"
             >
               <ChevronLeft className="w-6 h-6" />

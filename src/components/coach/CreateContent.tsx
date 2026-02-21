@@ -17,7 +17,9 @@ export default function CreateContent() {
           <div className="max-w-7xl mx-auto px-4 py-3">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => navigate('/coach/content-hub')}
+                onClick={() => {
+                  window.location.href = '/coach/content-hub';
+                }}
                 className="p-2 hover:bg-muted rounded-lg transition-colors -ml-2"
               >
                 <ChevronLeft className="w-6 h-6" />
@@ -192,7 +194,9 @@ export default function CreateContent() {
               type="button"
               variant="outline"
               className="flex-1"
-              onClick={() => navigate('/coach/content-hub')}
+              onClick={() => {
+                window.location.href = '/coach/content-hub';
+              }}
             >
               Cancel
             </Button>
