@@ -327,8 +327,6 @@ export default function ConnectionsPageNew() {
           </TabsContent>
         </Tabs>
       </div>
-
-      <BottomNav />
     </div>
   );
 }

@@ -520,20 +520,13 @@ const CoachDashboard = ({ userName, userRole, onTabChange, activeTab, onProfileO
           <div className="flex justify-around">
             {[
               { id: 'training', label: 'Dashboard', icon: Zap, color: 'text-blue-600' },
-              { id: 'discover', label: 'Athletes', icon: Users, color: 'text-green-600' },
-              { id: 'connections', label: 'Connect', icon: Users, color: 'text-purple-600', isLink: true }
-            ].map(({ id, label, icon: Icon, color, isLink }) => (
+              { id: 'discover', label: 'Athletes', icon: Users, color: 'text-green-600' }
+            ].map(({ id, label, icon: Icon, color }) => (
               <Button
                 key={id}
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  if (isLink) {
-                    window.location.href = '/connections';
-                  } else {
-                    onTabChange(id);
-                  }
-                }}
+                onClick={() => onTabChange(id)}
                 className={`flex flex-col items-center space-y-1 tap-target transition-all duration-300 ${activeTab === id
                   ? `${color} scale-110 font-semibold`
                   : 'text-muted-foreground hover:text-foreground'

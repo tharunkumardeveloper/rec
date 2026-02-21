@@ -352,8 +352,6 @@ export default function EnhancedProfilePageNew() {
           </TabsContent>
         </Tabs>
       </div>
-
-      <BottomNav />
     </div>
   );
 }
