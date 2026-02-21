@@ -36,6 +36,7 @@ async function setupDatabase() {
               district: { bsonType: 'string', description: 'User district' },
               email: { bsonType: 'string', description: 'User email' },
               profilePic: { bsonType: 'string', description: 'Profile picture URL/base64' },
+              profileImage: { bsonType: 'string', description: 'Face verification reference image (base64)' },
               createdAt: { bsonType: 'date', description: 'Account creation date' }
             }
           }
@@ -84,6 +85,10 @@ async function setupDatabase() {
               timestamp: { bsonType: 'date', description: 'Workout completion time' },
               videoDataUrl: { bsonType: 'string', description: 'Base64 encoded video' },
               pdfDataUrl: { bsonType: 'string', description: 'Base64 encoded PDF report' },
+              face_verified: { bsonType: 'bool', description: 'Whether face verification passed' },
+              verification_confidence: { bsonType: 'double', minimum: 0, maximum: 1, description: 'Face match confidence score' },
+              anomaly_flag: { bsonType: 'bool', description: 'Whether substitution was detected' },
+              verified_at: { bsonType: 'date', description: 'Verification timestamp' },
               createdAt: { bsonType: 'date', description: 'Record creation time' }
             }
           }
