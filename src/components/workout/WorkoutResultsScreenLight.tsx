@@ -34,7 +34,8 @@ const WorkoutResultsScreenLight = ({
   const [videoDuration, setVideoDuration] = useState(0);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [workoutScreenshots, setWorkoutScreenshots] = useState<string[]>([]);
-  const [autoSaved, setAutoSaved] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   useEffect(() => {
@@ -45,61 +46,66 @@ const WorkoutResultsScreenLight = ({
     }
   }, [videoBlob]);
 
-  // AUTO-SAVE workout when video is ready (with or without screenshots)
-  useEffect(() => {
-    if (!autoSaved && videoBlob) {
-      // Wait a bit for screenshots, but don't block save if they fail
-      const timer = setTimeout(() => {
-        if (!autoSaved) {
-          console.log('🔄 Starting auto-save...');
-          console.log(`📸 Screenshots captured: ${workoutScreenshots.length}`);
-          const userName = localStorage.getItem('user_name') || 'Athlete';
-          const profile = userProfileService.getProfile();
-          const userProfilePic = profile?.profilePic;
-          const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
-          const formScore = accuracy >= 80 ? 'Excellent' : accuracy >= 60 ? 'Good' : 'Needs Work';
-
-          console.log('📊 Saving workout for:', userName);
-          
-          workoutStorageService.blobToDataUrl(videoBlob).then(videoDataUrl => {
-            workoutStorageService.saveWorkout({
-              athleteName: userName,
-              athleteProfilePic: userProfilePic || undefined,
-              activityName,
-              totalReps,
-              correctReps,
-              incorrectReps,
-              duration,
-              accuracy,
-              formScore,
-              repDetails,
-              timestamp: new Date().toISOString(),
-              videoDataUrl,
-              pdfDataUrl: undefined,
-              screenshots: workoutScreenshots
-            }).then((workoutId) => {
-              setAutoSaved(true);
-              console.log('✅ Workout auto-saved! ID:', workoutId);
-              console.log('💾 Check localStorage key: athlete_workouts');
-            }).catch(err => {
-              console.error('❌ Auto-save failed:', err);
-            });
-          }).catch(err => {
-            console.error('❌ Video conversion failed:', err);
-          });
-        }
-      }, 2000); // Wait 2 seconds for screenshots
-
-      return () => clearTimeout(timer);
-    }
-  }, [videoBlob, autoSaved, workoutScreenshots, activityName, totalReps, correctReps, incorrectReps, duration, repDetails]);
-
+  // Remove AUTO-SAVE - now requires manual submission
   // Capture screenshots from video for PDF
   useEffect(() => {
     if (videoRef.current && videoUrl) {
       captureWorkoutScreenshots();
     }
   }, [videoUrl]);
+
+  const handleSubmitWorkout = async () => {
+    if (isSubmitted || isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      console.log('🔄 Submitting workout...');
+      console.log(`📸 Screenshots captured: ${workoutScreenshots.length}`);
+      
+      const userName = localStorage.getItem('user_name') || 'Athlete';
+      const profile = userProfileService.getProfile();
+      const userProfilePic = profile?.profilePic;
+      const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
+      const formScore = accuracy >= 80 ? 'Excellent' : accuracy >= 60 ? 'Good' : 'Needs Work';
+
+      console.log('📊 Saving workout for:', userName);
+      
+      if (!videoBlob) {
+        throw new Error('No video data available');
+      }
+
+      const videoDataUrl = await workoutStorageService.blobToDataUrl(videoBlob);
+      
+      const workoutId = await workoutStorageService.saveWorkout({
+        athleteName: userName,
+        athleteProfilePic: userProfilePic || undefined,
+        activityName,
+        totalReps,
+        correctReps,
+        incorrectReps,
+        duration,
+        accuracy,
+        formScore,
+        repDetails,
+        timestamp: new Date().toISOString(),
+        videoDataUrl,
+        pdfDataUrl: undefined,
+        screenshots: workoutScreenshots
+      });
+      
+      setIsSubmitted(true);
+      console.log('✅ Workout submitted successfully! ID:', workoutId);
+      console.log('💾 Check localStorage key: athlete_workouts');
+      
+      // Show success message
+      alert('Workout submitted successfully!');
+    } catch (error) {
+      console.error('❌ Workout submission failed:', error);
+      alert('Failed to submit workout. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const captureWorkoutScreenshots = async () => {
     try {
@@ -428,44 +434,34 @@ const WorkoutResultsScreenLight = ({
       // Save PDF locally
       pdf.save(filename);
 
-      // Save to local storage for coach dashboard (only if not already auto-saved)
-      if (!autoSaved) {
+      // Save to local storage for coach dashboard (only if submitted)
+      if (isSubmitted) {
         try {
           const pdfBlob = pdf.output('blob');
           const pdfDataUrl = await workoutStorageService.blobToDataUrl(pdfBlob);
           const videoDataUrl = videoBlob ? await workoutStorageService.blobToDataUrl(videoBlob) : undefined;
 
-          const workoutId = await workoutStorageService.saveWorkout({
-            athleteName: userName,
-            athleteProfilePic: userProfilePic || undefined,
-            activityName,
-            totalReps,
-            correctReps,
-            incorrectReps,
-            duration,
-            accuracy,
-            formScore,
-            repDetails,
-            timestamp: new Date().toISOString(),
-            videoDataUrl,
-            pdfDataUrl,
-            screenshots: workoutScreenshots
-          });
-
-          setAutoSaved(true);
-          console.log('✅ Workout saved successfully! ID:', workoutId);
-          console.log('📊 Athlete:', userName);
-          console.log('🏋️ Activity:', activityName);
-          console.log('💾 Storage size:', workoutStorageService.getStorageSize().toFixed(2), 'MB');
+          // Update the existing workout with PDF
+          const workouts = await workoutStorageService.getAllWorkouts();
+          const latestWorkout = workouts[workouts.length - 1];
           
-          // Show success message
-          alert(`✅ Workout saved! Coach can now view this workout in the Athletes tab.`);
+          if (latestWorkout) {
+            await workoutStorageService.saveWorkout({
+              ...latestWorkout,
+              pdfDataUrl,
+              screenshots: workoutScreenshots
+            });
+            
+            console.log('✅ PDF added to submitted workout');
+            console.log('💾 Storage size:', workoutStorageService.getStorageSize().toFixed(2), 'MB');
+          }
         } catch (storageError) {
-          console.error('❌ Failed to save workout locally:', storageError);
-          alert(`⚠️ Warning: Workout may not be visible to coach. Error: ${storageError}`);
+          console.error('❌ Failed to save PDF:', storageError);
+          alert(`⚠️ Warning: PDF may not be saved. Error: ${storageError}`);
         }
       } else {
-        console.log('ℹ️ Workout already auto-saved, skipping duplicate save');
+        alert('⚠️ Please submit the workout first before downloading PDF');
+        return;
       }
 
       // Auto-submit to coach dashboard (if configured)
@@ -792,13 +788,25 @@ const WorkoutResultsScreenLight = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
           <Button
             onClick={generatePDF}
-            disabled={isGeneratingPDF}
+            disabled={isGeneratingPDF || !isSubmitted}
             size="lg"
-            className="bg-green-600 hover:bg-green-700 text-white py-6 text-lg font-semibold rounded-xl shadow-lg"
+            className="bg-green-600 hover:bg-green-700 text-white py-6 text-lg font-semibold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="w-5 h-5 mr-2" />
             {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF Report'}
           </Button>
+          
+          {/* Submit Workout Button */}
+          <Button
+            onClick={handleSubmitWorkout}
+            disabled={isSubmitting || isSubmitted}
+            size="lg"
+            className="bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg font-semibold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <CheckCircle2 className="w-5 h-5 mr-2" />
+            {isSubmitting ? 'Submitting...' : isSubmitted ? 'Submitted ✓' : 'Submit Workout'}
+          </Button>
+          
           <Button
             onClick={onHome}
             size="lg"
