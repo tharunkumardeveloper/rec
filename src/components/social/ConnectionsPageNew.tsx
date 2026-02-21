@@ -135,6 +135,7 @@ export default function ConnectionsPageNew() {
                 const workoutsData = await workoutsRes.json();
                 const workouts = Array.isArray(workoutsData) ? workoutsData : (workoutsData.workouts || []);
                 console.log(`✅ Found ${workouts.length} workouts for ${connection.name}`);
+                console.log('📋 First workout:', workouts[0]);
                 return { ...connection, workouts }; // Get ALL workouts
               }
             } catch (err) {
@@ -456,7 +457,14 @@ function ConnectionCard({ connection, onViewProfile, navigate }: any) {
                   {connection.workouts.map((workout: any, idx: number) => (
                     <button
                       key={workout._id || idx}
-                      onClick={() => navigate(`/workout/${workout._id}`)}
+                      onClick={() => {
+                        console.log('🎯 Workout clicked:', workout._id, workout);
+                        if (workout._id) {
+                          navigate(`/workout/${workout._id}`);
+                        } else {
+                          console.error('❌ Workout has no _id:', workout);
+                        }
+                      }}
                       className="bg-purple-900/30 hover:bg-purple-800/50 rounded p-2 text-center transition-all hover:scale-105 cursor-pointer"
                     >
                       <Activity className="w-4 h-4 text-purple-400 mx-auto mb-1" />
