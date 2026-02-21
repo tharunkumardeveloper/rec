@@ -11,6 +11,7 @@ import SAIWorkoutsDashboard from "./components/home/SAIWorkoutsDashboard";
 import SAIAthleteDetailPage from "./components/home/SAIAthleteDetailPage";
 import ConnectionsPageNew from "./components/social/ConnectionsPageNew";
 import EnhancedProfilePageNew from "./components/social/EnhancedProfilePageNew";
+import WorkoutDetailPage from "./components/social/WorkoutDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/connections" element={<ConnectionsPageNew />} />
           <Route path="/profile/:userId" element={<EnhancedProfilePageNew />} />
+          <Route path="/workout/:workoutId" element={<WorkoutDetailPage />} />
           <Route path="/challenges" element={<Index />} />
           <Route path="/profile" element={<Index />} />
           <Route path="/coach-workouts" element={<CoachWorkoutsPage />} />
