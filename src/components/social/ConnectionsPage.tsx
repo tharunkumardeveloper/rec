@@ -40,19 +40,25 @@ export default function ConnectionsPage({ onBack, onViewProfile }: ConnectionsPa
     // Get userId from auth session
     const getSessionUserId = () => {
         try {
+            console.log('🔍 Checking localStorage for auth_session...');
             const sessionStr = localStorage.getItem('auth_session');
+            console.log('📦 Session string:', sessionStr ? 'Found' : 'Not found');
+            
             if (sessionStr) {
                 const session = JSON.parse(sessionStr);
+                console.log('✅ Session parsed:', session);
+                console.log('👤 UserId from session:', session.userId);
                 return session.userId || '';
             }
         } catch (error) {
-            console.error('Error reading session:', error);
+            console.error('❌ Error reading session:', error);
         }
+        console.warn('⚠️ No session found, returning empty string');
         return '';
     };
 
     const currentUserId = getSessionUserId();
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || 'https://rec-backend-yi7u.onrender.com';
 
     // Log when component mounts
     useEffect(() => {
