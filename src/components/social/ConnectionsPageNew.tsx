@@ -92,7 +92,25 @@ export default function ConnectionsPageNew() {
       const response = await fetch(`${API_URL}/api/users/discover?userId=${currentUserId}`);
       if (response.ok) {
         const data = await response.json();
-        setDiscoverUsers(data || []);
+        
+        // Load recent workout count for each user
+        const usersWithWorkouts = await Promise.all(
+          data.map(async (user: any) => {
+            try {
+              const workoutsRes = await fetch(`${API_URL}/api/sessions/user/${user.userId}`);
+              if (workoutsRes.ok) {
+                const workoutsData = await workoutsRes.json();
+                const workouts = Array.isArray(workoutsData) ? workoutsData : (workoutsData.workouts || []);
+                return { ...user, workoutCount: workouts.length, recentWorkouts: workouts.slice(0, 2) };
+              }
+            } catch (err) {
+              console.error('Error loading workouts for', user.userId);
+            }
+            return { ...user, workoutCount: 0, recentWorkouts: [] };
+          })
+        );
+        
+        setDiscoverUsers(usersWithWorkouts || []);
       }
     } catch (error) {
       console.error('Error loading discover users:', error);
@@ -101,17 +119,22 @@ export default function ConnectionsPageNew() {
 
   const loadMyConnections = async () => {
     try {
+      console.log('📊 Loading connections for user:', currentUserId);
       const response = await fetch(`${API_URL}/api/connections/${currentUserId}`);
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Found connections:', data.length);
+        
         // Load workouts for each connection
         const connectionsWithWorkouts = await Promise.all(
           data.map(async (connection: any) => {
             try {
+              console.log('🏋️ Loading workouts for:', connection.name);
               const workoutsRes = await fetch(`${API_URL}/api/sessions/user/${connection.userId}`);
               if (workoutsRes.ok) {
                 const workoutsData = await workoutsRes.json();
                 const workouts = Array.isArray(workoutsData) ? workoutsData : (workoutsData.workouts || []);
+                console.log(`✅ Found ${workouts.length} workouts for ${connection.name}`);
                 return { ...connection, workouts: workouts.slice(0, 3) }; // Get last 3 workouts
               }
             } catch (err) {
@@ -373,6 +396,16 @@ function UserCard({ user, onViewProfile }: any) {
               <MapPin className="w-3 h-3" />
               {user.district}
             </p>
+          )}
+
+          {/* Show workout count */}
+          {user.workoutCount !== undefined && user.workoutCount > 0 && (
+            <div className="w-full bg-purple-900/30 rounded p-2">
+              <p className="text-xs text-purple-300">
+                <Activity className="w-3 h-3 inline mr-1" />
+                {user.workoutCount} workout{user.workoutCount !== 1 ? 's' : ''}
+              </p>
+            </div>
           )}
 
           <Button
