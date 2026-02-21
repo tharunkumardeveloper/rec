@@ -139,19 +139,17 @@ export default function ConnectionsPageNew() {
     <div className="min-h-screen bg-background pb-20">
       {/* Simple Header - matching HomeScreen style */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center gap-2">
+            <button
               onClick={() => navigate('/')}
-              className="p-2"
+              className="p-2 hover:bg-muted rounded-lg transition-colors -ml-2"
             >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
+              <ChevronLeft className="w-6 h-6" />
+            </button>
             <div className="flex-1">
               <h1 className="text-xl font-bold">Connections</h1>
-              <p className="text-sm text-muted-foreground">Connect with athletes & coaches</p>
+              <p className="text-xs text-muted-foreground">Connect with athletes & coaches</p>
             </div>
           </div>
         </div>
@@ -300,44 +298,44 @@ function UserCard({ user }: { user: typeof MOCK_USERS[0] }) {
 
             {/* Stats Grid */}
             {user.role === 'ATHLETE' ? (
-              <div className="grid grid-cols-4 gap-2 mb-3">
-                <div className="bg-muted rounded-lg p-2 text-center">
-                  <Activity className="w-4 h-4 text-primary mx-auto mb-1" />
-                  <p className="text-sm font-bold">{user.stats.workouts}</p>
-                  <p className="text-xs text-muted-foreground">Workouts</p>
+              <div className="grid grid-cols-4 gap-1.5 mb-3">
+                <div className="bg-muted rounded-lg p-1.5 text-center">
+                  <Activity className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
+                  <p className="text-xs font-bold">{user.stats.workouts}</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Work</p>
                 </div>
-                <div className="bg-muted rounded-lg p-2 text-center">
-                  <TrendingUp className="w-4 h-4 text-success mx-auto mb-1" />
-                  <p className="text-sm font-bold">{user.stats.avgAccuracy}%</p>
-                  <p className="text-xs text-muted-foreground">Accuracy</p>
+                <div className="bg-muted rounded-lg p-1.5 text-center">
+                  <TrendingUp className="w-3.5 h-3.5 text-success mx-auto mb-0.5" />
+                  <p className="text-xs font-bold">{user.stats.avgAccuracy}%</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Acc</p>
                 </div>
-                <div className="bg-muted rounded-lg p-2 text-center">
-                  <Award className="w-4 h-4 text-info mx-auto mb-1" />
-                  <p className="text-sm font-bold">{user.stats.bestReps}</p>
-                  <p className="text-xs text-muted-foreground">Best</p>
+                <div className="bg-muted rounded-lg p-1.5 text-center">
+                  <Award className="w-3.5 h-3.5 text-info mx-auto mb-0.5" />
+                  <p className="text-xs font-bold">{user.stats.bestReps}</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Best</p>
                 </div>
-                <div className="bg-muted rounded-lg p-2 text-center">
-                  <Trophy className="w-4 h-4 text-warning mx-auto mb-1" />
-                  <p className="text-sm font-bold">{user.stats.streak}</p>
-                  <p className="text-xs text-muted-foreground">Streak</p>
+                <div className="bg-muted rounded-lg p-1.5 text-center">
+                  <Trophy className="w-3.5 h-3.5 text-warning mx-auto mb-0.5" />
+                  <p className="text-xs font-bold">{user.stats.streak}</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Streak</p>
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                <div className="bg-muted rounded-lg p-2 text-center">
-                  <Users className="w-4 h-4 text-primary mx-auto mb-1" />
-                  <p className="text-sm font-bold">{user.stats.athletes}</p>
-                  <p className="text-xs text-muted-foreground">Athletes</p>
+              <div className="grid grid-cols-3 gap-1.5 mb-3">
+                <div className="bg-muted rounded-lg p-1.5 text-center">
+                  <Users className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
+                  <p className="text-xs font-bold">{user.stats.athletes}</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Athletes</p>
                 </div>
-                <div className="bg-muted rounded-lg p-2 text-center">
-                  <Activity className="w-4 h-4 text-success mx-auto mb-1" />
-                  <p className="text-sm font-bold">{user.stats.totalWorkouts}</p>
-                  <p className="text-xs text-muted-foreground">Sessions</p>
+                <div className="bg-muted rounded-lg p-1.5 text-center">
+                  <Activity className="w-3.5 h-3.5 text-success mx-auto mb-0.5" />
+                  <p className="text-xs font-bold">{user.stats.totalWorkouts}</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Sessions</p>
                 </div>
-                <div className="bg-muted rounded-lg p-2 text-center">
-                  <Star className="w-4 h-4 text-warning mx-auto mb-1 fill-yellow-400" />
-                  <p className="text-sm font-bold">{user.stats.rating}</p>
-                  <p className="text-xs text-muted-foreground">Rating</p>
+                <div className="bg-muted rounded-lg p-1.5 text-center">
+                  <Star className="w-3.5 h-3.5 text-warning mx-auto mb-0.5 fill-yellow-400" />
+                  <p className="text-xs font-bold">{user.stats.rating}</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Rating</p>
                 </div>
               </div>
             )}
