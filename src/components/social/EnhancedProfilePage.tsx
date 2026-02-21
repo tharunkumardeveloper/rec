@@ -12,8 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 
-export default function EnhancedProfilePage() {
-  const { userId } = useParams();
+export default function EnhancedProfilePage({ userId, onBack }: { userId?: string; onBack?: () => void }) {
+  const { userId: paramUserId } = useParams();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [workouts, setWorkouts] = useState<any[]>([]);
@@ -22,19 +22,28 @@ export default function EnhancedProfilePage() {
   const [loading, setLoading] = useState(true);
 
   const currentUserId = localStorage.getItem('userId') || '';
-  const isOwnProfile = userId === currentUserId;
+  const profileUserId = userId || paramUserId || currentUserId;
+  const isOwnProfile = profileUserId === currentUserId;
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigate(-1);
+    }
+  };
 
   useEffect(() => {
     loadProfile();
-  }, [userId]);
+  }, [profileUserId]);
 
   const loadProfile = async () => {
     try {
       const [profileRes, workoutsRes, statsRes, connectionRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/users/${userId}`),
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/sessions/user/${userId}`),
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/users/${userId}/stats`),
-        !isOwnProfile ? fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/connections/status/${currentUserId}/${userId}`) : Promise.resolve(null)
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/users/${profileUserId}`),
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/sessions/user/${profileUserId}`),
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/users/${profileUserId}/stats`),
+        !isOwnProfile ? fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/connections/status/${currentUserId}/${profileUserId}`) : Promise.resolve(null)
       ]);
 
       const profileData = await profileRes.json();
@@ -57,7 +66,7 @@ export default function EnhancedProfilePage() {
       await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/connections/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fromUserId: currentUserId, toUserId: userId })
+        body: JSON.stringify({ fromUserId: currentUserId, toUserId: profileUserId })
       });
       loadProfile();
     } catch (error) {
@@ -86,7 +95,7 @@ export default function EnhancedProfilePage() {
       {/* Header with Cover */}
       <div className="relative h-48 md:h-64 bg-gradient-to-r from-violet-600 to-purple-600">
         <Button
-          onClick={() => navigate(-1)}
+          onClick={handleBack}
           variant="ghost"
           className="absolute top-4 left-4 text-white"
         >

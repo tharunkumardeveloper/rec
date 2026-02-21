@@ -24,6 +24,7 @@ import ChallengeDetail from '@/components/challenges/ChallengeDetail';
 import ActivityDetail from '@/components/activities/ActivityDetail';
 import WorkoutInterface from '@/components/workout/WorkoutInterface';
 import ProfilePage from '@/components/profile/ProfilePage';
+import EnhancedProfilePage from '@/components/social/EnhancedProfilePage';
 import SettingsPage from '@/components/settings/SettingsPage';
 import BadgesScreen from '@/components/badges/BadgesScreen';
 import { preloadAllAssets } from '@/utils/imagePreloader';
@@ -31,7 +32,7 @@ import { scrollToTop, scrollToTopInstant } from '@/utils/scrollToTop';
 import { userProfileService, UserProfile } from '@/services/userProfileService';
 import { authService } from '@/services/authService';
 
-type AppState = 'loading' | 'auth' | 'setup' | 'home' | 'profile' | 'settings' | 'badges' | 'challenges' | 'challenge-detail' | 'ghost-mode' | 'ghost-workout-detail' | 'test-mode' | 'test-workout-detail' | 'test-workout-interface';
+type AppState = 'loading' | 'auth' | 'setup' | 'home' | 'profile' | 'settings' | 'badges' | 'challenges' | 'challenge-detail' | 'ghost-mode' | 'ghost-workout-detail' | 'test-mode' | 'test-workout-detail' | 'test-workout-interface' | 'user-profile';
 type UserRole = 'athlete' | 'coach' | 'admin';
 
 const Index = () => {
@@ -48,6 +49,7 @@ const Index = () => {
   const [userSetupData, setUserSetupData] = useState<any>(null);
   const [selectedChallengeId, setSelectedChallengeId] = useState<string | null>(null);
   const [showGhostAnimation, setShowGhostAnimation] = useState(false);
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
 
   // Load user profile data
   useEffect(() => {
@@ -277,7 +279,13 @@ const Index = () => {
 
     switch (activeTab) {
       case 'discover':
-        return <DiscoverTab onStartWorkout={handleActivitySelect} />;
+        return <DiscoverTab 
+          onStartWorkout={handleActivitySelect} 
+          onViewProfile={(userId) => {
+            setViewingUserId(userId);
+            setAppState('user-profile');
+          }}
+        />;
       case 'report':
         return <ReportTab userSetupData={userSetupData} />;
       case 'roadmap':
@@ -288,6 +296,10 @@ const Index = () => {
   };
 
   // Show special pages first (before activity detail check)
+  if (appState === 'user-profile' && viewingUserId) {
+    return <EnhancedProfilePage userId={viewingUserId} onBack={handleBackToHome} />;
+  }
+
   if (appState === 'profile') {
     return <ProfilePage userName={userName} userRole={userRole} onBack={handleBackToHome} onLogout={() => setAppState('auth')} />;
   }
