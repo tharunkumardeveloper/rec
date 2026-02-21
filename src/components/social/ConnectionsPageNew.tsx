@@ -451,27 +451,33 @@ function ConnectionCard({ connection, onViewProfile, navigate }: any) {
             {connection.workouts && connection.workouts.length > 0 && (
               <div className="mt-3 space-y-2">
                 <p className="text-xs text-purple-300 font-semibold">
-                  All Workouts ({connection.workouts.length})
+                  All Workouts ({connection.workouts.length}) - v2.0
                 </p>
                 <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-48 overflow-y-auto">
-                  {connection.workouts.map((workout: any, idx: number) => (
-                    <button
-                      key={workout._id || idx}
-                      onClick={() => {
-                        console.log('🎯 Workout clicked:', workout._id, workout);
-                        if (workout._id) {
-                          navigate(`/workout/${workout._id}`);
-                        } else {
-                          console.error('❌ Workout has no _id:', workout);
-                        }
-                      }}
-                      className="bg-purple-900/30 hover:bg-purple-800/50 rounded p-2 text-center transition-all hover:scale-105 cursor-pointer"
-                    >
-                      <Activity className="w-4 h-4 text-purple-400 mx-auto mb-1" />
-                      <p className="text-xs text-white font-semibold">{workout.totalReps || 0}</p>
-                      <p className="text-xs text-purple-300 truncate">{workout.activityName}</p>
-                    </button>
-                  ))}
+                  {connection.workouts.map((workout: any, idx: number) => {
+                    console.log(`🔍 Rendering workout ${idx}:`, workout._id, workout.activityName);
+                    return (
+                      <button
+                        key={workout._id || idx}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('🎯 Workout clicked:', workout._id, workout);
+                          if (workout._id) {
+                            console.log('✅ Navigating to:', `/workout/${workout._id}`);
+                            navigate(`/workout/${workout._id}`);
+                          } else {
+                            console.error('❌ Workout has no _id:', workout);
+                          }
+                        }}
+                        className="bg-purple-900/30 hover:bg-purple-800/50 rounded p-2 text-center transition-all hover:scale-105 cursor-pointer"
+                      >
+                        <Activity className="w-4 h-4 text-purple-400 mx-auto mb-1" />
+                        <p className="text-xs text-white font-semibold">{workout.totalReps || 0}</p>
+                        <p className="text-xs text-purple-300 truncate">{workout.activityName}</p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
