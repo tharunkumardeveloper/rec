@@ -25,6 +25,7 @@ import ActivityDetail from '@/components/activities/ActivityDetail';
 import WorkoutInterface from '@/components/workout/WorkoutInterface';
 import ProfilePage from '@/components/profile/ProfilePage';
 import EnhancedProfilePage from '@/components/social/EnhancedProfilePage';
+import ConnectionsPage from '@/components/social/ConnectionsPage';
 import SettingsPage from '@/components/settings/SettingsPage';
 import BadgesScreen from '@/components/badges/BadgesScreen';
 import { preloadAllAssets } from '@/utils/imagePreloader';
@@ -32,7 +33,7 @@ import { scrollToTop, scrollToTopInstant } from '@/utils/scrollToTop';
 import { userProfileService, UserProfile } from '@/services/userProfileService';
 import { authService } from '@/services/authService';
 
-type AppState = 'loading' | 'auth' | 'setup' | 'home' | 'profile' | 'settings' | 'badges' | 'challenges' | 'challenge-detail' | 'ghost-mode' | 'ghost-workout-detail' | 'test-mode' | 'test-workout-detail' | 'test-workout-interface' | 'user-profile';
+type AppState = 'loading' | 'auth' | 'setup' | 'home' | 'profile' | 'settings' | 'badges' | 'challenges' | 'challenge-detail' | 'ghost-mode' | 'ghost-workout-detail' | 'test-mode' | 'test-workout-detail' | 'test-workout-interface' | 'user-profile' | 'connections';
 type UserRole = 'athlete' | 'coach' | 'admin';
 
 const Index = () => {
@@ -296,6 +297,18 @@ const Index = () => {
   };
 
   // Show special pages first (before activity detail check)
+  if (appState === 'connections') {
+    return (
+      <ConnectionsPage
+        onBack={handleBackToHome}
+        onViewProfile={(userId) => {
+          setViewingUserId(userId);
+          setAppState('user-profile');
+        }}
+      />
+    );
+  }
+
   if (appState === 'user-profile' && viewingUserId) {
     return <EnhancedProfilePage userId={viewingUserId} onBack={handleBackToHome} />;
   }
@@ -513,6 +526,18 @@ const Index = () => {
                     <span className="text-sm">{label}</span>
                   </button>
                 ))}
+                
+                {/* Connections Button */}
+                <button
+                  onClick={() => {
+                    scrollToTop();
+                    setAppState('connections');
+                  }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                >
+                  <span className="text-2xl">👥</span>
+                  <span className="text-sm">Connections</span>
+                </button>
               </nav>
 
               {/* User Section */}
@@ -635,17 +660,25 @@ const Index = () => {
                       {[
                         { id: 'training', label: 'Training', icon: '⚡' },
                         { id: 'discover', label: 'Discover', icon: '🔍' },
+                        { id: 'connections', label: 'Connect', icon: '👥', isPage: true },
                         { id: 'report', label: 'Report', icon: '📊' },
                         { id: 'roadmap', label: 'Roadmap', icon: '🗺️' }
-                      ].map(({ id, label, icon }) => (
+                      ].map(({ id, label, icon, isPage }) => (
                         <button
                           key={id}
                           onClick={() => {
                             scrollToTop();
-                            setActiveTab(id);
+                            if (isPage) {
+                              setAppState(id as AppState);
+                            } else {
+                              setActiveTab(id);
+                            }
                           }}
-                          className={`flex flex-col items-center space-y-1 tap-target p-2 rounded-lg transition-colors ${activeTab === id ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'
-                            }`}
+                          className={`flex flex-col items-center space-y-1 tap-target p-2 rounded-lg transition-colors ${
+                            (isPage ? appState === id : activeTab === id)
+                              ? 'text-primary bg-primary/10' 
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
                         >
                           <span className="text-lg">{icon}</span>
                           <span className="text-xs font-medium">{label}</span>

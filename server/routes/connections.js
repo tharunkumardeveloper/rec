@@ -8,6 +8,12 @@ router.get('/users/discover', async (req, res) => {
     const { userId } = req.query;
     const db = req.app.locals.db;
 
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+
+    console.log('Discovering users for:', userId);
+
     // Get existing connections
     const connections = await db.collection('connections').find({
       $or: [
@@ -20,15 +26,19 @@ router.get('/users/discover', async (req, res) => {
       c.fromUserId === userId ? c.toUserId : c.fromUserId
     );
 
+    console.log('Connected user IDs:', connectedUserIds);
+
     // Get all users except self and connected users
     const users = await db.collection('users').find({
       userId: { $ne: userId, $nin: connectedUserIds }
-    }).toArray();
+    }).limit(50).toArray();
+
+    console.log('Found users:', users.length);
 
     res.json(users);
   } catch (error) {
     console.error('Error fetching discover users:', error);
-    res.status(500).json({ error: 'Failed to fetch users' });
+    res.status(500).json({ error: 'Failed to fetch users', details: error.message });
   }
 });
 
