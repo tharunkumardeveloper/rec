@@ -68,11 +68,13 @@ export default function EnhancedProfilePage({ userId, onBack }: { userId?: strin
       const connectionData = connectionRes ? await connectionRes.json() : null;
 
       setProfile(profileData);
-      setWorkouts(workoutsData);
+      // Handle both array and object response formats
+      setWorkouts(Array.isArray(workoutsData) ? workoutsData : (workoutsData.workouts || []));
       setStats(statsData);
       setIsConnected(connectionData?.connected || false);
     } catch (error) {
       console.error('Error loading profile:', error);
+      setWorkouts([]); // Set empty array on error
     }
     setLoading(false);
   };
