@@ -43,7 +43,7 @@ export default function ConnectionsPage({ onBack, onViewProfile }: ConnectionsPa
             console.log('🔍 Checking localStorage for auth_session...');
             const sessionStr = localStorage.getItem('auth_session');
             console.log('📦 Session string:', sessionStr ? 'Found' : 'Not found');
-            
+
             if (sessionStr) {
                 const session = JSON.parse(sessionStr);
                 console.log('✅ Session parsed:', session);
@@ -109,8 +109,13 @@ export default function ConnectionsPage({ onBack, onViewProfile }: ConnectionsPa
                 console.log('📡 Fallback response status:', fallbackResponse.status);
 
                 if (fallbackResponse.ok) {
-                    const allUsers = await fallbackResponse.json();
+                    const result = await fallbackResponse.json();
+                    console.log('📊 Fallback result:', result);
+                    
+                    // Handle both array and object responses
+                    const allUsers = Array.isArray(result) ? result : (result.users || []);
                     console.log('📊 All users from fallback:', allUsers.length);
+                    
                     // Filter out current user on client side
                     const filtered = allUsers.filter((u: any) => u.userId !== currentUserId);
                     console.log('✅ Loaded users via fallback:', filtered.length);
