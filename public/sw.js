@@ -1,5 +1,5 @@
 // Service Worker for offline image caching
-const CACHE_NAME = 'talenttrack-v4-cloudinary-fix'; // Updated version - Skip Cloudinary URLs
+const CACHE_NAME = 'talenttrack-v5-workout-clickable'; // Updated version - Force refresh for clickable workouts
 const ASSETS_TO_CACHE = [
   // Challenge images
   '/challenges/pushup-power.webp',
