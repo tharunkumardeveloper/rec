@@ -135,7 +135,7 @@ export default function ConnectionsPageNew() {
                 const workoutsData = await workoutsRes.json();
                 const workouts = Array.isArray(workoutsData) ? workoutsData : (workoutsData.workouts || []);
                 console.log(`✅ Found ${workouts.length} workouts for ${connection.name}`);
-                return { ...connection, workouts: workouts.slice(0, 3) }; // Get last 3 workouts
+                return { ...connection, workouts }; // Get ALL workouts
               }
             } catch (err) {
               console.error('Error loading workouts for', connection.userId);
@@ -316,6 +316,7 @@ export default function ConnectionsPageNew() {
                     key={connection._id || connection.userId}
                     connection={connection}
                     onViewProfile={() => navigate(`/profile/${connection.userId}`)}
+                    navigate={navigate}
                   />
                 ))}
               </div>
@@ -421,7 +422,7 @@ function UserCard({ user, onViewProfile }: any) {
   );
 }
 
-function ConnectionCard({ connection, onViewProfile }: any) {
+function ConnectionCard({ connection, onViewProfile, navigate }: any) {
   return (
     <Card className="bg-black/40 backdrop-blur-xl border-purple-500/20">
       <CardContent className="p-4">
@@ -448,14 +449,20 @@ function ConnectionCard({ connection, onViewProfile }: any) {
 
             {connection.workouts && connection.workouts.length > 0 && (
               <div className="mt-3 space-y-2">
-                <p className="text-xs text-purple-300 font-semibold">Recent Activity</p>
-                <div className="grid grid-cols-3 gap-2">
+                <p className="text-xs text-purple-300 font-semibold">
+                  All Workouts ({connection.workouts.length})
+                </p>
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-48 overflow-y-auto">
                   {connection.workouts.map((workout: any, idx: number) => (
-                    <div key={idx} className="bg-purple-900/30 rounded p-2 text-center">
+                    <button
+                      key={workout._id || idx}
+                      onClick={() => navigate(`/workout/${workout._id}`)}
+                      className="bg-purple-900/30 hover:bg-purple-800/50 rounded p-2 text-center transition-all hover:scale-105 cursor-pointer"
+                    >
                       <Activity className="w-4 h-4 text-purple-400 mx-auto mb-1" />
                       <p className="text-xs text-white font-semibold">{workout.totalReps || 0}</p>
                       <p className="text-xs text-purple-300 truncate">{workout.activityName}</p>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>

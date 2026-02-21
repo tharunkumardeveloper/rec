@@ -3,13 +3,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings, Play, RotateCcw, Sparkles } from 'lucide-react';
+import { Settings, Play, RotateCcw, Sparkles, User } from 'lucide-react';
 import { elevenLabsTTS } from '@/services/elevenLabsTTS';
 
 const AdvancedTTSSettings = () => {
   const [settings, setSettings] = useState(elevenLabsTTS.getVoiceSettings());
   const [selectedVoice, setSelectedVoice] = useState('21m00Tcm4TlvDq8ikWAM');
+  const [athleteName, setAthleteName] = useState(() => {
+    try {
+      const sessionStr = localStorage.getItem('auth_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        return session.name || 'Athlete';
+      }
+    } catch (error) {
+      console.error('Error reading session:', error);
+    }
+    return 'Athlete';
+  });
 
   const voices = [
     { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', description: 'Natural, warm, encouraging (Default)' },
@@ -41,6 +54,21 @@ const AdvancedTTSSettings = () => {
     elevenLabsTTS.setVoice(voiceId);
   };
 
+  const handleNameChange = (newName: string) => {
+    setAthleteName(newName);
+    // Update session storage
+    try {
+      const sessionStr = localStorage.getItem('auth_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        session.name = newName;
+        localStorage.setItem('auth_session', JSON.stringify(session));
+      }
+    } catch (error) {
+      console.error('Error updating name:', error);
+    }
+  };
+
   const resetToDefaults = () => {
     const defaults = {
       stability: 0.5,
@@ -56,10 +84,10 @@ const AdvancedTTSSettings = () => {
 
   const testCurrentSettings = () => {
     const testMessages = [
-      "10 reps! You're crushing it!",
-      "Perfect form! Keep it up!",
-      "You're on fire! Don't stop now!",
-      "Amazing work! You got this!"
+      `${athleteName}, you're crushing it!`,
+      `Perfect form, ${athleteName}! Keep it up!`,
+      `You're on fire, ${athleteName}! Don't stop now!`,
+      `Amazing work, ${athleteName}! You got this!`
     ];
     const randomMessage = testMessages[Math.floor(Math.random() * testMessages.length)];
     elevenLabsTTS.speak(randomMessage, true);
@@ -74,6 +102,23 @@ const AdvancedTTSSettings = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Athlete Name */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <User className="w-4 h-4" />
+            Your Name (for voice coach)
+          </Label>
+          <Input
+            value={athleteName}
+            onChange={(e) => handleNameChange(e.target.value)}
+            placeholder="Enter your name"
+            className="w-full"
+          />
+          <p className="text-xs text-muted-foreground">
+            The voice coach will use this name when encouraging you
+          </p>
+        </div>
+
         {/* Voice Selection */}
         <div className="space-y-2">
           <Label>Voice Character</Label>

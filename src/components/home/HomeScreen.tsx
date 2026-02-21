@@ -451,7 +451,7 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
         }}
         onNavigate={(destination, payload) => {
           console.log('🤖 ChatWidget navigation triggered:', { destination, payload });
-          
+
           if (destination === 'ghost-mode' || destination === 'test-mode') {
             console.log('🎯 Navigating to special mode:', destination);
             onTabChange(destination);
@@ -468,12 +468,12 @@ const HomeScreen = ({ userRole, userName, onTabChange, activeTab, onProfileOpen,
             };
             const activityName = workoutNameMap[payload.workoutId];
             console.log('🏋️ Mapped workout ID to activity name:', { workoutId: payload.workoutId, activityName });
-            
+
             if (activityName) {
               // First switch to training tab
               console.log('📍 Step 1: Switching to training tab');
               onTabChange('training');
-              
+
               // Then trigger activity selection after a short delay
               setTimeout(() => {
                 console.log('📍 Step 2: Selecting activity:', activityName);
