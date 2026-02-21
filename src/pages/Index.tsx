@@ -17,6 +17,7 @@ import TestModeTab from '@/components/test/TestModeTab';
 import TestWorkoutDetail from '@/components/test/TestWorkoutDetail';
 import TestWorkoutInterface from '@/components/test/TestWorkoutInterface';
 import DiscoverTab from '@/components/tabs/DiscoverTab';
+import DiscoverTabEnhanced from '@/components/tabs/DiscoverTabEnhanced';
 import ReportTab from '@/components/tabs/ReportTab';
 import RoadmapTab from '@/components/tabs/RoadmapTab';
 import ChallengesTab from '@/components/tabs/ChallengesTab';
@@ -280,13 +281,7 @@ const Index = () => {
 
     switch (activeTab) {
       case 'discover':
-        return <DiscoverTab 
-          onStartWorkout={handleActivitySelect} 
-          onViewProfile={(userId) => {
-            setViewingUserId(userId);
-            setAppState('user-profile');
-          }}
-        />;
+        return <DiscoverTabEnhanced />;
       case 'report':
         return <ReportTab userSetupData={userSetupData} />;
       case 'roadmap':
@@ -298,19 +293,11 @@ const Index = () => {
 
   // Show special pages first (before activity detail check)
   if (appState === 'connections') {
-    return (
-      <ConnectionsPageNew
-        onBack={handleBackToHome}
-        onViewProfile={(userId) => {
-          setViewingUserId(userId);
-          setAppState('user-profile');
-        }}
-      />
-    );
+    return <ConnectionsPageNew />;
   }
 
   if (appState === 'user-profile' && viewingUserId) {
-    return <EnhancedProfilePageNew userId={viewingUserId} onBack={handleBackToHome} />;
+    return <EnhancedProfilePageNew />;
   }
 
   if (appState === 'profile') {

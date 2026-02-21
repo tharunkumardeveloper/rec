@@ -486,6 +486,27 @@ const CoachDashboard = ({ userName, userRole, onTabChange, activeTab, onProfileO
 
       {/* Content */}
       <div className="px-4 pb-20 lg:pb-8 max-w-2xl lg:max-w-7xl mx-auto pt-6">
+        {/* Content Hub Button */}
+        <Card
+          className="mb-6 overflow-hidden cursor-pointer hover:shadow-lg transition-all bg-gradient-to-r from-primary to-primary-dark border-primary"
+          onClick={() => navigate('/coach/content-hub')}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base">Content Hub</h3>
+                  <p className="text-sm text-white/80">Create posts, videos & courses</p>
+                </div>
+              </div>
+              <Plus className="w-6 h-6 text-white" />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Search Bar */}
         <div className="mb-6 relative">
           <div className={`relative transition-all duration-300 ${searchFocus ? 'transform scale-105' : ''
