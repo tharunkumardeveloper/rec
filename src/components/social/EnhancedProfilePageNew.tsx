@@ -269,11 +269,14 @@ export default function EnhancedProfilePageNew() {
           <TabsContent value="workouts" className="space-y-4 mt-6">
             {canViewWorkouts ? (
               workouts.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {workouts.map(workout => (
-                    <WorkoutCard key={workout._id} workout={workout} />
-                  ))}
-                </div>
+                <>
+                  <p className="text-xs text-purple-300 text-right">v3.0 - Clickable workouts</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {workouts.map(workout => (
+                      <WorkoutCard key={workout._id} workout={workout} />
+                    ))}
+                  </div>
+                </>
               ) : (
                 <Card className="bg-black/40 backdrop-blur-xl border-purple-500/20 p-12 text-center">
                   <Activity className="w-16 h-16 text-purple-400 mx-auto mb-4" />
@@ -387,12 +390,21 @@ function StatCard({ icon: Icon, label, value }: any) {
 function WorkoutCard({ workout }: any) {
   const navigate = useNavigate();
   
+  console.log('🔍 Rendering workout card:', workout._id, workout.activityName);
+  
   return (
     <Card 
       className="bg-black/40 backdrop-blur-xl border-purple-500/20 hover:border-purple-400 transition-all cursor-pointer"
-      onClick={() => {
-        console.log('🎯 Workout card clicked:', workout._id);
-        navigate(`/workout/${workout._id}`);
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('🎯 Workout card clicked:', workout._id, workout);
+        if (workout._id) {
+          console.log('✅ Navigating to /workout/' + workout._id);
+          navigate(`/workout/${workout._id}`);
+        } else {
+          console.error('❌ No workout._id found!');
+        }
       }}
     >
       <CardContent className="p-4">
