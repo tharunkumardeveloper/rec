@@ -35,9 +35,27 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
   }, []);
 
   const roles = [
-    { value: 'ATHLETE' as Role, label: 'Athlete', icon: '🏃', description: 'Track your fitness journey' },
-    { value: 'COACH' as Role, label: 'Coach', icon: '👨‍🏫', description: 'Manage and guide athletes' },
-    { value: 'SAI_ADMIN' as Role, label: 'SAI Admin', icon: '🛡️', description: 'Oversee all operations' }
+    { 
+      value: 'ATHLETE' as Role, 
+      label: 'Athlete', 
+      icon: <User className="w-8 h-8" />, 
+      description: 'Track your fitness journey',
+      gradient: 'from-blue-500 to-blue-600'
+    },
+    { 
+      value: 'COACH' as Role, 
+      label: 'Coach', 
+      icon: <Zap className="w-8 h-8" />, 
+      description: 'Manage and guide athletes',
+      gradient: 'from-purple-500 to-purple-600'
+    },
+    { 
+      value: 'SAI_ADMIN' as Role, 
+      label: 'SAI Admin', 
+      icon: <Lock className="w-8 h-8" />, 
+      description: 'Oversee all operations',
+      gradient: 'from-gray-600 to-gray-700'
+    }
   ];
 
   const handleRecentUserClick = (user: UserProfile) => {
@@ -202,15 +220,19 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
                   <button
                     key={role.value}
                     onClick={() => handleRoleSelect(role.value)}
-                    className="w-full p-4 rounded-lg bg-white/10 hover:bg-white/20 border-2 border-white/20 hover:border-white/40 transition-all duration-200 text-left group"
+                    className={`w-full p-5 rounded-xl bg-gradient-to-r ${role.gradient} hover:shadow-lg border-2 border-white/20 hover:border-white/40 transition-all duration-200 text-left group`}
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl">{role.icon}</span>
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-lg bg-white/20 flex items-center justify-center text-white">
+                        {role.icon}
+                      </div>
                       <div className="flex-1">
-                        <div className="text-white font-semibold text-lg">{role.label}</div>
+                        <div className="text-white font-bold text-lg">{role.label}</div>
                         <div className="text-white/90 text-sm">{role.description}</div>
                       </div>
-                      <div className="text-white/70 group-hover:text-white transition-colors text-xl">→</div>
+                      <div className="text-white/70 group-hover:text-white transition-colors">
+                        <ArrowLeft className="w-5 h-5 rotate-180" />
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -229,7 +251,9 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
               </button>
               
               <div className="text-center mb-6">
-                <div className="text-4xl mb-3">{selectedRoleData?.icon}</div>
+                <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${selectedRoleData?.gradient} mx-auto mb-4 flex items-center justify-center text-white shadow-lg`}>
+                  {selectedRoleData?.icon}
+                </div>
                 <h2 className="text-2xl font-bold text-white mb-2">{selectedRoleData?.label}</h2>
                 <p className="text-white/70">Choose an option to continue</p>
               </div>
@@ -269,16 +293,18 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
                       <img 
                         src={recentUsers.find(u => u.email === email)?.profilePic} 
                         alt="Profile" 
-                        className="w-20 h-20 rounded-full object-cover mx-auto border-4 border-white/30"
+                        className="w-20 h-20 rounded-full object-cover mx-auto border-4 border-white/30 shadow-lg"
                       />
                     ) : (
-                      <div className="w-20 h-20 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-2xl mx-auto border-4 border-white/30">
+                      <div className="w-20 h-20 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-2xl mx-auto border-4 border-white/30 shadow-lg">
                         {recentUsers.find(u => u.email === email)?.name.split(' ').map(n => n[0]).join('')}
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="text-4xl mb-3">{selectedRoleData?.icon}</div>
+                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${selectedRoleData?.gradient} mx-auto mb-4 flex items-center justify-center text-white shadow-lg`}>
+                    {selectedRoleData?.icon}
+                  </div>
                 )}
                 <h2 className="text-xl font-bold text-white mb-1">
                   {email && recentUsers.find(u => u.email === email) 
@@ -360,7 +386,9 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
               </button>
               
               <div className="text-center mb-6">
-                <div className="text-4xl mb-3">{selectedRoleData?.icon}</div>
+                <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${selectedRoleData?.gradient} mx-auto mb-4 flex items-center justify-center text-white shadow-lg`}>
+                  {selectedRoleData?.icon}
+                </div>
                 <h2 className="text-xl font-bold text-white mb-1">Create {selectedRoleData?.label} Account</h2>
                 <p className="text-white/70 text-sm">Fill in your details</p>
               </div>
