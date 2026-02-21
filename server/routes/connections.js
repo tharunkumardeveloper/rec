@@ -2,6 +2,19 @@ const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
 
+// Debug endpoint - Get all users
+router.get('/users/all', async (req, res) => {
+  try {
+    const db = req.app.locals.db;
+    const users = await db.collection('users').find({}).limit(50).toArray();
+    console.log('📊 All users:', users.length);
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching all users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
 // Get users to discover (exclude self and existing connections)
 router.get('/users/discover', async (req, res) => {
   try {
@@ -12,7 +25,12 @@ router.get('/users/discover', async (req, res) => {
       return res.status(400).json({ error: 'userId is required' });
     }
 
-    console.log('Discovering users for:', userId);
+    console.log('🔍 Discovering users for:', userId);
+
+    // First, let's see all users in the database
+    const allUsers = await db.collection('users').find({}).toArray();
+    console.log('📊 Total users in database:', allUsers.length);
+    console.log('👥 All user IDs:', allUsers.map(u => u.userId));
 
     // Get existing connections
     const connections = await db.collection('connections').find({
@@ -26,18 +44,19 @@ router.get('/users/discover', async (req, res) => {
       c.fromUserId === userId ? c.toUserId : c.fromUserId
     );
 
-    console.log('Connected user IDs:', connectedUserIds);
+    console.log('🔗 Connected user IDs:', connectedUserIds);
 
     // Get all users except self and connected users
     const users = await db.collection('users').find({
       userId: { $ne: userId, $nin: connectedUserIds }
     }).limit(50).toArray();
 
-    console.log('Found users:', users.length);
+    console.log('✅ Found discoverable users:', users.length);
+    console.log('📋 Discoverable user names:', users.map(u => u.name));
 
     res.json(users);
   } catch (error) {
-    console.error('Error fetching discover users:', error);
+    console.error('❌ Error fetching discover users:', error);
     res.status(500).json({ error: 'Failed to fetch users', details: error.message });
   }
 });
