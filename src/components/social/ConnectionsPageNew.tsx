@@ -47,7 +47,22 @@ export default function ConnectionsPageNew() {
     return '';
   };
 
+  const getSessionUserRole = () => {
+    try {
+      const sessionStr = localStorage.getItem('auth_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        return session.role || '';
+      }
+    } catch (error) {
+      console.error('Error reading session:', error);
+    }
+    return '';
+  };
+
   const currentUserId = getSessionUserId();
+  const userRole = getSessionUserRole();
+  const isAthlete = userRole === 'ATHLETE';
   const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || 'https://rec-backend-yi7u.onrender.com';
 
   useEffect(() => {
@@ -327,6 +342,9 @@ export default function ConnectionsPageNew() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Show BottomNav only for athletes */}
+      {isAthlete && <BottomNav />}
     </div>
   );
 }
