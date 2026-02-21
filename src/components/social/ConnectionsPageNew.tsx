@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import BottomNav from '@/components/navigation/BottomNav';
+import { MOCK_ATHLETES, MOCK_COACHES } from '@/services/mockSAIData';
 
 interface ConnectionRequest {
   _id: string;
@@ -93,9 +94,43 @@ export default function ConnectionsPageNew() {
       if (response.ok) {
         const data = await response.json();
         
-        // Load recent workout count for each user
+        // Convert mock data to user format
+        const mockUsers = [
+          ...MOCK_ATHLETES.map(athlete => ({
+            userId: athlete.id,
+            name: athlete.name,
+            profilePic: athlete.profilePic,
+            role: 'ATHLETE',
+            district: 'Demo User',
+            skills: ['Push-ups', 'Squats', 'Sit-ups'],
+            workoutCount: athlete.workoutCount,
+            isMock: true
+          })),
+          ...MOCK_COACHES.map(coach => ({
+            userId: coach.id,
+            name: coach.name,
+            profilePic: coach.profilePic,
+            role: 'COACH',
+            district: 'Demo Coach',
+            skills: ['Strength Training', 'Endurance', 'Flexibility'],
+            workoutCount: coach.totalWorkouts,
+            isMock: true
+          }))
+        ];
+        
+        // Filter out duplicates by name
+        const realUserNames = new Set(data.map((u: any) => u.name.toLowerCase()));
+        const uniqueMockUsers = mockUsers.filter(m => !realUserNames.has(m.name.toLowerCase()));
+        
+        // Combine real and mock users
+        const combinedUsers = [...data, ...uniqueMockUsers];
+        
+        // Load workout count for real users only
         const usersWithWorkouts = await Promise.all(
-          data.map(async (user: any) => {
+          combinedUsers.map(async (user: any) => {
+            if (user.isMock) {
+              return user; // Mock users already have workout count
+            }
             try {
               const workoutsRes = await fetch(`${API_URL}/api/sessions/user/${user.userId}`);
               if (workoutsRes.ok) {
@@ -391,6 +426,11 @@ function UserCard({ user, onViewProfile }: any) {
             <Badge variant={user.role === 'COACH' ? 'default' : 'secondary'} className="bg-purple-600 text-xs">
               {user.role}
             </Badge>
+            {user.isMock && (
+              <Badge variant="outline" className="text-xs border-yellow-500/50 text-yellow-300">
+                Demo
+              </Badge>
+            )}
           </div>
 
           {user.district && (
@@ -400,13 +440,18 @@ function UserCard({ user, onViewProfile }: any) {
             </p>
           )}
 
-          {/* Show workout count */}
+          {/* Show workout stats */}
           {user.workoutCount !== undefined && user.workoutCount > 0 && (
-            <div className="w-full bg-purple-900/30 rounded p-2">
-              <p className="text-xs text-purple-300">
-                <Activity className="w-3 h-3 inline mr-1" />
+            <div className="w-full bg-purple-900/30 rounded p-2 space-y-1">
+              <p className="text-xs text-purple-300 flex items-center justify-center gap-1">
+                <Activity className="w-3 h-3" />
                 {user.workoutCount} workout{user.workoutCount !== 1 ? 's' : ''}
               </p>
+              {user.role === 'ATHLETE' && (
+                <p className="text-xs text-green-300">
+                  Active athlete
+                </p>
+              )}
             </div>
           )}
 
@@ -414,8 +459,9 @@ function UserCard({ user, onViewProfile }: any) {
             onClick={onViewProfile}
             variant="outline"
             className="w-full border-purple-500/50 hover:bg-purple-600/20 text-xs h-8"
+            disabled={user.isMock}
           >
-            View Profile
+            {user.isMock ? 'Demo User' : 'View Profile'}
           </Button>
         </div>
       </CardContent>
@@ -450,34 +496,25 @@ function ConnectionCard({ connection, onViewProfile, navigate }: any) {
 
             {connection.workouts && connection.workouts.length > 0 && (
               <div className="mt-3 space-y-2">
-                <p className="text-xs text-purple-300 font-semibold">
-                  All Workouts ({connection.workouts.length}) - v2.0
-                </p>
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-48 overflow-y-auto">
-                  {connection.workouts.map((workout: any, idx: number) => {
-                    console.log(`🔍 Rendering workout ${idx}:`, workout._id, workout.activityName);
-                    return (
-                      <button
-                        key={workout._id || idx}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          console.log('🎯 Workout clicked:', workout._id, workout);
-                          if (workout._id) {
-                            console.log('✅ Navigating to:', `/workout/${workout._id}`);
-                            navigate(`/workout/${workout._id}`);
-                          } else {
-                            console.error('❌ Workout has no _id:', workout);
-                          }
-                        }}
-                        className="bg-purple-900/30 hover:bg-purple-800/50 rounded p-2 text-center transition-all hover:scale-105 cursor-pointer"
-                      >
-                        <Activity className="w-4 h-4 text-purple-400 mx-auto mb-1" />
-                        <p className="text-xs text-white font-semibold">{workout.totalReps || 0}</p>
-                        <p className="text-xs text-purple-300 truncate">{workout.activityName}</p>
-                      </button>
-                    );
-                  })}
+                <p className="text-xs text-purple-300 font-semibold">Activity Stats</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-purple-900/30 rounded p-2 text-center">
+                    <Activity className="w-4 h-4 text-purple-400 mx-auto mb-1" />
+                    <p className="text-xs text-white font-semibold">{connection.workouts.length}</p>
+                    <p className="text-xs text-purple-300">Workouts</p>
+                  </div>
+                  <div className="bg-green-900/30 rounded p-2 text-center">
+                    <p className="text-xs text-white font-semibold">
+                      {Math.round(connection.workouts.reduce((sum: number, w: any) => sum + (w.accuracy || 0), 0) / connection.workouts.length) || 0}%
+                    </p>
+                    <p className="text-xs text-green-300">Avg Accuracy</p>
+                  </div>
+                  <div className="bg-blue-900/30 rounded p-2 text-center">
+                    <p className="text-xs text-white font-semibold">
+                      {Math.max(...connection.workouts.map((w: any) => w.totalReps || 0), 0)}
+                    </p>
+                    <p className="text-xs text-blue-300">Best Reps</p>
+                  </div>
                 </div>
               </div>
             )}
