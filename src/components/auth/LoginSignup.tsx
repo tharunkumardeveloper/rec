@@ -40,27 +40,27 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
       label: 'Athlete', 
       icon: <User className="w-8 h-8" />, 
       description: 'Track your fitness journey',
-      gradient: 'from-cyan-500 via-blue-500 to-indigo-600',
-      hoverGradient: 'hover:from-cyan-400 hover:via-blue-400 hover:to-indigo-500',
-      shadow: 'shadow-blue-500/50'
+      gradient: 'from-purple-400 via-purple-500 to-purple-600',
+      hoverGradient: 'hover:from-purple-300 hover:via-purple-400 hover:to-purple-500',
+      shadow: 'shadow-purple-500/50'
     },
     { 
       value: 'COACH' as Role, 
       label: 'Coach', 
       icon: <Zap className="w-8 h-8" />, 
       description: 'Manage and guide athletes',
-      gradient: 'from-purple-500 via-pink-500 to-rose-500',
-      hoverGradient: 'hover:from-purple-400 hover:via-pink-400 hover:to-rose-400',
-      shadow: 'shadow-purple-500/50'
+      gradient: 'from-purple-500 via-purple-600 to-purple-700',
+      hoverGradient: 'hover:from-purple-400 hover:via-purple-500 hover:to-purple-600',
+      shadow: 'shadow-purple-600/50'
     },
     { 
       value: 'SAI_ADMIN' as Role, 
       label: 'SAI Admin', 
       icon: <Lock className="w-8 h-8" />, 
       description: 'Oversee all operations',
-      gradient: 'from-slate-600 via-gray-700 to-slate-800',
-      hoverGradient: 'hover:from-slate-500 hover:via-gray-600 hover:to-slate-700',
-      shadow: 'shadow-slate-500/50'
+      gradient: 'from-purple-600 via-purple-700 to-purple-800',
+      hoverGradient: 'hover:from-purple-500 hover:via-purple-600 hover:to-purple-700',
+      shadow: 'shadow-purple-700/50'
     }
   ];
 
@@ -176,8 +176,8 @@ const LoginSignup = ({ onSuccess }: LoginSignupProps) => {
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="w-full max-w-md relative z-10">
