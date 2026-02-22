@@ -382,7 +382,57 @@ class WorkoutStorageService {
   private generateId(): string {
     return `workout_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
+
+  /**
+   * Remove duplicate workouts from localStorage
+   * Keeps the first occurrence of each unique workout (by athlete, activity, timestamp)
+   */
+  public removeDuplicates(): number {
+    console.log('🧹 Cleaning up duplicate workouts...');
+    
+    const workouts = this.getAllWorkouts();
+    const seen = new Set<string>();
+    const uniqueWorkouts: StoredWorkout[] = [];
+    let duplicatesRemoved = 0;
+
+    for (const workout of workouts) {
+      const key = `${workout.athleteName}|${workout.activityName}|${workout.timestamp}`;
+      
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueWorkouts.push(workout);
+      } else {
+        duplicatesRemoved++;
+        console.log(`🗑️ Removing duplicate: ${workout.athleteName} - ${workout.activityName} at ${workout.timestamp}`);
+      }
+    }
+
+    if (duplicatesRemoved > 0) {
+      this.saveToStorage(uniqueWorkouts);
+      console.log(`✅ Removed ${duplicatesRemoved} duplicate workouts`);
+      console.log(`📊 Workouts before: ${workouts.length}, after: ${uniqueWorkouts.length}`);
+    } else {
+      console.log('✅ No duplicates found');
+    }
+
+    return duplicatesRemoved;
+  }
+
+  /**
+   * Auto-cleanup duplicates on service initialization
+   */
+  public initialize(): void {
+    console.log('🚀 Initializing WorkoutStorageService...');
+    const removed = this.removeDuplicates();
+    if (removed > 0) {
+      console.log(`✨ Cleaned up ${removed} duplicate entries on initialization`);
+    }
+  }
 }
 
 export const workoutStorageService = new WorkoutStorageService();
+
+// Auto-cleanup duplicates on service load
+workoutStorageService.initialize();
+
 export default workoutStorageService;
