@@ -74,6 +74,12 @@ const WorkoutResultsScreenLight = ({
         throw new Error('No video data available');
       }
 
+      // Generate PDF automatically
+      console.log('📄 Generating PDF report...');
+      const pdfBlob = await generatePDFBlob();
+      const pdfDataUrl = await workoutStorageService.blobToDataUrl(pdfBlob);
+      console.log('✅ PDF generated successfully');
+
       const videoDataUrl = await workoutStorageService.blobToDataUrl(videoBlob);
       
       const workoutId = await workoutStorageService.saveWorkout({
@@ -89,22 +95,175 @@ const WorkoutResultsScreenLight = ({
         repDetails,
         timestamp: new Date().toISOString(),
         videoDataUrl,
-        pdfDataUrl: undefined,
+        pdfDataUrl, // Include PDF in submission
         screenshots: workoutScreenshots
       });
       
       setIsSubmitted(true);
       console.log('✅ Workout submitted successfully! ID:', workoutId);
+      console.log('📄 PDF included in submission');
       console.log('💾 Check localStorage key: athlete_workouts');
       
       // Show success message
-      alert('Workout submitted successfully!');
+      alert('Workout submitted successfully! Your coach can now view your workout and PDF report.');
     } catch (error) {
       console.error('❌ Workout submission failed:', error);
       alert('Failed to submit workout. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Helper function to generate PDF and return as Blob
+  const generatePDFBlob = async (): Promise<Blob> => {
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    
+    const userName = localStorage.getItem('user_name') || 'Athlete';
+    const profile = userProfileService.getProfile();
+    const userProfilePic = profile?.profilePic;
+    const accuracy = totalReps > 0 ? Math.round((correctReps / totalReps) * 100) : 0;
+    const formScore = accuracy >= 80 ? 'Excellent' : accuracy >= 60 ? 'Good' : 'Needs Work';
+    const currentDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const currentTime = new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    // Header
+    pdf.setFillColor(59, 130, 246);
+    pdf.rect(0, 0, pageWidth, 40, 'F');
+    
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(24);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Workout Report', pageWidth / 2, 20, { align: 'center' });
+    
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(activityName, pageWidth / 2, 30, { align: 'center' });
+
+    // Profile Section
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(16);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Athlete Profile', 20, 55);
+    
+    let profileYPos = 65;
+    
+    if (userProfilePic) {
+      try {
+        pdf.addImage(userProfilePic, 'JPEG', 20, 60, 25, 25);
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Name: ${userName}`, 50, 65);
+        pdf.text(`Date: ${currentDate}`, 50, 72);
+        pdf.text(`Time: ${currentTime}`, 50, 79);
+        pdf.text(`Workout: ${activityName}`, 50, 86);
+        profileYPos = 95;
+      } catch (e) {
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Name: ${userName}`, 20, 65);
+        pdf.text(`Date: ${currentDate}`, 20, 72);
+        pdf.text(`Time: ${currentTime}`, 20, 79);
+        pdf.text(`Workout: ${activityName}`, 20, 86);
+        profileYPos = 95;
+      }
+    } else {
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Name: ${userName}`, 20, 65);
+      pdf.text(`Date: ${currentDate}`, 20, 72);
+      pdf.text(`Time: ${currentTime}`, 20, 79);
+      pdf.text(`Workout: ${activityName}`, 20, 86);
+      profileYPos = 95;
+    }
+
+    // Metrics
+    pdf.setFontSize(16);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Key Metrics', 20, profileYPos);
+
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(`Total Reps: ${totalReps}`, 20, profileYPos + 10);
+    pdf.text(`Correct Reps: ${correctReps}`, 20, profileYPos + 17);
+    pdf.text(`Incorrect Reps: ${incorrectReps}`, 20, profileYPos + 24);
+    pdf.text(`Duration: ${formatTime(duration)}`, 20, profileYPos + 31);
+    pdf.text(`Accuracy: ${accuracy}%`, 20, profileYPos + 38);
+    pdf.text(`Form Score: ${formScore}`, 20, profileYPos + 45);
+
+    // Performance Chart
+    const chartYPos = profileYPos + 60;
+    pdf.setFontSize(16);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Performance Breakdown', 20, chartYPos);
+
+    const barY = chartYPos + 10;
+    const barHeight = 8;
+    const maxBarWidth = 170;
+
+    pdf.setFillColor(34, 197, 94);
+    const correctWidth = totalReps > 0 ? (correctReps / totalReps) * maxBarWidth : 0;
+    pdf.rect(20, barY, correctWidth, barHeight, 'F');
+    pdf.setFontSize(10);
+    pdf.text(`Correct: ${correctReps}`, 20, barY - 2);
+
+    pdf.setFillColor(239, 68, 68);
+    const incorrectWidth = totalReps > 0 ? (incorrectReps / totalReps) * maxBarWidth : 0;
+    pdf.rect(20, barY + 15, incorrectWidth, barHeight, 'F');
+    pdf.text(`Incorrect: ${incorrectReps}`, 20, barY + 13);
+
+    // Workout Screenshots
+    if (workoutScreenshots.length > 0) {
+      pdf.addPage();
+      pdf.setFillColor(59, 130, 246);
+      pdf.rect(0, 0, pageWidth, 30, 'F');
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Workout Screenshots', pageWidth / 2, 18, { align: 'center' });
+
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Key moments captured during your workout:', 20, 40);
+
+      let yPos = 50;
+      const imgWidth = 80;
+      const imgHeight = 60;
+      const spacing = 10;
+
+      for (let i = 0; i < Math.min(6, workoutScreenshots.length); i++) {
+        const xPos = i % 2 === 0 ? 20 : 110;
+        
+        if (i > 0 && i % 2 === 0) {
+          yPos += imgHeight + spacing + 5;
+        }
+
+        if (yPos + imgHeight > pageHeight - 20) {
+          pdf.addPage();
+          yPos = 20;
+        }
+
+        try {
+          pdf.addImage(workoutScreenshots[i], 'JPEG', xPos, yPos, imgWidth, imgHeight);
+          pdf.setFontSize(9);
+          pdf.text(`Screenshot ${i + 1}`, xPos + imgWidth / 2, yPos + imgHeight + 5, { align: 'center' });
+        } catch (e) {
+          console.error('Error adding screenshot:', e);
+        }
+      }
+    }
+
+    return pdf.output('blob');
   };
 
   const captureWorkoutScreenshots = async () => {
