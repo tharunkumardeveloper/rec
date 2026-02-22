@@ -21,12 +21,40 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
   console.log('Activity:', activityName);
 
   const handleDownload = () => {
-    console.log('🔽 Download clicked for:', pdfUrl);
-    const link = document.createElement('a');
-    link.href = pdfUrl;
-    link.download = `${athleteName}_${activityName}_Report.pdf`;
-    link.target = '_blank';
-    link.click();
+    console.log('🔽 Download clicked for:', pdfUrl.substring(0, 100) + '...');
+    
+    if (isBase64) {
+      // For base64 data URLs, create a blob and download
+      try {
+        const base64Data = pdfUrl.split(',')[1];
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${athleteName}_${activityName}_Report.pdf`;
+        link.click();
+        
+        URL.revokeObjectURL(url);
+        console.log('✅ Base64 PDF downloaded successfully');
+      } catch (error) {
+        console.error('❌ Error downloading base64 PDF:', error);
+        alert('Failed to download PDF. Please try again.');
+      }
+    } else {
+      // For regular URLs
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = `${athleteName}_${activityName}_Report.pdf`;
+      link.target = '_blank';
+      link.click();
+    }
   };
 
   const handleZoomIn = () => {
@@ -41,15 +69,20 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
   const isCloudinaryUrl = pdfUrl.includes('cloudinary.com');
   const isCloudinaryRaw = pdfUrl.includes('/raw/upload/');
   const isBase64 = pdfUrl.startsWith('data:');
+  
+  // Detect mobile device
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   console.log('URL Type Detection:');
   console.log('  - Is Cloudinary:', isCloudinaryUrl);
   console.log('  - Is Cloudinary Raw:', isCloudinaryRaw);
   console.log('  - Is Base64:', isBase64);
+  console.log('  - Is Mobile:', isMobile);
 
-  // For Cloudinary raw URLs, use Mozilla PDF.js viewer
-  const viewerUrl = isCloudinaryRaw 
-    ? `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(pdfUrl)}`
+  // For mobile, use Google Docs Viewer which works better in APK/mobile browsers
+  // For desktop, use direct PDF URL
+  const viewerUrl = isCloudinaryRaw && isMobile
+    ? `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`
     : pdfUrl;
 
   console.log('Viewer URL:', viewerUrl);
@@ -107,34 +140,62 @@ const PDFViewer = ({ pdfUrl, athleteName, activityName, onClose }: PDFViewerProp
           )}
 
           {isCloudinaryRaw ? (
-            // Use Google Docs Viewer for Cloudinary raw PDFs
-            <iframe
-              src={viewerUrl}
-              className="w-full h-full border-0"
-              title="PDF Report"
-              onLoad={() => {
-                console.log('✅ PDF iframe loaded successfully');
-                setLoading(false);
-              }}
-              onError={(e) => {
-                console.error('❌ PDF iframe load error:', e);
-                setError(true);
-                setLoading(false);
-              }}
-            />
+            // Use Google Docs Viewer for mobile, direct iframe for desktop
+            isMobile ? (
+              <iframe
+                src={viewerUrl}
+                className="w-full h-full border-0"
+                title="PDF Report"
+                onLoad={() => {
+                  console.log('✅ Google Docs PDF viewer loaded successfully');
+                  setLoading(false);
+                }}
+                onError={(e) => {
+                  console.error('❌ Google Docs viewer load error:', e);
+                  setError(true);
+                  setLoading(false);
+                }}
+              />
+            ) : (
+              <iframe
+                src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+                className="w-full h-full border-0"
+                title="PDF Report"
+                onLoad={() => {
+                  console.log('✅ Direct PDF loaded successfully');
+                  setLoading(false);
+                }}
+                onError={(e) => {
+                  console.error('❌ Direct PDF load error:', e);
+                  setError(true);
+                  setLoading(false);
+                }}
+              />
+            )
           ) : isBase64 ? (
-            // For base64 PDFs, use direct iframe with zoom
-            <div className="h-full overflow-auto p-4">
-              <div className="bg-white shadow-lg mx-auto" style={{ width: `${zoom}%` }}>
-                <iframe
-                  src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
-                  className="w-full h-[800px] border-0"
-                  title="PDF Report"
+            // For base64 PDFs, use object element which works better for data URLs
+            <div className="h-full overflow-auto p-4 flex items-center justify-center">
+              <div className="bg-white shadow-2xl" style={{ width: `${zoom}%`, maxWidth: '100%' }}>
+                <object
+                  data={pdfUrl}
+                  type="application/pdf"
+                  className="w-full"
+                  style={{ height: '80vh' }}
                   onLoad={() => {
                     console.log('✅ Base64 PDF loaded successfully');
                     setLoading(false);
                   }}
-                />
+                >
+                  <div className="p-8 text-center">
+                    <p className="text-gray-600 mb-4">
+                      Your browser cannot display this PDF inline.
+                    </p>
+                    <Button onClick={handleDownload} size="lg" className="bg-blue-600 hover:bg-blue-700">
+                      <Download className="w-5 h-5 mr-2" />
+                      Download PDF to View
+                    </Button>
+                  </div>
+                </object>
               </div>
             </div>
           ) : (
