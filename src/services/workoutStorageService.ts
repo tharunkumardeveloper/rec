@@ -37,6 +37,24 @@ class WorkoutStorageService {
   public async saveWorkout(workout: Omit<StoredWorkout, 'id'>): Promise<string> {
     console.log(`💾 Saving workout for athlete: ${workout.athleteName}`);
     
+    // Check for duplicates based on timestamp and athlete name
+    const existingWorkouts = this.getAllWorkouts();
+    const isDuplicate = existingWorkouts.some(w => 
+      w.athleteName === workout.athleteName &&
+      w.activityName === workout.activityName &&
+      w.timestamp === workout.timestamp
+    );
+
+    if (isDuplicate) {
+      console.log(`⚠️ Duplicate workout detected, skipping save`);
+      const existing = existingWorkouts.find(w => 
+        w.athleteName === workout.athleteName &&
+        w.activityName === workout.activityName &&
+        w.timestamp === workout.timestamp
+      );
+      return existing?.id || this.generateId();
+    }
+    
     const newWorkout: StoredWorkout = {
       ...workout,
       id: this.generateId()
