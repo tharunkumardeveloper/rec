@@ -34,7 +34,9 @@ import {
   Star,
   TrendingUp,
   Award,
-  Plus
+  Plus,
+  BarChart3,
+  Home
 } from 'lucide-react';
 
 interface SAIAdminDashboardProps {
@@ -206,29 +208,6 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-3">
-        <Button 
-          onClick={() => onTabChange('leaderboard')} 
-          className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 h-auto py-4"
-        >
-          <div className="flex flex-col items-center gap-1">
-            <Medal className="w-6 h-6" />
-            <span className="text-sm font-semibold">Leaderboard</span>
-          </div>
-        </Button>
-        
-        <Button 
-          onClick={() => onTabChange('events')} 
-          className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 h-auto py-4"
-        >
-          <div className="flex flex-col items-center gap-1">
-            <Calendar className="w-6 h-6" />
-            <span className="text-sm font-semibold">Events</span>
-          </div>
-        </Button>
-      </div>
-
       {/* SAI Scouting Info Banner */}
       <Card className="border-2 border-purple-500 bg-gradient-to-br from-purple-50 to-blue-50">
         <CardContent className="p-4">
@@ -237,29 +216,49 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
               <Binoculars className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-purple-900 mb-1">SAI Talent Scouting</h3>
+              <h3 className="font-bold text-purple-900 mb-1">SAI Talent Scouting & Analytics</h3>
               <p className="text-sm text-purple-700 mb-3">
                 Identify and nurture promising athletes across India. Monitor performance metrics, track progress, and discover future champions.
               </p>
               <Button 
-                onClick={() => onTabChange('scouting')} 
+                onClick={() => onTabChange('analytics')} 
                 size="sm" 
                 className="bg-purple-600 hover:bg-purple-700"
               >
-                <Star className="w-4 h-4 mr-2" />
-                View Scouting Dashboard
+                <BarChart3 className="w-4 h-4 mr-2" />
+                View Analytics Dashboard
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Recent Activity */}
+      <div className="space-y-3">
+        <h3 className="text-lg font-semibold">Recent Activity</h3>
+        <Card className="border-l-4 border-l-blue-500">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Activity className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-sm">System Active</p>
+                <p className="text-xs text-muted-foreground">
+                  {overviewStats.totalAthletes} athletes tracked • {overviewStats.totalWorkouts} workouts recorded
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Coaches Preview Section */}
       {coaches.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Coaches</h3>
-            <Button onClick={() => onTabChange('coaches')} variant="outline" size="sm">
+            <h3 className="text-lg font-semibold">Top Coaches</h3>
+            <Button onClick={() => onTabChange('analytics')} variant="outline" size="sm">
               <Eye className="w-4 h-4 mr-2" />
               View All
             </Button>
@@ -296,7 +295,7 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
     </div>
   );
 
-  const renderAthletesContent = () => {
+  const renderAnalyticsContent = () => {
     if (selectedAthlete && selectedWorkout) {
       const athleteData = athleteWorkouts.find(a => a.name === selectedAthlete);
       if (!athleteData) return null;
@@ -316,126 +315,181 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
 
     return (
       <div className="space-y-6">
-        {athleteWorkouts.length > 0 && (
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">
-              {athleteWorkouts.length} Athlete{athleteWorkouts.length !== 1 ? 's' : ''}
-            </h3>
-            <Button onClick={loadAthleteData} variant="outline" size="sm">
-              <Activity className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
-        )}
+        {/* Tab Selector */}
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          <Button
+            size="sm"
+            variant={showScoutingModal ? 'default' : 'outline'}
+            onClick={() => setShowScoutingModal(true)}
+          >
+            <Star className="w-4 h-4 mr-2" />
+            Talent Scouting
+          </Button>
+          <Button
+            size="sm"
+            variant={!showScoutingModal ? 'default' : 'outline'}
+            onClick={() => setShowScoutingModal(false)}
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Athletes & Coaches
+          </Button>
+        </div>
 
-        {athleteWorkouts.length > 0 ? (
-          <div className="space-y-3">
-            {athleteWorkouts.map((athlete) => {
-              const totalReps = athlete.workouts.reduce((sum, w) => sum + w.totalReps, 0);
-              const avgAccuracy = Math.round(
-                athlete.workouts.reduce((sum, w) => sum + w.accuracy, 0) / athlete.workouts.length
-              );
-
-              return (
-                <Card key={athlete.name} className="card-elevated hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary">
-                  <CardContent className="p-3 sm:p-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                      <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-full overflow-hidden border-2 border-primary/30">
-                          {athlete.profilePic ? (
-                            <img src={athlete.profilePic} alt={athlete.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold text-sm">
-                              {athlete.name ? athlete.name.split(' ').map(n => n[0]).join('') : '?'}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-sm sm:text-base truncate">{athlete.name}</h3>
-                          <p className="text-xs text-muted-foreground truncate">Coach: {athlete.coach}</p>
-                          <div className="flex items-center flex-wrap gap-2 mt-1">
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                              {athlete.workoutCount} workout{athlete.workoutCount !== 1 ? 's' : ''}
-                            </span>
-                            <span className="text-xs text-muted-foreground">•</span>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                              {totalReps} reps
-                            </span>
-                            <span className="text-xs text-muted-foreground">•</span>
-                            <Badge className={`${avgAccuracy >= 80 ? 'bg-green-500' : 'bg-yellow-500'} text-white text-xs`}>
-                              {avgAccuracy}%
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <Button 
-                        size="sm" 
-                        className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 flex-shrink-0"
-                        onClick={() => handleViewWorkouts(athlete.name)}
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        View
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+        {showScoutingModal ? (
+          <SAIScoutingDashboard onBack={() => setShowScoutingModal(false)} />
         ) : (
-          <Card className="card-elevated">
-            <CardContent className="p-6 text-center space-y-4">
-              <Users className="w-16 h-16 text-gray-300 mx-auto" />
-              <h3 className="text-lg font-semibold">No Athlete Workouts Yet</h3>
-              <p className="text-sm text-muted-foreground">
-                Athlete workout data will appear here after they complete workouts.
-              </p>
-              <Button onClick={loadAthleteData} variant="outline" size="sm">
-                <Activity className="w-4 h-4 mr-2" />
-                Refresh Data
-              </Button>
-            </CardContent>
-          </Card>
+          <>
+            {/* Athletes Section */}
+            {athleteWorkouts.length > 0 && (
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">
+                  {athleteWorkouts.length} Athlete{athleteWorkouts.length !== 1 ? 's' : ''}
+                </h3>
+                <Button onClick={loadAthleteData} variant="outline" size="sm">
+                  <Activity className="w-4 h-4 mr-2" />
+                  Refresh
+                </Button>
+              </div>
+            )}
+
+            {athleteWorkouts.length > 0 ? (
+              <div className="space-y-3">
+                {athleteWorkouts.map((athlete) => {
+                  const totalReps = athlete.workouts.reduce((sum, w) => sum + w.totalReps, 0);
+                  const avgAccuracy = Math.round(
+                    athlete.workouts.reduce((sum, w) => sum + w.accuracy, 0) / athlete.workouts.length
+                  );
+
+                  return (
+                    <Card key={athlete.name} className="card-elevated hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary">
+                      <CardContent className="p-3 sm:p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-full overflow-hidden border-2 border-primary/30">
+                              {athlete.profilePic ? (
+                                <img src={athlete.profilePic} alt={athlete.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center font-bold text-sm">
+                                  {athlete.name ? athlete.name.split(' ').map(n => n[0]).join('') : '?'}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-sm sm:text-base truncate">{athlete.name}</h3>
+                              <p className="text-xs text-muted-foreground truncate">Coach: {athlete.coach}</p>
+                              <div className="flex items-center flex-wrap gap-2 mt-1">
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                  {athlete.workoutCount} workout{athlete.workoutCount !== 1 ? 's' : ''}
+                                </span>
+                                <span className="text-xs text-muted-foreground">•</span>
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                  {totalReps} reps
+                                </span>
+                                <span className="text-xs text-muted-foreground">•</span>
+                                <Badge className={`${avgAccuracy >= 80 ? 'bg-green-500' : 'bg-yellow-500'} text-white text-xs`}>
+                                  {avgAccuracy}%
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 flex-shrink-0"
+                            onClick={() => handleViewWorkouts(athlete.name)}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            View
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <Card className="card-elevated">
+                <CardContent className="p-6 text-center space-y-4">
+                  <Users className="w-16 h-16 text-gray-300 mx-auto" />
+                  <h3 className="text-lg font-semibold">No Athlete Workouts Yet</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Athlete workout data will appear here after they complete workouts.
+                  </p>
+                  <Button onClick={loadAthleteData} variant="outline" size="sm">
+                    <Activity className="w-4 h-4 mr-2" />
+                    Refresh Data
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Coaches Section */}
+            {coaches.length > 0 && (
+              <>
+                <div className="flex items-center justify-between mt-8">
+                  <h3 className="text-lg font-semibold">All Coaches</h3>
+                </div>
+                
+                <div className="space-y-2">
+                  {coaches.map((coach) => (
+                    <Card key={coach.id} className="card-elevated hover:shadow-md transition-all border-l-4 border-l-success">
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-success/30 flex-shrink-0">
+                            <img src={coach.profilePic} alt={coach.name} className="w-full h-full object-cover" />
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-sm truncate">{coach.name}</h4>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{coach.athleteCount} athletes</span>
+                              <span>•</span>
+                              <span>{coach.totalWorkouts} workouts</span>
+                            </div>
+                          </div>
+                          
+                          <Badge className="bg-success text-white text-xs flex-shrink-0">
+                            {coach.athleteCount > 0 ? Math.round(coach.totalWorkouts / coach.athleteCount) : 0} avg
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
         )}
       </div>
     );
-  };
-
-  const getTabContent = () => {
-    switch (activeTab) {
-      case 'training':
-        return renderDashboardContent();
-      case 'discover':
-        return renderAthletesContent();
-      case 'coaches':
-        return <SAICoachesDashboard onBack={() => onTabChange('training')} />;
-      case 'leaderboard':
-        return <SAINationalLeaderboard onBack={() => onTabChange('training')} />;
-      case 'events':
-        return <SAIEventsScheduler onBack={() => onTabChange('training')} />;
-      case 'scouting':
-        return <SAIScoutingDashboard onBack={() => onTabChange('training')} />;
-      default:
-        return renderDashboardContent();
-    }
   };
 
   const getTabTitle = () => {
     switch (activeTab) {
       case 'training':
         return 'Dashboard';
-      case 'discover':
-        return 'Athletes';
-      case 'coaches':
-        return 'Coaches';
       case 'leaderboard':
         return 'National Leaderboard';
       case 'events':
         return 'Events & Scheduling';
-      case 'scouting':
-        return 'Talent Scouting';
+      case 'analytics':
+        return 'Analytics & Scouting';
       default:
         return 'Dashboard';
+    }
+  };
+
+  const getTabContent = () => {
+    switch (activeTab) {
+      case 'training':
+        return renderDashboardContent();
+      case 'leaderboard':
+        return <SAINationalLeaderboard onBack={() => onTabChange('training')} />;
+      case 'events':
+        return <SAIEventsScheduler onBack={() => onTabChange('training')} />;
+      case 'analytics':
+        return renderAnalyticsContent();
+      default:
+        return renderDashboardContent();
     }
   };
 
@@ -501,22 +555,16 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
         <div className="max-w-md mx-auto px-4 py-2">
           <div className="flex justify-around">
             {[
-              { id: 'training', label: 'Dashboard', icon: Zap, color: 'text-blue-600' },
-              { id: 'discover', label: 'Athletes', icon: Users, color: 'text-green-600' },
-              { id: 'connections', label: 'Connect', icon: Users, color: 'text-purple-600', isLink: true },
-              { id: 'coaches', label: 'Coaches', icon: GraduationCap, color: 'text-orange-600' }
-            ].map(({ id, label, icon: Icon, color, isLink }) => (
+              { id: 'training', label: 'Dashboard', icon: Home, color: 'text-blue-600' },
+              { id: 'leaderboard', label: 'Leaderboard', icon: Medal, color: 'text-yellow-600' },
+              { id: 'events', label: 'Events', icon: Calendar, color: 'text-purple-600' },
+              { id: 'analytics', label: 'Analytics', icon: BarChart3, color: 'text-green-600' }
+            ].map(({ id, label, icon: Icon, color }) => (
               <Button
                 key={id}
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  if (isLink) {
-                    window.location.href = '/connections';
-                  } else {
-                    onTabChange(id);
-                  }
-                }}
+                onClick={() => onTabChange(id)}
                 className={`flex flex-col items-center space-y-1 tap-target transition-all duration-300 ${
                   activeTab === id ? `${color} scale-110 font-semibold` : 'text-muted-foreground hover:text-foreground'
                 }`}
