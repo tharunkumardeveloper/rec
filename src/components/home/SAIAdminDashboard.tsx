@@ -6,6 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import workoutStorageService, { StoredWorkout } from '@/services/workoutStorageService';
 import AthleteWorkoutDetail from '@/components/coach/AthleteWorkoutDetail';
 import SAICoachesDashboard from './SAICoachesDashboard';
+import SAINationalLeaderboard from './SAINationalLeaderboard';
+import SAIEventsScheduler from './SAIEventsScheduler';
+import SAIScoutingDashboard from './SAIScoutingDashboard';
 import { userProfileService } from '@/services/userProfileService';
 import { 
   getMockCoachesWithRealData, 
@@ -24,7 +27,14 @@ import {
   Activity, 
   Eye,
   UserCheck,
-  GraduationCap
+  GraduationCap,
+  Calendar,
+  Medal,
+  Binoculars,
+  Star,
+  TrendingUp,
+  Award,
+  Plus
 } from 'lucide-react';
 
 interface SAIAdminDashboardProps {
@@ -49,6 +59,8 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
   const [selectedWorkout, setSelectedWorkout] = useState<StoredWorkout | null>(null);
   const [userProfilePic, setUserProfilePic] = useState<string>('');
   const [coaches, setCoaches] = useState<MockCoach[]>([]);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [showScoutingModal, setShowScoutingModal] = useState(false);
 
   // Load user profile photo
   useEffect(() => {
@@ -193,6 +205,54 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-3">
+        <Button 
+          onClick={() => onTabChange('leaderboard')} 
+          className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 h-auto py-4"
+        >
+          <div className="flex flex-col items-center gap-1">
+            <Medal className="w-6 h-6" />
+            <span className="text-sm font-semibold">Leaderboard</span>
+          </div>
+        </Button>
+        
+        <Button 
+          onClick={() => onTabChange('events')} 
+          className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 h-auto py-4"
+        >
+          <div className="flex flex-col items-center gap-1">
+            <Calendar className="w-6 h-6" />
+            <span className="text-sm font-semibold">Events</span>
+          </div>
+        </Button>
+      </div>
+
+      {/* SAI Scouting Info Banner */}
+      <Card className="border-2 border-purple-500 bg-gradient-to-br from-purple-50 to-blue-50">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-purple-500 rounded-lg">
+              <Binoculars className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-purple-900 mb-1">SAI Talent Scouting</h3>
+              <p className="text-sm text-purple-700 mb-3">
+                Identify and nurture promising athletes across India. Monitor performance metrics, track progress, and discover future champions.
+              </p>
+              <Button 
+                onClick={() => onTabChange('scouting')} 
+                size="sm" 
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Star className="w-4 h-4 mr-2" />
+                View Scouting Dashboard
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Coaches Preview Section */}
       {coaches.length > 0 && (
@@ -349,6 +409,12 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
         return renderAthletesContent();
       case 'coaches':
         return <SAICoachesDashboard onBack={() => onTabChange('training')} />;
+      case 'leaderboard':
+        return <SAINationalLeaderboard onBack={() => onTabChange('training')} />;
+      case 'events':
+        return <SAIEventsScheduler onBack={() => onTabChange('training')} />;
+      case 'scouting':
+        return <SAIScoutingDashboard onBack={() => onTabChange('training')} />;
       default:
         return renderDashboardContent();
     }
@@ -362,6 +428,12 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
         return 'Athletes';
       case 'coaches':
         return 'Coaches';
+      case 'leaderboard':
+        return 'National Leaderboard';
+      case 'events':
+        return 'Events & Scheduling';
+      case 'scouting':
+        return 'Talent Scouting';
       default:
         return 'Dashboard';
     }

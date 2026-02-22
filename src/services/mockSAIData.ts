@@ -19,6 +19,8 @@ export interface MockAthlete {
   coachName: string;
   workoutCount: number;
   lastWorkout: string;
+  age?: number;
+  state?: string;
 }
 
 // Mock coaches using images from ppl folder
@@ -55,7 +57,9 @@ export const MOCK_ATHLETES: MockAthlete[] = [
     profilePic: '/ppl/aryan.webp',
     coachName: 'Rahul Dravid',
     workoutCount: 5,
-    lastWorkout: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
+    lastWorkout: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+    age: 19,
+    state: 'Delhi'
   },
   {
     id: 'athlete-2',
@@ -63,7 +67,9 @@ export const MOCK_ATHLETES: MockAthlete[] = [
     profilePic: '/ppl/dev%20patel.jpg',
     coachName: 'Rahul Dravid',
     workoutCount: 4,
-    lastWorkout: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() // 5 hours ago
+    lastWorkout: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+    age: 21,
+    state: 'Gujarat'
   },
   {
     id: 'athlete-3',
@@ -71,7 +77,9 @@ export const MOCK_ATHLETES: MockAthlete[] = [
     profilePic: '/ppl/umesh%20yadav.jpeg',
     coachName: 'Rahul Dravid',
     workoutCount: 3,
-    lastWorkout: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // 1 day ago
+    lastWorkout: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    age: 20,
+    state: 'Karnataka'
   },
   
   // Athletes under Manish Paul
@@ -81,7 +89,9 @@ export const MOCK_ATHLETES: MockAthlete[] = [
     profilePic: '/ppl/dharani.webp',
     coachName: 'Manish Paul',
     workoutCount: 4,
-    lastWorkout: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString() // 3 hours ago
+    lastWorkout: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
+    age: 18,
+    state: 'Tamil Nadu'
   },
   {
     id: 'athlete-5',
@@ -89,7 +99,9 @@ export const MOCK_ATHLETES: MockAthlete[] = [
     profilePic: '/ppl/pranshika.webp',
     coachName: 'Manish Paul',
     workoutCount: 4,
-    lastWorkout: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString() // 6 hours ago
+    lastWorkout: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
+    age: 22,
+    state: 'Maharashtra'
   }
 ];
 
@@ -127,7 +139,9 @@ export function getMockAthletesWithRealData(realAthletes: Array<{
     profilePic: athlete.athleteProfilePic || '/ppl/madhesh.jpg', // Default pic
     coachName: 'Gautham Vasudev Menon',
     workoutCount: athlete.workoutCount,
-    lastWorkout: athlete.lastWorkout
+    lastWorkout: athlete.lastWorkout,
+    age: 18 + Math.floor(Math.random() * 7), // Random age 18-24
+    state: ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Kolkata', 'Hyderabad'][Math.floor(Math.random() * 6)]
   }));
   
   return [...realAthletesWithCoach, ...mockAthletes];
