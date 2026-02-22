@@ -24,3 +24,13 @@ export function getDefaultProfilePic(originalName: string, currentProfilePic?: s
   // Default fallback
   return '/ppl/dharani.webp';
 }
+
+export function getTharunProfilePic(userName: string, currentProfilePic?: string): string {
+  // If user is Tharun, use his specific profile pic
+  if (userName === 'Tharun' || userName === 'Tharun Kumar' || userName.toLowerCase().includes('tharun')) {
+    return '/ppl/tharun.jpg';
+  }
+  
+  // Otherwise return current or default
+  return currentProfilePic || '/ppl/dharani.webp';
+}

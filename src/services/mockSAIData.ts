@@ -1,4 +1,4 @@
-import { transformUserName, getDefaultProfilePic } from '@/utils/userNameTransform';
+import { transformUserName, getDefaultProfilePic, getTharunProfilePic } from '@/utils/userNameTransform';
 
 /**
  * Mock SAI Data Service
@@ -139,8 +139,11 @@ export function getMockAthletesWithRealData(realAthletes: Array<{
     // Transform generic names to proper Indian names
     const athleteName = transformUserName(athlete.name);
     
-    // Get appropriate profile pic
-    const profilePic = getDefaultProfilePic(athlete.name, athlete.athleteProfilePic);
+    // Get appropriate profile pic - check for Tharun first
+    let profilePic = getTharunProfilePic(athlete.name, athlete.athleteProfilePic);
+    if (profilePic === athlete.athleteProfilePic || (!profilePic && !athlete.athleteProfilePic)) {
+      profilePic = getDefaultProfilePic(athlete.name, athlete.athleteProfilePic);
+    }
     
     return {
       id: `real-${athleteName.toLowerCase().replace(/\s+/g, '-')}`,
