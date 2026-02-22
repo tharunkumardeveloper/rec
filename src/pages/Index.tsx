@@ -489,42 +489,71 @@ const Index = () => {
                 <h1 className="text-xl font-bold text-white">TalentTrack</h1>
               </div>
               
-              {/* Navigation Items */}
+              {/* Navigation Items - Different for SAI Admin */}
               <nav className="flex-1 px-4 py-6 space-y-2">
-                {[
-                  { id: 'training', label: 'Training', icon: '⚡' },
-                  { id: 'discover', label: 'Discover', icon: '🔍' },
-                  { id: 'report', label: 'Report', icon: '📊' },
-                  { id: 'roadmap', label: 'Roadmap', icon: '🗺️' }
-                ].map(({ id, label, icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => {
-                      scrollToTop();
-                      setActiveTab(id);
-                    }}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                      activeTab === id 
-                        ? 'bg-primary text-primary-foreground font-semibold' 
-                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-                    }`}
-                  >
-                    <span className="text-2xl">{icon}</span>
-                    <span className="text-sm">{label}</span>
-                  </button>
-                ))}
-                
-                {/* Connections Button */}
-                <button
-                  onClick={() => {
-                    scrollToTop();
-                    setAppState('connections');
-                  }}
-                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                >
-                  <span className="text-2xl">👥</span>
-                  <span className="text-sm">Connections</span>
-                </button>
+                {userRole === 'admin' ? (
+                  // SAI Admin Menu - 4 items
+                  [
+                    { id: 'training', label: 'Dashboard', icon: '🏠' },
+                    { id: 'leaderboard', label: 'Leaderboard', icon: '🏅' },
+                    { id: 'events', label: 'Events', icon: '📅' },
+                    { id: 'analytics', label: 'Analytics', icon: '📊' }
+                  ].map(({ id, label, icon }) => (
+                    <button
+                      key={id}
+                      onClick={() => {
+                        scrollToTop();
+                        setActiveTab(id);
+                      }}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                        activeTab === id 
+                          ? 'bg-primary text-primary-foreground font-semibold' 
+                          : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                      }`}
+                    >
+                      <span className="text-2xl">{icon}</span>
+                      <span className="text-sm">{label}</span>
+                    </button>
+                  ))
+                ) : (
+                  // Regular User Menu
+                  <>
+                    {[
+                      { id: 'training', label: 'Training', icon: '⚡' },
+                      { id: 'discover', label: 'Discover', icon: '🔍' },
+                      { id: 'report', label: 'Report', icon: '📊' },
+                      { id: 'roadmap', label: 'Roadmap', icon: '🗺️' }
+                    ].map(({ id, label, icon }) => (
+                      <button
+                        key={id}
+                        onClick={() => {
+                          scrollToTop();
+                          setActiveTab(id);
+                        }}
+                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                          activeTab === id 
+                            ? 'bg-primary text-primary-foreground font-semibold' 
+                            : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                        }`}
+                      >
+                        <span className="text-2xl">{icon}</span>
+                        <span className="text-sm">{label}</span>
+                      </button>
+                    ))}
+                    
+                    {/* Connections Button - Only for non-admin users */}
+                    <button
+                      onClick={() => {
+                        scrollToTop();
+                        setAppState('connections');
+                      }}
+                      className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    >
+                      <span className="text-2xl">👥</span>
+                      <span className="text-sm">Connections</span>
+                    </button>
+                  </>
+                )}
               </nav>
 
               {/* User Section */}
