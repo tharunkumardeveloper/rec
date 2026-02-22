@@ -1,3 +1,5 @@
+import { transformUserName, getDefaultProfilePic } from '@/utils/userNameTransform';
+
 /**
  * Mock SAI Data Service
  * Provides demo coaches and athletes for SAI Admin Dashboard
@@ -133,16 +135,24 @@ export function getMockAthletesWithRealData(realAthletes: Array<{
   const mockAthletes = [...MOCK_ATHLETES];
   
   // Add real athletes under Gautham Vasudev Menon
-  const realAthletesWithCoach = realAthletes.map(athlete => ({
-    id: `real-${athlete.name.toLowerCase().replace(/\s+/g, '-')}`,
-    name: athlete.name,
-    profilePic: athlete.athleteProfilePic || '/ppl/madhesh.jpg', // Default pic
-    coachName: 'Gautham Vasudev Menon',
-    workoutCount: athlete.workoutCount,
-    lastWorkout: athlete.lastWorkout,
-    age: 18 + Math.floor(Math.random() * 7), // Random age 18-24
-    state: ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Kolkata', 'Hyderabad'][Math.floor(Math.random() * 6)]
-  }));
+  const realAthletesWithCoach = realAthletes.map(athlete => {
+    // Transform generic names to proper Indian names
+    const athleteName = transformUserName(athlete.name);
+    
+    // Get appropriate profile pic
+    const profilePic = getDefaultProfilePic(athlete.name, athlete.athleteProfilePic);
+    
+    return {
+      id: `real-${athleteName.toLowerCase().replace(/\s+/g, '-')}`,
+      name: athleteName,
+      profilePic: profilePic,
+      coachName: 'Gautham Vasudev Menon',
+      workoutCount: athlete.workoutCount,
+      lastWorkout: athlete.lastWorkout,
+      age: 18 + Math.floor(Math.random() * 7), // Random age 18-24
+      state: ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Kolkata', 'Hyderabad'][Math.floor(Math.random() * 6)]
+    };
+  });
   
   return [...realAthletesWithCoach, ...mockAthletes];
 }
