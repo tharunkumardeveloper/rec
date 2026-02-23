@@ -608,6 +608,10 @@ const Index = () => {
               activeTab={activeTab}
               onProfileOpen={handleProfileOpen}
               onSettingsOpen={handleSettingsOpen}
+              onViewUserProfile={(userId) => {
+                setViewingUserId(userId);
+                setAppState('user-profile');
+              }}
             />
             ) : (
               <div className="min-h-screen bg-background">

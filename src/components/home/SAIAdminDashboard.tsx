@@ -45,9 +45,10 @@ interface SAIAdminDashboardProps {
   activeTab: string;
   onProfileOpen?: () => void;
   onSettingsOpen?: () => void;
+  onViewUserProfile?: (userId: string) => void;
 }
 
-const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSettingsOpen }: SAIAdminDashboardProps) => {
+const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, onSettingsOpen, onViewUserProfile }: SAIAdminDashboardProps) => {
   const [searchFocus, setSearchFocus] = useState(false);
   const [athleteWorkouts, setAthleteWorkouts] = useState<Array<{ 
     name: string; 
@@ -336,7 +337,10 @@ const SAIAdminDashboard = ({ userName, onTabChange, activeTab, onProfileOpen, on
         </div>
 
         {showScoutingModal ? (
-          <SAIScoutingDashboard onBack={() => setShowScoutingModal(false)} />
+          <SAIScoutingDashboard 
+            onBack={() => setShowScoutingModal(false)} 
+            onViewUserProfile={onViewUserProfile}
+          />
         ) : (
           <>
             {/* Athletes Section */}

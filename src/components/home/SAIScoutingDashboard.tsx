@@ -24,9 +24,10 @@ interface ScoutingProfile {
 
 interface SAIScoutingDashboardProps {
   onBack: () => void;
+  onViewUserProfile?: (userId: string) => void;
 }
 
-const SAIScoutingDashboard = ({ onBack }: SAIScoutingDashboardProps) => {
+const SAIScoutingDashboard = ({ onBack, onViewUserProfile }: SAIScoutingDashboardProps) => {
   const [scoutingProfiles, setScoutingProfiles] = useState<ScoutingProfile[]>([]);
   const [selectedAthlete, setSelectedAthlete] = useState<ScoutingProfile | null>(null);
   const [filterRating, setFilterRating] = useState<number>(0);
@@ -303,7 +304,18 @@ const SAIScoutingDashboard = ({ onBack }: SAIScoutingDashboardProps) => {
                   </div>
 
                   <div className="flex gap-2 mt-3">
-                    <Button size="sm" className="bg-gradient-to-r from-purple-500 to-blue-500">
+                    <Button 
+                      size="sm" 
+                      className="bg-gradient-to-r from-purple-500 to-blue-500"
+                      onClick={() => {
+                        // Try to find user ID from the profile name
+                        if (onViewUserProfile) {
+                          // Generate a consistent ID from the name
+                          const userId = `athlete_${profile.name.toLowerCase().replace(/\s+/g, '_')}`;
+                          onViewUserProfile(userId);
+                        }
+                      }}
+                    >
                       <Eye className="w-4 h-4 mr-2" />
                       View Full Profile
                     </Button>

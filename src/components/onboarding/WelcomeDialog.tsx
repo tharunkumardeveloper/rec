@@ -14,6 +14,9 @@ const WelcomeDialog = () => {
     // Check if user has completed onboarding
     const hasCompletedOnboarding = localStorage.getItem('onboarding_completed');
     
+    // Check if this is a navigation (not first load)
+    const isNavigation = sessionStorage.getItem('app_navigated');
+    
     // Check user role from multiple sources
     const profile = userProfileService.getProfile();
     const userRole = profile?.role;
@@ -37,13 +40,16 @@ const WelcomeDialog = () => {
       storedRole === 'coach' || 
       storedRole === 'admin';
     
-    // Only show dialog for athletes who haven't completed onboarding
-    if (!hasCompletedOnboarding && !isCoachOrAdmin) {
+    // Only show dialog for athletes who haven't completed onboarding AND it's not a navigation
+    if (!hasCompletedOnboarding && !isCoachOrAdmin && !isNavigation) {
       setIsOpen(true);
     } else if (isCoachOrAdmin) {
       // Auto-complete onboarding for coaches and admins
       localStorage.setItem('onboarding_completed', 'true');
     }
+    
+    // Mark that app has been navigated
+    sessionStorage.setItem('app_navigated', 'true');
   }, []);
 
   const handleContinue = () => {
