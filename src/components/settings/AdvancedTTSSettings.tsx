@@ -24,17 +24,13 @@ const AdvancedTTSSettings = () => {
     return 'Athlete';
   });
 
-  // Free tier voices only - 3 Male + 3 Female (tested and confirmed working)
+  // Only 2 voices - 1 Male + 1 Female (Best quality free tier)
   const voices = [
-    // Male Voices
-    { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam 👨', description: 'Deep, authoritative male (Default - Free)', gender: 'male' },
-    { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel 👨', description: 'Professional, clear male (Free)', gender: 'male' },
-    { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie 👨', description: 'Casual, friendly male (Free)', gender: 'male' },
+    // Male Voice
+    { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam 👨', description: 'Deep, authoritative male (Default)', gender: 'male' },
     
-    // Female Voices  
-    { id: 'jsCqWAovK2LkecY7zXl4', name: 'Freya 👩', description: 'Young, energetic female (Free)', gender: 'female' },
-    { id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda 👩', description: 'Warm, encouraging female (Free)', gender: 'female' },
-    { id: 'pMsXgVXv3BLzUgSXRplE', name: 'Serena 👩', description: 'Pleasant, motivating female (Free)', gender: 'female' }
+    // Female Voice (Rachel requires paid plan, using best free alternative)
+    { id: 'jsCqWAovK2LkecY7zXl4', name: 'Freya 👩', description: 'Natural, warm female (Free alternative to Rachel)', gender: 'female' }
   ];
 
   const handleStabilityChange = (value: number[]) => {
