@@ -52,8 +52,11 @@ class ElevenLabsTTSService {
   private readonly API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || '';
   private readonly API_URL = 'https://api.elevenlabs.io/v1/text-to-speech';
   
-  // Rachel - Natural, warm, encouraging (default)
-  private voiceId: string = '21m00Tcm4TlvDq8ikWAM';
+  // Using a free-tier compatible voice ID
+  // Note: Library voices (like Rachel) require paid plan
+  // Use your own cloned voices or generated voices for free tier
+  // Default to first available voice from user's account
+  private voiceId: string = 'pNInz6obpgDQGcFmaJgB'; // Adam - Free tier voice
   
   // Voice settings (can be customized)
   private voiceSettings: VoiceSettings = {
@@ -270,6 +273,16 @@ class ElevenLabsTTSService {
           
         } catch (elevenLabsError: any) {
           console.warn('☁️ ElevenLabs error:', elevenLabsError.message);
+          
+          // If it's a payment error (402), don't retry - just fall back immediately
+          if (elevenLabsError.message.includes('402') || 
+              elevenLabsError.message.includes('payment_required') ||
+              elevenLabsError.message.includes('paid_plan_required')) {
+            console.log('💳 Payment required for this voice. Falling back to browser TTS.');
+            this.retryCount = 0;
+            this.speakWithBrowser(text);
+            return;
+          }
           
           // Retry with ElevenLabs if it's a timeout or network error
           if (this.retryCount < this.MAX_RETRIES && 
@@ -749,7 +762,7 @@ class ElevenLabsTTSService {
 
   getVoiceInfo(): string {
     if (this.API_KEY) {
-      return 'ElevenLabs Rachel (Ultra-realistic AI voice)';
+      return 'ElevenLabs Adam (Free tier voice)';
     }
     return 'Browser TTS (ElevenLabs API key not configured)';
   }
