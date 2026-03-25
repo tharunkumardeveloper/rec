@@ -77,12 +77,47 @@ class ElevenLabsTTSService {
         this.initBrowserVoice();
       }
       
+      // List of library voices that require paid plan (to be avoided)
+      const libraryVoices = [
+        '21m00Tcm4TlvDq8ikWAM', // Rachel
+        'EXAVITQu4vr4xnSDxMaL', // Bella
+        'MF3mGyEYCl7XYWbV9V6O', // Elli
+        'piTKgcLEGmPE4e6mEKli', // Nicole
+        'jBpfuIE2acCO8z3wKNLl', // Gigi
+        'XB0fDUnXU5powFXDhCwa', // Charlotte
+        'ThT5KcBeYPX3keUQqHPh', // Dorothy
+        'z9fAnlkpzviPz146aGWa', // Glinda
+        'oWAxZDx7w5VEj9dCyTzz', // Grace
+        'jsCqWAovK2LkecY7zXl4', // Freya
+        'LcfcDJNUP1GQjkzn1xUU', // Emily
+        'XrExE9yKIg1WjnnlVkGX', // Matilda
+        'pMsXgVXv3BLzUgSXRplE', // Serena
+        't0jbNlBVZ17f02VDIeMI', // Jessie
+        'zrHiDhphv9ZnVXBqCLjz'  // Mimi
+      ];
+      
       // Load saved settings
       const saved = localStorage.getItem('elevenlabs_voice_settings');
       if (saved) {
-        const settings = JSON.parse(saved);
-        this.voiceSettings = settings.voiceSettings || this.voiceSettings;
-        this.voiceId = settings.voiceId || this.voiceId;
+        try {
+          const settings = JSON.parse(saved);
+          this.voiceSettings = settings.voiceSettings || this.voiceSettings;
+          
+          // Check if saved voice is a library voice (requires payment)
+          if (settings.voiceId && libraryVoices.includes(settings.voiceId)) {
+            console.warn('⚠️ Saved voice requires paid plan. Resetting to free tier voice.');
+            // Reset to free tier voice
+            this.voiceId = 'pNInz6obpgDQGcFmaJgB'; // Adam
+            // Clear the saved settings
+            localStorage.removeItem('elevenlabs_voice_settings');
+          } else if (settings.voiceId) {
+            this.voiceId = settings.voiceId;
+          }
+        } catch (error) {
+          console.error('Error loading voice settings:', error);
+          // Reset to default on error
+          localStorage.removeItem('elevenlabs_voice_settings');
+        }
       }
     }
     
