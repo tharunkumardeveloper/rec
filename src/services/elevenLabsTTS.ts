@@ -25,10 +25,13 @@ class ElevenLabsTTSService {
   private isEnabled: boolean = true;
   private isSpeaking: boolean = false;
   private lastSpeakTime: number = 0;
-  private readonly SPEAK_INTERVAL = 1500; // 1.5 seconds to prevent overlap
+  private readonly SPEAK_INTERVAL = 2000; // 2 seconds to prevent overlap (increased from 1.5s)
   private currentAudio: HTMLAudioElement | null = null;
   private audioQueue: string[] = []; // Queue for pending messages
   private isProcessingQueue: boolean = false;
+  private readonly API_TIMEOUT = 5000; // 5 second timeout for API calls
+  private retryCount: number = 0;
+  private readonly MAX_RETRIES = 2;
   
   // Coaching context for intelligent responses
   private context: CoachingContext = {
@@ -135,40 +138,55 @@ class ElevenLabsTTSService {
   }
 
   /**
-   * Generate audio using ElevenLabs API
+   * Generate audio using ElevenLabs API with timeout
    */
   private async generateElevenLabsAudio(text: string): Promise<Blob> {
     if (!this.API_KEY) {
       throw new Error('ElevenLabs API key not configured');
     }
 
-    const response = await fetch(`${this.API_URL}/${this.voiceId}`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'audio/mpeg',
-        'Content-Type': 'application/json',
-        'xi-api-key': this.API_KEY
-      },
-      body: JSON.stringify({
-        text: text,
-        model_id: 'eleven_turbo_v2',
-        voice_settings: this.voiceSettings
-      })
-    });
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.API_TIMEOUT);
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`ElevenLabs API error: ${response.status} - ${error}`);
+    try {
+      const response = await fetch(`${this.API_URL}/${this.voiceId}`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': this.API_KEY
+        },
+        body: JSON.stringify({
+          text: text,
+          model_id: 'eleven_turbo_v2',
+          voice_settings: this.voiceSettings
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`ElevenLabs API error: ${response.status} - ${error}`);
+      }
+
+      return await response.blob();
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('ElevenLabs API timeout');
+      }
+      throw error;
     }
-
-    return await response.blob();
   }
 
   /**
-   * Speak using ElevenLabs with browser fallback - prevents overlap
+   * Speak using ElevenLabs with browser fallback - prevents overlap with retry logic
    */
   async speak(text: string, force: boolean = false): Promise<void> {
-    if (!this.isEnabled) return;
+    if (!this.isEnabled || !text || text.trim() === '') return;
 
     // If force is true, stop current audio and clear queue
     if (force) {
@@ -181,6 +199,7 @@ class ElevenLabsTTSService {
         this.synth.cancel();
       }
       this.isSpeaking = false;
+      this.retryCount = 0;
     }
 
     // If already speaking and not forced, add to queue
@@ -217,26 +236,55 @@ class ElevenLabsTTSService {
 
           this.currentAudio = new Audio(audioUrl);
           
+          // Set volume
+          this.currentAudio.volume = 0.9;
+          
           this.currentAudio.onended = () => {
             this.isSpeaking = false;
             URL.revokeObjectURL(audioUrl);
             this.currentAudio = null;
-            // Process next in queue
+            this.retryCount = 0;
+            // Process next in queue with delay
             this.processQueue();
           };
 
-          this.currentAudio.onerror = () => {
+          this.currentAudio.onerror = (error) => {
+            console.error('❌ Audio playback error:', error);
             this.isSpeaking = false;
             URL.revokeObjectURL(audioUrl);
             this.currentAudio = null;
-            // Process next in queue
-            this.processQueue();
+            
+            // Retry with browser TTS if ElevenLabs audio fails
+            if (this.retryCount < this.MAX_RETRIES) {
+              this.retryCount++;
+              console.log(`🔄 Retrying with browser TTS (attempt ${this.retryCount})`);
+              this.speakWithBrowser(text);
+            } else {
+              this.retryCount = 0;
+              this.processQueue();
+            }
           };
 
           await this.currentAudio.play();
+          this.retryCount = 0; // Reset on successful play
           
-        } catch (elevenLabsError) {
-          console.warn('☁️ ElevenLabs unavailable, using browser fallback');
+        } catch (elevenLabsError: any) {
+          console.warn('☁️ ElevenLabs error:', elevenLabsError.message);
+          
+          // Retry with ElevenLabs if it's a timeout or network error
+          if (this.retryCount < this.MAX_RETRIES && 
+              (elevenLabsError.message.includes('timeout') || 
+               elevenLabsError.message.includes('network'))) {
+            this.retryCount++;
+            console.log(`🔄 Retrying ElevenLabs (attempt ${this.retryCount})`);
+            this.isSpeaking = false;
+            setTimeout(() => this.speak(text, force), 1000);
+            return;
+          }
+          
+          // Fall back to browser TTS
+          console.log('🔄 Falling back to browser TTS');
+          this.retryCount = 0;
           this.speakWithBrowser(text);
         }
       } else {
@@ -246,19 +294,20 @@ class ElevenLabsTTSService {
     } catch (error) {
       console.error('❌ TTS error:', error);
       this.isSpeaking = false;
+      this.retryCount = 0;
       this.processQueue();
     }
   }
 
   /**
-   * Process queued messages
+   * Process queued messages with proper delay
    */
   private processQueue(): void {
     if (this.isProcessingQueue || this.audioQueue.length === 0) return;
     
     this.isProcessingQueue = true;
     
-    // Wait a bit before processing next message
+    // Wait longer before processing next message to ensure clean separation
     setTimeout(() => {
       const nextMessage = this.audioQueue.shift();
       this.isProcessingQueue = false;
@@ -266,7 +315,7 @@ class ElevenLabsTTSService {
       if (nextMessage) {
         this.speak(nextMessage, false);
       }
-    }, 500); // Small delay between messages
+    }, 800); // Increased from 500ms to 800ms for better separation
   }
 
   private speakWithBrowser(text: string): void {
@@ -715,6 +764,7 @@ class ElevenLabsTTSService {
   stop(): void {
     this.stopIdleDetection();
     this.audioQueue = []; // Clear queue
+    this.retryCount = 0; // Reset retry count
     if (this.currentAudio) {
       this.currentAudio.pause();
       this.currentAudio = null;
@@ -731,6 +781,7 @@ class ElevenLabsTTSService {
     this.stopIdleDetection();
     this.audioQueue = []; // Clear queue
     this.isProcessingQueue = false;
+    this.retryCount = 0; // Reset retry count
     this.context = {
       lastMessageType: '',
       consecutiveCorrect: 0,
