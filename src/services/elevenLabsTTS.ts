@@ -79,21 +79,18 @@ class ElevenLabsTTSService {
       
       // List of library voices that require paid plan (to be avoided)
       const libraryVoices = [
-        '21m00Tcm4TlvDq8ikWAM', // Rachel
-        'EXAVITQu4vr4xnSDxMaL', // Bella
-        'MF3mGyEYCl7XYWbV9V6O', // Elli
-        'piTKgcLEGmPE4e6mEKli', // Nicole
-        'jBpfuIE2acCO8z3wKNLl', // Gigi
-        'XB0fDUnXU5powFXDhCwa', // Charlotte
-        'ThT5KcBeYPX3keUQqHPh', // Dorothy
-        'z9fAnlkpzviPz146aGWa', // Glinda
-        'oWAxZDx7w5VEj9dCyTzz', // Grace
-        'jsCqWAovK2LkecY7zXl4', // Freya
-        'LcfcDJNUP1GQjkzn1xUU', // Emily
-        'XrExE9yKIg1WjnnlVkGX', // Matilda
-        'pMsXgVXv3BLzUgSXRplE', // Serena
-        't0jbNlBVZ17f02VDIeMI', // Jessie
-        'zrHiDhphv9ZnVXBqCLjz'  // Mimi
+        '21m00Tcm4TlvDq8ikWAM', // Rachel (female - paid)
+        'EXAVITQu4vr4xnSDxMaL', // Bella (female - paid)
+        'MF3mGyEYCl7XYWbV9V6O', // Elli (female - paid)
+        'piTKgcLEGmPE4e6mEKli', // Nicole (female - paid)
+        'jBpfuIE2acCO8z3wKNLl', // Gigi (female - paid)
+        'XB0fDUnXU5powFXDhCwa', // Charlotte (female - paid)
+        'ThT5KcBeYPX3keUQqHPh', // Dorothy (female - paid)
+        'z9fAnlkpzviPz146aGWa', // Glinda (female - paid)
+        'oWAxZDx7w5VEj9dCyTzz', // Grace (female - paid)
+        'LcfcDJNUP1GQjkzn1xUU', // Emily (female - paid)
+        'zrHiDhphv9ZnVXBqCLjz', // Mimi (female - paid)
+        't0jbNlBVZ17f02VDIeMI'  // Jessie (female - paid)
       ];
       
       // Load saved settings

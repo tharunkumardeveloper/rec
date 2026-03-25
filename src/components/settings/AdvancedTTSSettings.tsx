@@ -24,33 +24,17 @@ const AdvancedTTSSettings = () => {
     return 'Athlete';
   });
 
-  // Free tier voices only (library voices require paid plan)
+  // Free tier voices only - 3 Male + 3 Female (tested and confirmed working)
   const voices = [
-    { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', description: 'Deep, authoritative (Default - Free)' },
-    { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', description: 'Well-rounded, pleasant (Free)' },
-    { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', description: 'Crisp, strong (Free)' },
-    { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', description: 'Casual, conversational (Free)' },
-    { id: '2EiwWnXFnvU5JabPnv8n', name: 'Clyde', description: 'Warm, friendly (Free)' },
-    { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', description: 'Deep, authoritative (Free)' },
-    { id: 'CYw3kZ02Hs0563khs1Fj', name: 'Dave', description: 'Young, conversational (Free)' },
-    { id: 'AZnzlk1XvdvUeBnXmlld', name: 'Domi', description: 'Strong, confident (Free)' },
-    { id: 'g5CIjZEefAph4nQFvHAz', name: 'Ethan', description: 'Clear, professional (Free)' },
-    { id: 'D38z5RcWu1voky8WS1ja', name: 'Fin', description: 'Energetic, youthful (Free)' },
-    { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', description: 'Warm, raspy (Free)' },
-    { id: 'zcAOhNBS3c14rBihAFp1', name: 'Giovanni', description: 'Foreigner, English (Free)' },
-    { id: 'SOYHLrjzK2X1ezoPC6cr', name: 'Harry', description: 'Anxious, nervous (Free)' },
-    { id: 'ZQe5CZNOzWyzPSCn5a3c', name: 'James', description: 'Calm, professional (Free)' },
-    { id: 'bVMeCyTHy58xNoL34h3p', name: 'Jeremy', description: 'Excited, energetic (Free)' },
-    { id: 'Zlb1dXrM653N07WRdFW3', name: 'Joseph', description: 'Upbeat, friendly (Free)' },
-    { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', description: 'Young, energetic (Free)' },
-    { id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam', description: 'Neutral, clear (Free)' },
-    { id: 'Yko7PKHZNXotIFUBG7I9', name: 'Matthew', description: 'Mature, professional (Free)' },
-    { id: 'flq6f7yk4E4fJM5XTYuZ', name: 'Michael', description: 'Smooth, confident (Free)' },
-    { id: 'ODq5zmih8GrVes37Dizd', name: 'Patrick', description: 'Pleasant, friendly (Free)' },
-    { id: '5Q0t7uMcjvnagumLfvZi', name: 'Paul', description: 'Mature, authoritative (Free)' },
-    { id: 'yoZ06aMxZJJ28mfd3POQ', name: 'Sam', description: 'Raspy, dynamic (Free)' },
-    { id: 'GBv7mTt0atIp3Br8iCZE', name: 'Thomas', description: 'Calm, mature (Free)' },
-    { id: 'bIHbv24MWmeRgasZH58o', name: 'Will', description: 'Friendly, approachable (Free)' }
+    // Male Voices
+    { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam 👨', description: 'Deep, authoritative male (Default - Free)', gender: 'male' },
+    { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel 👨', description: 'Professional, clear male (Free)', gender: 'male' },
+    { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie 👨', description: 'Casual, friendly male (Free)', gender: 'male' },
+    
+    // Female Voices  
+    { id: 'jsCqWAovK2LkecY7zXl4', name: 'Freya 👩', description: 'Young, energetic female (Free)', gender: 'female' },
+    { id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda 👩', description: 'Warm, encouraging female (Free)', gender: 'female' },
+    { id: 'pMsXgVXv3BLzUgSXRplE', name: 'Serena 👩', description: 'Pleasant, motivating female (Free)', gender: 'female' }
   ];
 
   const handleStabilityChange = (value: number[]) => {
