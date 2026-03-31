@@ -28,9 +28,10 @@ TalentTrack is a **next-generation fitness platform** that combines cutting-edge
 
 </div>
 
-<table>
+<div align="center">
+<table align="center">
 <tr>
-<td width="50%">
+<td width="50%" align="center">
 
 🤖 **AI-Powered Analysis**
 - MediaPipe pose detection
@@ -45,7 +46,7 @@ TalentTrack is a **next-generation fitness platform** that combines cutting-edge
 - Multiple voice options
 
 </td>
-<td width="50%">
+<td width="50%" align="center">
 
 👻 **Ghost Mode**
 - Race your best performances
@@ -62,18 +63,21 @@ TalentTrack is a **next-generation fitness platform** that combines cutting-edge
 </td>
 </tr>
 </table>
+</div>
+
+</div>
 
 ---
 
-## 🎮 Workout Modes
-
 <div align="center">
+
+## 🎮 Workout Modes
 
 ### 💪 Normal Mode - AI-Powered Training
 
-<img src="public/pushup.gif" alt="Push-ups" width="250"/>
-<img src="public/pullup.gif" alt="Pull-ups" width="250"/>
-<img src="public/situp.gif" alt="Sit-ups" width="250"/>
+<img src="public/pushup.gif" alt="Push-ups" width="280"/>
+<img src="public/pullup.gif" alt="Pull-ups" width="280"/>
+<img src="public/situp.gif" alt="Sit-ups" width="280"/>
 
 **Real-time rep counting • Form validation • Voice coaching • Performance metrics**
 
@@ -89,6 +93,7 @@ TalentTrack is a **next-generation fitness platform** that combines cutting-edge
 
 </div>
 
+<div align="center">
 <table>
 <tr>
 <td align="center" width="25%">
@@ -113,6 +118,7 @@ Competitive edge like<br/>never before
 </td>
 </tr>
 </table>
+</div>
 
 <div align="center">
 
@@ -134,49 +140,50 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 
 </div>
 
+<div align="center">
 <table>
 <tr>
 <td align="center" width="33%">
-<img src="public/pushup.gif" width="120"/><br/>
+<img src="public/pushup.gif" width="200"/><br/>
 <b>💪 Push-ups</b><br/>
 <sub>Elbow angle tracking</sub>
 </td>
 <td align="center" width="33%">
-<img src="public/pullup.gif" width="120"/><br/>
+<img src="public/pullup.gif" width="200"/><br/>
 <b>🏋️ Pull-ups</b><br/>
 <sub>Chin-over-bar detection</sub>
 </td>
 <td align="center" width="33%">
-<img src="public/situp.gif" width="120"/><br/>
+<img src="public/situp.gif" width="200"/><br/>
 <b>🧘 Sit-ups</b><br/>
 <sub>Torso angle validation</sub>
 </td>
 </tr>
 <tr>
 <td align="center">
-<img src="public/squat.webp" width="120"/><br/>
+<img src="public/squat.webp" width="200"/><br/>
 <b>🦵 Squats</b><br/>
 <sub>Knee angle tracking</sub>
 </td>
 <td align="center">
-<img src="public/verticaljump.gif" width="120"/><br/>
+<img src="public/verticaljump.gif" width="200"/><br/>
 <b>🚀 Vertical Jump</b><br/>
 <sub>Height measurement</sub>
 </td>
 <td align="center">
-<img src="public/shuttlerun.gif" width="120"/><br/>
+<img src="public/shuttlerun.gif" width="200"/><br/>
 <b>🏃 Shuttle Run</b><br/>
 <sub>Distance tracking</sub>
 </td>
 </tr>
 <tr>
 <td align="center">
-<img src="public/sit&reach.gif" width="120"/><br/>
+<img src="public/sit&reach.gif" width="200"/><br/>
 <b>🤸 Sit & Reach</b><br/>
 <sub>Flexibility test</sub>
 </td>
 <td align="center">
-<img src="public/kneepushup.gif" width="120"/><br/>
+<img src="public/kneepushup.gif" width="200"/><br/>
 <b>🦵 Knee Push-ups</b><br/>
 <sub>Modified version</sub>
 </td>
@@ -187,6 +194,7 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 </td>
 </tr>
 </table>
+</div>
 
 ---
 
@@ -200,9 +208,10 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 
 </div>
 
+<div align="center">
 <table>
 <tr>
-<td width="50%">
+<td width="50%" align="center">
 
 **🗣️ Dynamic Feedback**
 - "10 reps! You're crushing it!"
@@ -215,7 +224,7 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 - Safety reminders
 
 </td>
-<td width="50%">
+<td width="50%" align="center">
 
 **🎯 Milestone Celebrations**
 - "New personal record!"
@@ -230,6 +239,7 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 </td>
 </tr>
 </table>
+</div>
 
 <div align="center">
 
@@ -247,6 +257,7 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 
 </div>
 
+<div align="center">
 <table>
 <tr>
 <td align="center" width="20%">
@@ -276,6 +287,7 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 </td>
 </tr>
 </table>
+</div>
 
 ---
 
@@ -285,9 +297,10 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 
 </div>
 
+<div align="center">
 <table>
 <tr>
-<td width="50%">
+<td width="50%" align="center">
 
 **🤝 Social Connection**
 - Follow friends
@@ -302,7 +315,7 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 - Streak tracking
 
 </td>
-<td width="50%">
+<td width="50%" align="center">
 
 **👨‍🏫 Coach Dashboard**
 - Monitor athlete progress
@@ -320,6 +333,7 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 </td>
 </tr>
 </table>
+</div>
 
 ---
 
@@ -331,6 +345,7 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 
 </div>
 
+<div align="center">
 <table>
 <tr>
 <td align="center" width="25%">
@@ -355,6 +370,7 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 </td>
 </tr>
 </table>
+</div>
 
 ---
 
