@@ -18,11 +18,11 @@
 
 ---
 
+<div align="center">
+
 ## 🌟 What is TalentTrack?
 
 TalentTrack is a **next-generation fitness platform** that combines cutting-edge **AI pose detection**, **real-time voice coaching**, and **gamification** to revolutionize how you work out!
-
-<div align="center">
 
 ### 💪 Why Choose TalentTrack?
 
@@ -358,9 +358,9 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 
 ---
 
-## 🚀 Quick Start
-
 <div align="center">
+
+## 🚀 Quick Start
 
 ### 🌐 Try it Online - No Installation Required!
 
@@ -368,7 +368,11 @@ Push your limits • Compete for high scores • Track progress • Earn badges
 
 </div>
 
+<div align="center">
+
 ### 💻 Run Locally
+
+</div>
 
 ```bash
 # Clone the repository
@@ -384,15 +388,21 @@ npm run dev
 
 Open **http://localhost:5173** in your browser and start training! 💪
 
+<div align="center">
+
 ### 📦 Requirements
 
-- ✅ Node.js 16+
-- ✅ Modern browser (Chrome recommended)
-- ✅ Webcam (for live workouts)
+✅ Node.js 16+ • ✅ Modern browser (Chrome recommended) • ✅ Webcam (for live workouts)
+
+</div>
 
 ---
 
+<div align="center">
+
 ## 🛠️ Tech Stack
+
+</div>
 
 <div align="center">
 
@@ -425,9 +435,9 @@ Open **http://localhost:5173** in your browser and start training! 💪
 
 ---
 
-## 📱 Demo
-
 <div align="center">
+
+## 📱 Demo
 
 ### 🎬 Watch TalentTrack in Action
 
@@ -441,6 +451,8 @@ Open **http://localhost:5173** in your browser and start training! 💪
 | 📊 **Analytics** | 📈 | Detailed performance metrics and progress tracking |
 
 ---
+
+<div align="center">
 
 ## 🎯 How It Works
 
@@ -505,9 +517,15 @@ graph LR
 </tr>
 </table>
 
+</div>
+
 ---
 
+<div align="center">
+
 ## 🎮 User Roles
+
+</div>
 
 <table>
 <tr>
@@ -564,7 +582,11 @@ graph LR
 
 ---
 
+<div align="center">
+
 ## 🔧 Configuration
+
+</div>
 
 ### 🎤 Voice Coach Setup
 
@@ -602,7 +624,11 @@ MONGODB_URI=your_mongodb_connection_string
 
 ---
 
+<div align="center">
+
 ## 🚀 Deployment
+
+</div>
 
 ### Frontend (Vercel)
 
@@ -629,9 +655,13 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 ---
 
+<div align="center">
+
 ## 🤝 Contributing
 
 We welcome contributions! Here's how:
+
+</div>
 
 1. 🍴 **Fork** the repository
 2. 🌿 **Create** a feature branch (`git checkout -b feature/amazing-feature`)
@@ -641,7 +671,11 @@ We welcome contributions! Here's how:
 
 ---
 
+<div align="center">
+
 ## 🐛 Troubleshooting
+
+</div>
 
 <table>
 <tr>
@@ -694,7 +728,11 @@ We welcome contributions! Here's how:
 
 ---
 
+<div align="center">
+
 ## 🎯 Roadmap
+
+</div>
 
 <table>
 <tr>
@@ -741,9 +779,13 @@ Built with ❤️ using amazing technologies:
 
 ---
 
+<div align="center">
+
 ## 📄 License
 
 MIT License - See [LICENSE](LICENSE) for details
+
+</div>
 
 ---
 
